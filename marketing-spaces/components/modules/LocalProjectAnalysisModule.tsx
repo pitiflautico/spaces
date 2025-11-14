@@ -11,6 +11,7 @@ interface LocalProjectAnalysisModuleProps {
 
 export default function LocalProjectAnalysisModule({ module }: LocalProjectAnalysisModuleProps) {
   const { updateModule } = useSpaceStore();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [inputs, setInputs] = useState<LocalProjectAnalysisInputs>({
     localProjectPath: module.inputs.localProjectPath || '',
@@ -22,6 +23,43 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
     const newInputs = { ...inputs, [field]: value };
     setInputs(newInputs);
     updateModule(module.id, { inputs: newInputs });
+  };
+
+  const handleFolderIconClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      // Get the first file to extract the path
+      const firstFile = files[0];
+      // Extract path from webkitRelativePath (format: "foldername/...")
+      const pathParts = firstFile.webkitRelativePath.split('/');
+      const folderName = pathParts[0];
+
+      // Detect OS
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMac = userAgent.includes('mac');
+      const isWindows = userAgent.includes('win');
+
+      let suggestion = '';
+      if (isMac) {
+        suggestion = `/Users/${navigator.userAgent.includes('chrome') ? 'yourname' : 'yourname'}/Projects/${folderName}`;
+      } else if (isWindows) {
+        suggestion = `C:\\Users\\yourname\\Documents\\${folderName}`;
+      } else {
+        suggestion = `/home/yourname/projects/${folderName}`;
+      }
+
+      // Show helpful dialog
+      const message = `✅ Folder selected: ${folderName}\n\n⚠️ Due to browser security, the complete path cannot be accessed automatically.\n\n💡 Suggested path:\n${suggestion}\n\nPlease copy and paste the correct absolute path to this folder in the input field above.`;
+
+      alert(message);
+
+      // Optionally, you could try to set a partial path
+      // handleInputChange('localProjectPath', suggestion);
+    }
   };
 
   const outputs = module.outputs as LocalProjectAnalysisOutputs;
@@ -47,10 +85,26 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
               placeholder="/Users/dani/Projects/myapp"
               className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 pr-10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
             />
-            <FolderIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <button
+              type="button"
+              onClick={handleFolderIconClick}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors cursor-pointer"
+              title="Browse folders"
+            >
+              <FolderIcon className="w-4 h-4" />
+            </button>
+            {/* Hidden file input for folder selection */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              {...({ webkitdirectory: '', directory: '' } as any)}
+              onChange={handleFolderSelect}
+              className="hidden"
+              multiple
+            />
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Enter the absolute path to your local project
+            Enter the absolute path or click the folder icon to browse
           </p>
         </div>
 
