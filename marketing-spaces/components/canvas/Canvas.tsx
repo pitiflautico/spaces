@@ -45,7 +45,16 @@ export default function Canvas() {
 
   // Handle mouse down for panning
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0 && (spacePressed || e.target === canvasRef.current)) {
+    // Allow panning with:
+    // - Middle mouse button (button 1)
+    // - Left mouse button (button 0) + Spacebar
+    // - Left mouse button on canvas background (not on modules)
+    const isMiddleButton = e.button === 1;
+    const isLeftWithSpace = e.button === 0 && spacePressed;
+    const isLeftOnBackground = e.button === 0 && (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background'));
+
+    if (isMiddleButton || isLeftWithSpace || isLeftOnBackground) {
+      e.preventDefault();
       setIsDragging(true);
       setDragStart({ x: e.clientX - canvasState.pan.x, y: e.clientY - canvasState.pan.y });
     }
@@ -113,9 +122,15 @@ export default function Canvas() {
   return (
     <div
       ref={canvasRef}
-      className="relative w-full h-screen bg-[#0A0A0A] overflow-hidden"
+      className="relative w-full h-screen bg-[#0A0A0A] overflow-hidden canvas-background"
       onMouseDown={handleMouseDown}
-      style={{ cursor: isDragging || spacePressed ? 'grab' : 'default' }}
+      onContextMenu={(e) => {
+        // Prevent context menu on middle button
+        if (isDragging) e.preventDefault();
+      }}
+      style={{
+        cursor: isDragging ? 'grabbing' : spacePressed ? 'grab' : 'default'
+      }}
     >
       {/* Dot Grid Background */}
       <DotGrid zoom={canvasState.zoom} pan={canvasState.pan} />

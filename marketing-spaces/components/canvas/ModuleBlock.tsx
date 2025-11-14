@@ -149,7 +149,7 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
   return (
     <div
       ref={blockRef}
-      className={`absolute bg-[#1A1A1A] border-2 rounded-xl shadow-2xl overflow-hidden transition-all ${
+      className={`absolute bg-[#1A1A1A] border-2 rounded-xl shadow-2xl overflow-hidden transition-all pointer-events-auto ${
         isSelected ? 'border-blue-500 shadow-blue-500/20' : 'border-[#2A2A2A]'
       } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       style={{
