@@ -1,13 +1,6 @@
-@import "tailwindcss";
-
-@theme {
-  --color-dark-bg: #0A0A0A;
-  --color-dark-sidebar: #1A1A1A;
-  --color-dark-card: #2A2A2A;
-  --color-dark-border: #3A3A3A;
-  --color-dark-hover: #2F2F2F;
-  --color-grid-dot: #3E3E3E;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   margin: 0;
