@@ -9,7 +9,7 @@ import {
   Cog6ToothIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import IngestionAgentModule from '@/components/modules/IngestionAgentModule';
+import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
 
 interface ModuleBlockProps {
   module: Module;
@@ -71,35 +71,34 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
     updateModule(module.id, { status: 'running' });
 
     try {
-      if (module.type === 'ingestion-agent') {
-        // Call the ingestion API
-        const response = await fetch('/api/ingestion', {
+      if (module.type === 'local-project-analysis') {
+        // Call the local analysis API
+        const response = await fetch('/api/local-analysis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            projectName: module.inputs.projectName,
-            repoUrl: module.inputs.repoUrl,
-            branch: module.inputs.branch || 'main',
-            mode: module.inputs.mode || 'copy',
+            localProjectPath: module.inputs.localProjectPath,
+            includeHiddenFiles: module.inputs.includeHiddenFiles || false,
+            includeNodeModules: module.inputs.includeNodeModules || false,
           }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Ingestion failed');
+          throw new Error(data.error || 'Analysis failed');
         }
 
         // Update module with outputs
         updateModule(module.id, {
           status: 'done',
           outputs: {
-            projectPath: data.projectPath,
-            folderStructure: data.folderStructure,
-            projectMetadata: data.metadata,
-            ingestionLog: data.log,
+            repositoryMetadata: data.repositoryMetadata,
+            fileContents: data.fileContents,
+            repoStructure: data.repoStructure,
+            analysisLog: data.analysisLog,
           },
         });
       } else {
@@ -198,10 +197,10 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
 
       {/* Module Content */}
       <div className="module-content p-5">
-        {module.type === 'ingestion-agent' && (
-          <IngestionAgentModule module={module} />
+        {module.type === 'local-project-analysis' && (
+          <LocalProjectAnalysisModule module={module} />
         )}
-        {module.type !== 'ingestion-agent' && (
+        {module.type !== 'local-project-analysis' && (
           <div className="text-gray-400 text-sm">
             Module type: {module.type}
           </div>

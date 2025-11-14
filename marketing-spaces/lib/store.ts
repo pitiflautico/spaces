@@ -69,15 +69,15 @@ export const useSpaceStore = create<SpaceStore>((set, get) => ({
 
   addModule: (type: ModuleType, position: Position) => {
     const moduleDefaults: Record<ModuleType, Partial<Module>> = {
-      'ingestion-agent': {
-        name: 'Ingestion Agent',
-        size: { width: 450, height: 500 },
+      'local-project-analysis': {
+        name: 'Local Project Analysis Agent',
+        size: { width: 450, height: 520 },
         ports: {
           input: [],
           output: [
-            { id: 'out-1', type: 'output', label: 'Project Path', connected: false },
-            { id: 'out-2', type: 'output', label: 'Folder Structure', connected: false },
-            { id: 'out-3', type: 'output', label: 'Metadata', connected: false },
+            { id: 'out-1', type: 'output', label: 'Repository Metadata', connected: false },
+            { id: 'out-2', type: 'output', label: 'File Contents', connected: false },
+            { id: 'out-3', type: 'output', label: 'Repo Structure', connected: false },
           ],
         },
       },

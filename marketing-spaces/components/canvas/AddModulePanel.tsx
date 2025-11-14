@@ -20,10 +20,10 @@ const moduleCategories: ModuleCategory[] = [
     name: 'Project Initialization',
     modules: [
       {
-        type: 'ingestion-agent',
-        name: 'Ingestion Agent',
-        description: 'Download and analyze your project repository',
-        icon: '📥',
+        type: 'local-project-analysis',
+        name: 'Local Project Analysis Agent',
+        description: 'Analyze local project structure, files, and metadata',
+        icon: '🔍',
       },
       {
         type: 'reader-engine',

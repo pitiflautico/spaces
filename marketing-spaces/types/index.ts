@@ -11,7 +11,7 @@ export interface Size {
 export type ModuleStatus = 'idle' | 'running' | 'done' | 'error';
 
 export type ModuleType =
-  | 'ingestion-agent'
+  | 'local-project-analysis'
   | 'reader-engine'
   | 'naming-engine'
   | 'icon-generator'
@@ -65,17 +65,15 @@ export interface CanvasState {
   pan: Position;
 }
 
-export interface IngestionAgentInputs {
-  projectName: string;
-  repoUrl?: string;
-  zipFile?: File;
-  branch: string;
-  mode: 'copy' | 'readonly';
+export interface LocalProjectAnalysisInputs {
+  localProjectPath: string;
+  includeHiddenFiles: boolean;
+  includeNodeModules: boolean;
 }
 
-export interface IngestionAgentOutputs {
-  projectPath?: string;
-  folderStructure?: any;
-  projectMetadata?: any;
-  ingestionLog?: string;
+export interface LocalProjectAnalysisOutputs {
+  repositoryMetadata?: any;
+  fileContents?: any;
+  repoStructure?: any;
+  analysisLog?: string;
 }

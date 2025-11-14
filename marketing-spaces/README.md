@@ -13,25 +13,24 @@ Una plataforma completa de marketing para aplicaciones con interfaz estilo Freep
 
 ### Módulos Disponibles
 
-#### 1. Ingestion Agent (Implementado)
+#### 1. Local Project Analysis Agent (Implementado)
 Primer módulo del sistema que permite:
-- Descargar repositorios de GitHub
-- Subir archivos ZIP
-- Analizar estructura de carpetas
+- Analizar proyectos locales existentes
+- Leer estructura de carpetas y archivos
 - Detectar tipo de proyecto y framework
-- Generar metadata y logs
+- Extraer contenidos de archivos clave (package.json, README, configs)
+- Generar metadata detallada y logs
 
 **Inputs:**
-- Project Name (requerido)
-- Repository URL o ZIP file
-- Branch (default: main)
-- Mode: copy | readonly
+- Local Project Path (ruta absoluta requerida)
+- Include Hidden Files (yes/no, default: no)
+- Include Node Modules (yes/no, default: no)
 
 **Outputs:**
-- Project Path
-- Folder Structure JSON
-- Project Metadata JSON
-- Ingestion Log
+- repository_metadata.json (metadata del proyecto)
+- file_contents.json (contenidos de archivos importantes)
+- repo_structure.json (estructura de carpetas)
+- analysis_log.txt (log del proceso)
 
 #### 2. Reader Engine (Próximamente)
 Análisis profundo del código del proyecto
@@ -48,11 +47,11 @@ Materiales de marketing completos
 ## Tecnologías
 
 - **Frontend**: Next.js 16, React 19, TypeScript
-- **Estilos**: Tailwind CSS
+- **Estilos**: Tailwind CSS 4
 - **Estado**: Zustand
 - **Iconos**: Heroicons
 - **Backend**: Next.js API Routes
-- **Git Operations**: simple-git
+- **File System**: Node.js fs/promises
 
 ## Instalación
 
@@ -75,7 +74,7 @@ La aplicación estará disponible en [http://localhost:3000](http://localhost:30
 marketing-spaces/
 ├── app/
 │   ├── api/
-│   │   └── ingestion/          # API para Ingestion Agent
+│   │   └── local-analysis/     # API para Local Project Analysis Agent
 │   ├── globals.css
 │   ├── layout.tsx
 │   └── page.tsx
@@ -91,13 +90,11 @@ marketing-spaces/
 │   │   ├── AddModuleButton.tsx # Botón para añadir módulos
 │   │   └── AddModulePanel.tsx  # Panel de selección de módulos
 │   └── modules/
-│       └── IngestionAgentModule.tsx  # UI del módulo Ingestion Agent
+│       └── LocalProjectAnalysisModule.tsx  # UI del módulo Local Project Analysis
 ├── lib/
 │   └── store.ts                # Estado global con Zustand
 ├── types/
 │   └── index.ts                # Tipos TypeScript
-├── storage/
-│   └── projects/               # Proyectos descargados
 └── public/
 
 ```
@@ -116,16 +113,16 @@ marketing-spaces/
 2. Selecciona el módulo deseado
 3. El módulo aparecerá en el canvas
 
-### Usar Ingestion Agent
+### Usar Local Project Analysis Agent
 
-1. Añadir módulo "Ingestion Agent"
+1. Añadir módulo "Local Project Analysis Agent"
 2. Completar inputs:
-   - Project Name: nombre del proyecto
-   - Repository URL: URL de GitHub
-   - Branch: rama a clonar (default: main)
+   - Local Project Path: ruta absoluta al proyecto local (ej: /Users/dani/Projects/myapp)
+   - Include hidden files: Yes/No (default: No)
+   - Include node_modules: Yes/No (default: No)
 3. Click en "Run"
-4. Esperar a que se complete la ingesta
-5. Ver los outputs generados
+4. Esperar a que se complete el análisis
+5. Descargar los outputs generados (JSON files y log)
 
 ### Navegación en el Canvas
 
@@ -136,17 +133,16 @@ marketing-spaces/
 
 ## API Endpoints
 
-### POST /api/ingestion
+### POST /api/local-analysis
 
-Ejecuta el proceso de ingesta de un proyecto.
+Ejecuta el análisis de un proyecto local.
 
 **Request:**
 ```json
 {
-  "projectName": "my-app",
-  "repoUrl": "https://github.com/user/repo.git",
-  "branch": "main",
-  "mode": "copy"
+  "localProjectPath": "/Users/dani/Projects/my-app",
+  "includeHiddenFiles": false,
+  "includeNodeModules": false
 }
 ```
 
@@ -154,10 +150,24 @@ Ejecuta el proceso de ingesta de un proyecto.
 ```json
 {
   "success": true,
-  "projectPath": "/path/to/project",
-  "folderStructure": [...],
-  "metadata": {...},
-  "log": "..."
+  "repositoryMetadata": {
+    "projectName": "my-app",
+    "projectType": "web",
+    "framework": "Next.js",
+    "dependencies": {...},
+    "detectedFiles": ["package.json", "README.md", ...],
+    "directories": {...}
+  },
+  "fileContents": {
+    "packageJson": {...},
+    "readme": "...",
+    "srcFiles": [...]
+  },
+  "repoStructure": {
+    "root": "my-app",
+    "items": [...]
+  },
+  "analysisLog": "..."
 }
 ```
 
