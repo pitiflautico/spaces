@@ -142,8 +142,11 @@ export const useSpaceStore = create<SpaceStore>()(
         name: 'Naming Engine',
         size: { width: 400, height: 350 },
         ports: {
-          input: [{ id: 'in-1', type: 'input', label: 'Project Data', connected: false, acceptedTypes: [DataType.JSON] }],
-          output: [{ id: 'out-1', type: 'output', label: 'Name Suggestions', connected: false, dataType: DataType.TEXT }],
+          input: [{ id: 'in-1', type: 'input', label: 'App Intelligence', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Naming Package', connected: false, dataType: DataType.JSON },
+            { id: 'out-2', type: 'output', label: 'Chosen Name', connected: false, dataType: DataType.JSON }
+          ],
         },
       },
       'icon-generator': {

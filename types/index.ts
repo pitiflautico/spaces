@@ -206,3 +206,29 @@ export interface AIProviderResponse {
   providerUsed: string;
   model: string;
 }
+
+// Naming Engine types (V2.0 - Module 3)
+export interface NamingPackage {
+  recommended_name: string;
+  alternatives: string[];
+  style: string;
+  slogan: string;
+  creative_rationale: string;
+  naming_keywords: string[];
+  tone: string;
+  short_descriptions: string[];
+  domain_suggestions: string[];
+}
+
+export interface ChosenName {
+  final_name: string;
+  chosen_at: string;
+  source_module: string;
+  engine_version: string;
+}
+
+export interface NamingEngineOutputs {
+  namingPackage?: NamingPackage;
+  chosenName?: ChosenName;
+  namingLog?: string;
+}
