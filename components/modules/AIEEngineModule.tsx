@@ -77,6 +77,7 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       };
 
       // Call AI provider
+      addLog('info', `Llamando a ${config.provider} (${config.model || 'default'})...`, module.id);
       const response = await aiProvider.run(prompt, config);
 
       // Parse response
@@ -106,6 +107,8 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         status: 'done',
         outputs: newOutputs
       });
+
+      addLog('success', `AIE Engine completado usando ${response.providerUsed}`, module.id);
 
     } catch (err: any) {
       const errorMsg = err.message || 'Unknown error occurred';

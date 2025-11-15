@@ -55,10 +55,22 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
   const handleRun = async () => {
     try {
       updateModule(module.id, { status: 'running' });
+      addLog('info', `Ejecutando ${module.name}...`, module.id);
 
       // Ejecutar según tipo de módulo
       if (module.type === 'local-project-analysis') {
         const inputs = module.inputs as any;
+
+        // Validate that project path is configured
+        if (!inputs.localProjectPath || inputs.localProjectPath.trim() === '') {
+          throw new Error(
+            'No has configurado la ruta del proyecto.\n\n' +
+            'Por favor:\n' +
+            '1. Haz clic en el botón "Select Folder" dentro del módulo\n' +
+            '2. O escribe manualmente la ruta completa del proyecto\n' +
+            '3. Luego ejecuta el módulo con el botón Play ▶'
+          );
+        }
 
         const response = await fetch('/api/local-analysis', {
           method: 'POST',
@@ -71,7 +83,10 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Try to get error message from server
+          const errorData = await response.json().catch(() => null);
+          const errorMessage = errorData?.error || `HTTP error! status: ${response.status}`;
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -88,6 +103,8 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
             },
           },
         });
+
+        addLog('success', `${module.name} completado exitosamente`, module.id);
       } else if (module.type === 'reader-engine') {
         // AIE Engine Module execution
         const { getCurrentSpace } = useSpaceStore.getState();
