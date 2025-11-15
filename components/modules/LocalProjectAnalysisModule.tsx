@@ -12,28 +12,19 @@ interface LocalProjectAnalysisModuleProps {
 export default function LocalProjectAnalysisModule({ module }: LocalProjectAnalysisModuleProps) {
   const { updateModule } = useSpaceStore();
 
-  const [inputs, setInputs] = useState<LocalProjectAnalysisInputs>({
-    localProjectPath: module.inputs.localProjectPath || '',
-    includeHiddenFiles: module.inputs.includeHiddenFiles || false,
-    includeNodeModules: module.inputs.includeNodeModules || false,
-  });
-
-  // Sync local state with module.inputs when module updates
-  useEffect(() => {
-    setInputs({
-      localProjectPath: module.inputs.localProjectPath || '',
-      includeHiddenFiles: module.inputs.includeHiddenFiles || false,
-      includeNodeModules: module.inputs.includeNodeModules || false,
-    });
-  }, [module.inputs]);
+  // Read directly from module.inputs instead of maintaining local state
+  const inputs = (module.inputs || {}) as LocalProjectAnalysisInputs;
 
   const handleInputChange = (field: keyof LocalProjectAnalysisInputs, value: any) => {
-    const newInputs = { ...inputs, [field]: value };
+    const newInputs = {
+      localProjectPath: inputs.localProjectPath || '',
+      includeHiddenFiles: inputs.includeHiddenFiles || false,
+      includeNodeModules: inputs.includeNodeModules || false,
+      [field]: value
+    };
     console.log('[LocalProjectAnalysis] handleInputChange:', field, '=', value);
     console.log('[LocalProjectAnalysis] newInputs:', newInputs);
-    setInputs(newInputs);
     updateModule(module.id, { inputs: newInputs });
-    console.log('[LocalProjectAnalysis] updateModule called with inputs:', newInputs);
   };
 
   const handleSelectFolderClick = async () => {
