@@ -11,6 +11,7 @@ export default function AddModuleButton() {
     <>
       {/* Floating Add Button */}
       <button
+        data-add-module-btn
         onClick={() => setIsPanelOpen(true)}
         className="fixed left-[280px] top-6 z-30 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center group"
         title="Add module"

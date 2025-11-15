@@ -7,6 +7,7 @@ import ModuleBlock from './ModuleBlock';
 import ConnectionLines from './ConnectionLines';
 import DotGrid from './DotGrid';
 import CanvasControls from './CanvasControls';
+import FloatingToolbar from './FloatingToolbar';
 
 export default function Canvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -170,6 +171,9 @@ export default function Canvas() {
 
       {/* Canvas Controls */}
       <CanvasControls />
+
+      {/* Floating Toolbar */}
+      <FloatingToolbar />
 
       {/* Instructions Overlay */}
       {(!currentSpace || currentSpace.modules.length === 0) && (

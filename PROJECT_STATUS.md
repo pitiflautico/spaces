@@ -4,15 +4,46 @@
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15 (Tarea A completada)
+**Última actualización**: 2025-11-15 (Toolbar + ModuleWrapper + Duplicate)
 **Versión del sistema**: v1.1 (en desarrollo)
-**Fase actual**: ✅ Conectores tipados COMPLETOS | Próximo: Toolbar flotante
+**Fase actual**: ✅ Toolbar flotante (UI) + Sistema modular base | Próximo: Play/Restart Flow
 
 ---
 
 ## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
 
-### ✅ Tarea A: Conectores Tipados (18/18 tareas - 100% COMPLETO)
+### ✅ SESIÓN 2: Toolbar Flotante + Sistema Modular Base
+
+**Archivos NUEVOS**:
+- ✅ `/components/canvas/FloatingToolbar.tsx` - Toolbar vertical lateral con 8 botones
+- ✅ `/components/canvas/ModuleWrapper.tsx` - Componente base reutilizable para módulos
+
+**Archivos MODIFICADOS**:
+- ✅ `/components/canvas/ModuleBlock.tsx` - Refactorizado completamente (ahora usa ModuleWrapper)
+- ✅ `/components/canvas/Canvas.tsx` - Añadido FloatingToolbar
+- ✅ `/components/canvas/AddModuleButton.tsx` - Añadido data-attribute para toolbar
+- ✅ `/lib/store.ts` - Añadido duplicateModule()
+
+**Funcionalidad implementada**:
+1. ✅ **FloatingToolbar**: Barra vertical izquierda con 8 botones (Play, Restart, Undo, Redo, etc.)
+2. ✅ **ModuleWrapper**: Sistema base para TODOS los módulos (elimina duplicación de código)
+3. ✅ **Duplicate Module**: Funcionalidad completa para duplicar módulos
+4. ✅ **Nuevo diseño de módulos**: Título simple + icono + duplicate button + play esquina
+5. ✅ **Puertos mejorados**: Outputs a la derecha, inputs a la izquierda, iconos visuales
+
+**Patrón de reutilización**:
+```tsx
+// Antes: 300+ líneas por módulo (duplicación)
+// Ahora: ModuleWrapper (reutilizable) + contenido específico
+
+<ModuleWrapper module={module} onRun={handleRun} icon={<Icon />}>
+  {contenido específico del módulo}
+</ModuleWrapper>
+```
+
+---
+
+### ✅ SESIÓN 1: Tarea A - Conectores Tipados (18/18 tareas - 100% COMPLETO)
 
 **Archivos modificados**:
 - ✅ `/types/index.ts` - Añadidos DataType enum, ConnectionError, ValidationResult
@@ -42,14 +73,16 @@
 - ✅ **Primer módulo funcional**: Local Project Analysis Agent (100% operativo)
 - ✅ **Conectores tipados**: COMPLETO (drag/drop + validación + gestión dinámica)
 - ✅ **Estados extendidos**: 7 estados (idle, running, done, error, warning, fatal_error, invalid)
-- ❌ **Toolbar flotante**: No implementada (próxima tarea)
+- ✅ **Toolbar flotante**: UI COMPLETA (falta lógica de ejecución topológica)
+- ✅ **Sistema modular base**: ModuleWrapper implementado (evita duplicación)
+- ✅ **Duplicate module**: Funcionalidad completa
 - ❌ **Sistema de guardado**: Solo en memoria (falta persistencia)
-- ❌ **Sistema de ejecución en cadena**: No implementado
+- ❌ **Sistema de ejecución en cadena**: No implementado (próxima tarea)
 
 ### Métricas del Proyecto
-- **Total de archivos TS**: 15 archivos (+1 nuevo)
-- **Líneas de código**: ~2,600 líneas TypeScript (+580)
-- **Componentes React**: 11 componentes
+- **Total de archivos TS**: 17 archivos (+2 nuevos: FloatingToolbar, ModuleWrapper)
+- **Líneas de código**: ~3,200 líneas TypeScript (+600)
+- **Componentes React**: 13 componentes
 - **Helpers**: 1 (`data-type-icons.tsx`)
 - **APIs Backend**: 1 endpoint (`/api/local-analysis`)
 - **Módulos disponibles**: 5 (solo 1 funcional)

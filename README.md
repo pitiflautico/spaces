@@ -9,8 +9,8 @@ Un canvas interactivo donde puedes conectar módulos de procesamiento para anali
 ## 📊 Estado del Proyecto
 
 **Versión actual**: v1.1 (en desarrollo)
-**Progreso global**: ~35% completado
-**Última actualización**: 2025-11-15 ✅ Tarea A completada
+**Progreso global**: ~45% completado
+**Última actualización**: 2025-11-15 ✅ Toolbar + ModuleWrapper
 
 ### 🎯 Progreso por Área
 
@@ -18,9 +18,11 @@ Un canvas interactivo donde puedes conectar módulos de procesamiento para anali
 Infraestructura Base        ████████████████████ 100%
 Módulo Local Analysis       ████████████████████ 100%
 Conectores Visuales         ████████████████████ 100%
-Conectores Tipados          ████████████████████ 100%  ✅ NUEVO
-Estados Extendidos          ███████░░░░░░░░░░░░░  45%  ✅ NUEVO
-Toolbar Flotante            ░░░░░░░░░░░░░░░░░░░░   0%
+Conectores Tipados          ████████████████████ 100%  ✅
+Estados Extendidos          ███████░░░░░░░░░░░░░  45%  ✅
+Toolbar Flotante (UI)       ████████████████░░░░  80%  ✅ NUEVO
+Sistema Modular Base        ████████████████████ 100%  ✅ NUEVO
+Duplicate Module            ████████████████████ 100%  ✅ NUEVO
 Sistema de Guardado         ░░░░░░░░░░░░░░░░░░░░   0%
 Ejecución en Cadena         ░░░░░░░░░░░░░░░░░░░░   0%
 Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░░░░   0%
@@ -37,7 +39,7 @@ Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░
 - ✅ API backend para análisis de filesystem
 - ✅ UI dark theme moderna
 
-**Nuevas (Tarea A - 2025-11-15)**:
+**Nuevas (Sesión 1 - Tarea A)**:
 - ✅ **Conectores tipados**: 6 tipos de datos (image, text, json, audio, video, mixed)
 - ✅ **Drag & drop de puertos**: Arrastrar desde OUTPUT, soltar en INPUT
 - ✅ **Validación de conexiones**: 5 validaciones automáticas
@@ -46,6 +48,15 @@ Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░
 - ✅ **Resaltar compatibles**: INPUT compatible brilla en verde
 - ✅ **Gestión dinámica**: Reset/error propagan estado `invalid`
 - ✅ **7 estados visuales**: idle, running, done, error, warning, fatal_error, invalid
+
+**Nuevas (Sesión 2 - Toolbar + Sistema Modular)**:
+- ✅ **FloatingToolbar**: Barra vertical lateral con 8 botones (Play, Restart, Undo, Redo, History, Settings, Templates)
+- ✅ **ModuleWrapper**: Componente base reutilizable para TODOS los módulos (evita duplicación de código)
+- ✅ **Duplicate Module**: Funcionalidad completa para duplicar módulos con offset
+- ✅ **Nuevo diseño de módulos**: Basado en diseño de referencia (título simple, icono, duplicate button)
+- ✅ **Play button mejorado**: Grande en esquina inferior derecha
+- ✅ **Settings button**: En esquina inferior izquierda
+- ✅ **Puertos visuales mejorados**: Iconos más grandes, mejor posicionamiento
 
 ### 🚧 En Desarrollo
 

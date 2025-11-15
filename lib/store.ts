@@ -18,6 +18,7 @@ interface SpaceStore {
   addModule: (type: ModuleType, position: Position) => void;
   updateModule: (id: string, updates: Partial<Module>) => void;
   deleteModule: (id: string) => void;
+  duplicateModule: (id: string) => void;
   setSelectedModule: (id: string | null) => void;
 
   // Connection actions
@@ -224,6 +225,44 @@ export const useSpaceStore = create<SpaceStore>((set, get) => ({
                 connections: space.connections.filter(
                   (c) => c.sourceModuleId !== id && c.targetModuleId !== id
                 ),
+                updatedAt: new Date(),
+              }
+            : space
+        ),
+      };
+    });
+  },
+
+  duplicateModule: (id: string) => {
+    set((state) => {
+      const currentSpace = state.spaces.find((s) => s.id === state.currentSpaceId);
+      if (!currentSpace) return state;
+
+      const originalModule = currentSpace.modules.find((m) => m.id === id);
+      if (!originalModule) return state;
+
+      // Create duplicate with offset position and new ID
+      const duplicatedModule: Module = {
+        ...originalModule,
+        id: `module-${Date.now()}`,
+        position: {
+          x: originalModule.position.x + 50,
+          y: originalModule.position.y + 50,
+        },
+        status: 'idle',
+        outputs: {}, // Reset outputs
+        ports: {
+          input: originalModule.ports.input.map((p) => ({ ...p, connected: false })),
+          output: originalModule.ports.output.map((p) => ({ ...p, connected: false })),
+        },
+      };
+
+      return {
+        spaces: state.spaces.map((space) =>
+          space.id === state.currentSpaceId
+            ? {
+                ...space,
+                modules: [...space.modules, duplicatedModule],
                 updatedAt: new Date(),
               }
             : space
