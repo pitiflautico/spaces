@@ -353,10 +353,24 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
             </div>
           </div>
 
+          {/* Recommended Model */}
+          <div className="px-3 py-2.5 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-pink-400 font-semibold">⭐ Recommended Model</span>
+              <span className="text-xs text-gray-500">({selectedProvider})</span>
+            </div>
+            <p className="text-sm text-white font-medium">
+              {IMAGE_AI_MODELS[selectedProvider as keyof typeof IMAGE_AI_MODELS]?.[0]?.name}
+            </p>
+            <p className="text-xs text-gray-300 mt-0.5">
+              {IMAGE_AI_MODELS[selectedProvider as keyof typeof IMAGE_AI_MODELS]?.[0]?.description}
+            </p>
+          </div>
+
           {/* Model Selector */}
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">
-              AI Model ({selectedProvider})
+              Choose AI Model (3 options)
             </label>
             <select
               value={selectedModel}
