@@ -210,11 +210,28 @@ export interface AIProviderResponse {
 
 // Flow Context (V2.0 - Global Pipeline Configuration)
 // This context is propagated through all modules in the pipeline
+// Each module can read from it and enrich it with new data
 export interface FlowContext {
+  // Language & Market (Set by Module 2 - AIE Engine)
   language?: string; // 'en', 'es', 'fr', 'de', 'pt', 'it', 'ja', 'zh', etc.
   targetMarket?: string; // 'US', 'EU', 'LATAM', 'ASIA', 'Global', etc.
-  brandTone?: string; // Inherited from AIE Engine
-  customPreferences?: Record<string, any>; // Extensible for future needs
+
+  // Brand & Design (Set by Module 2 - AIE Engine)
+  brandTone?: string; // Brand tone and voice
+  brandColors?: string[]; // Array of hex colors like ['#3B82F6', '#10B981']
+  designStyle?: string; // Design style description
+  iconStyle?: string; // Recommended icon style
+
+  // App Info (Set by Module 2 - AIE Engine)
+  category?: string; // Main app category
+  keywords?: string[]; // Key keywords for the app
+
+  // Naming (Set by Module 3 - Naming Engine)
+  appName?: string; // Final selected app name
+  slogan?: string; // App slogan/tagline
+
+  // Extensible for future modules
+  customPreferences?: Record<string, any>;
 }
 
 // Naming Engine types (V2.0 - Module 3)

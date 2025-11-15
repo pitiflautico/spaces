@@ -174,11 +174,34 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       }
 
       // Create flow context to propagate to downstream modules
+      // This includes all the data that future modules will need
       const flowContext: FlowContext = {
+        // Language & Market
         language: selectedLanguage,
-        targetMarket: appIntelligence.targetAudience, // Infer from AI analysis
+        targetMarket: appIntelligence.targetAudience,
+
+        // Brand & Design
         brandTone: appIntelligence.tone,
+        brandColors: appIntelligence.brandColorsSuggested,
+        designStyle: appIntelligence.designStyle,
+        iconStyle: appIntelligence.iconStyleRecommendation,
+
+        // App Info
+        category: appIntelligence.category,
+        keywords: appIntelligence.keywords.slice(0, 10), // Top 10 keywords
+
+        // Note: appName and slogan will be added by Module 3 (Naming Engine)
       };
+
+      // Debug: Log language propagation
+      console.log('=== AIE ENGINE - Flow Context Created ===');
+      console.log('Selected Language:', selectedLanguage);
+      console.log('Brand Colors:', flowContext.brandColors);
+      console.log('Design Style:', flowContext.designStyle);
+      console.log('Icon Style:', flowContext.iconStyle);
+      console.log('Category:', flowContext.category);
+      console.log('Full FlowContext:', flowContext);
+      console.log('=========================================');
 
       // Create outputs
       const newOutputs: AIEEngineOutputs = {
@@ -189,6 +212,11 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
                 `Timestamp: ${new Date().toISOString()}`,
         flowContext, // Propagate to downstream modules
       };
+
+      // Debug: Log final outputs
+      console.log('=== AIE ENGINE - Final Outputs ===');
+      console.log('outputs.flowContext:', newOutputs.flowContext);
+      console.log('==================================');
 
       // Update module
       updateModule(module.id, {
@@ -272,6 +300,15 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
               </option>
             ))}
           </select>
+          <div className="mt-2 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-blue-300 font-medium">Selected:</span>
+              <span className="text-lg">{LANGUAGES.find(l => l.code === selectedLanguage)?.flag || '🌐'}</span>
+              <span className="text-xs text-blue-200 font-semibold">
+                {LANGUAGES.find(l => l.code === selectedLanguage)?.name || 'English'}
+              </span>
+            </div>
+          </div>
           <p className="text-xs text-gray-500 mt-1.5">
             This language will be used for all outputs in the pipeline
           </p>

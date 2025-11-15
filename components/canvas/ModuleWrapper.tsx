@@ -217,7 +217,7 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
       onMouseDown={handleMouseDown}
     >
       {/* Wrapper con posición relativa para los puertos */}
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full" data-module-id={module.id}>
         {/* Módulo interior */}
         <div
           className={`w-full h-full bg-dark-sidebar rounded-2xl shadow-2xl transition-all ${getBorderColor()} ${
@@ -394,6 +394,7 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
             <div
               key={port.id}
               className="port absolute z-50 pointer-events-auto"
+              data-port-id={port.id}
               style={{
                 top: portTop,
                 left: '-40px', // 40px FUERA del borde izquierdo
@@ -433,6 +434,7 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
             <div
               key={port.id}
               className="port absolute z-50 pointer-events-auto"
+              data-port-id={port.id}
               style={{
                 top: portTop,
                 right: '-40px', // 40px FUERA del borde derecho

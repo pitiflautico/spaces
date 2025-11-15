@@ -691,4 +691,272 @@ Este archivo muestra:
 
 ---
 
+## 🌊 FLUJO DE DATOS ENTRE MÓDULOS
+
+### Sistema de Propagación de Contexto
+
+El sistema usa **FlowContext** para propagar información entre módulos en el pipeline.
+
+```typescript
+// types/index.ts
+interface FlowContext {
+  language?: string;        // Idioma seleccionado ('en', 'es', 'fr', etc.)
+  targetMarket?: string;    // Mercado objetivo
+  brandTone?: string;       // Tono de marca
+  customPreferences?: Record<string, any>;
+}
+```
+
+### Cómo Funciona el Flujo de Datos
+
+```
+┌─────────────────┐
+│   MÓDULO 1      │
+│ Local Project   │  outputs.projectAnalysis
+│   Analysis      ├──────────┐
+└─────────────────┘          │
+                             ▼
+                   ┌─────────────────┐
+                   │   MÓDULO 2      │
+                   │  AIE Engine     │
+                   │                 │
+                   │ inputs: {       │
+                   │  - projectData  │ ◄─── Lee del M1
+                   │  - language     │ ◄─── Selección del usuario
+                   │ }               │
+                   │                 │
+                   │ outputs: {      │
+                   │  - appIntel...  │ ───┐
+                   │  - flowContext  │ ───┼─── Propaga idioma
+                   │ }               │    │
+                   └─────────────────┘    │
+                             │            │
+                             ▼            │
+                   ┌─────────────────┐   │
+                   │   MÓDULO 3      │   │
+                   │ Naming Engine   │   │
+                   │                 │   │
+                   │ inputs: {       │   │
+                   │  - appIntell... │ ◄─┘
+                   │  - flowContext  │ ◄─── Recibe idioma
+                   │ }               │
+                   │                 │
+                   │ outputs: {      │
+                   │  - namingPkg    │
+                   │  - chosenName   │ ───┐
+                   │  - flowContext  │ ───┼─── Sigue propagando
+                   │ }               │    │
+                   └─────────────────┘    │
+                             │            │
+                             ▼            ▼
+                   ┌─────────────────┐
+                   │   MÓDULO 4+     │
+                   │ (Futuros)       │ ◄─── Reciben flowContext
+                   └─────────────────┘
+```
+
+### Implementación en Módulos
+
+#### Módulo 2 (AIE Engine) - Crea flowContext
+
+```typescript
+// AIEEngineModule.tsx:176-190
+
+// 1. Usuario selecciona idioma en la UI
+const selectedLanguage = inputs.language || 'en';
+
+// 2. Crear flowContext al finalizar
+const flowContext: FlowContext = {
+  language: selectedLanguage,
+  targetMarket: appIntelligence.targetAudience,
+  brandTone: appIntelligence.tone,
+};
+
+// 3. Incluir en outputs
+const newOutputs: AIEEngineOutputs = {
+  appIntelligence,
+  aieLog: "...",
+  flowContext,  // ← Propaga a módulos siguientes
+};
+
+updateModule(module.id, {
+  status: 'done',
+  outputs: newOutputs
+});
+```
+
+#### Módulo 3 (Naming Engine) - Consume y propaga flowContext
+
+```typescript
+// NamingEngineModule.tsx:114-119
+
+// 1. Leer flowContext del módulo anterior
+const sourceModule = space?.modules.find(m => m.id === incomingConnection.sourceModuleId);
+const flowContext = sourceModule.outputs.flowContext || { language: 'en' };
+
+// 2. Usar el idioma en el prompt de AI
+const prompt = buildNamingPrompt(appIntelligence, flowContext.language || 'en');
+
+// 3. Propagar flowContext a módulos siguientes
+const newOutputs: NamingEngineOutputs = {
+  namingPackage,
+  chosenName: defaultChosenName,
+  namingLog: "...",
+  flowContext,  // ← Continúa la propagación
+};
+```
+
+### Estados de Módulos y Conexiones
+
+#### Estados de Módulos
+
+```typescript
+type ModuleStatus = 'idle' | 'running' | 'done' | 'error' | 'warning' | 'fatal_error' | 'invalid';
+```
+
+| Estado | Color | Significado | Botón Play |
+|--------|-------|-------------|------------|
+| `idle` | Gris | Sin ejecutar | ▶️ Play |
+| `running` | Azul | Ejecutando | 🔄 Spinner |
+| `done` | Verde | Completado | ✓ Check |
+| `warning` | Amarillo | Advertencia (Ej: pendiente selección) | ⚠️ Warning |
+| `error` | Rojo | Error | 🔄 Retry |
+| `invalid` | Naranja | Datos obsoletos (upstream cambió) | ↻ Re-run |
+
+#### Flujo de Invalidación en Cascada
+
+```
+Módulo 1 (done) ──→ Módulo 2 (done) ──→ Módulo 3 (done)
+     │
+     │ Si usuario ejecuta M1 nuevamente...
+     ▼
+Módulo 1 (running) → Módulo 2 (invalid) → Módulo 3 (invalid)
+     │
+     ▼ (completa)
+Módulo 1 (done) ──→ Módulo 2 (invalid) → Módulo 3 (invalid)
+                          │
+                          │ Usuario debe ejecutar M2 para actualizar
+                          ▼
+                    Módulo 2 (done) ──→ Módulo 3 (invalid)
+                                              │
+                                              │ Y luego M3
+                                              ▼
+                                        Módulo 3 (done)
+```
+
+### Puertos y Conexiones
+
+#### Sistema de Puertos (v1.1)
+
+Los módulos tienen puertos de entrada y salida con tipos de datos específicos:
+
+```typescript
+interface ModulePort {
+  id: string;
+  type: 'input' | 'output';
+  label: string;
+  connected: boolean;
+  dataType?: DataType;           // Para output ports
+  acceptedTypes?: DataType[];    // Para input ports
+}
+
+enum DataType {
+  IMAGE = 'image',
+  TEXT = 'text',
+  JSON = 'json',
+  AUDIO = 'audio',
+  VIDEO = 'video',
+  MIXED = 'mixed'
+}
+```
+
+#### Ejemplo: Módulo 3 (Naming Engine)
+
+```typescript
+// lib/store.ts:141-151
+
+'naming-engine': {
+  name: 'Naming Engine',
+  size: { width: 400, height: 350 },
+  ports: {
+    input: [
+      {
+        id: 'in-1',
+        type: 'input',
+        label: 'App Intelligence',
+        connected: false,
+        acceptedTypes: [DataType.JSON]
+      }
+    ],
+    output: [
+      {
+        id: 'out-1',
+        type: 'output',
+        label: 'Naming Package',      // Todas las sugerencias
+        connected: false,
+        dataType: DataType.JSON
+      },
+      {
+        id: 'out-2',
+        type: 'output',
+        label: 'Chosen Name',          // Nombre final seleccionado
+        connected: false,
+        dataType: DataType.JSON
+      }
+    ],
+  },
+}
+```
+
+**¿Por qué 2 salidas en el Módulo 3?**
+
+- **out-1 (Naming Package)**: Contiene TODAS las sugerencias (recomendado + alternativas + slogan + rationale, etc.)
+  - Útil para documentación, análisis, o módulos que necesiten todas las opciones
+
+- **out-2 (Chosen Name)**: Solo el nombre FINAL que el usuario seleccionó
+  - Útil para módulos que solo necesitan el nombre definitivo (ej: generador de iconos, branding)
+
+### Conexión Visual y Datos
+
+**IMPORTANTE**: Las conexiones visuales (líneas SVG) se dibujan desde el **centro del puerto de salida** hasta el **centro del puerto de entrada**, NO desde las bolas de los puertos.
+
+```typescript
+// ConnectionLines.tsx - Cálculo de posiciones
+
+const sourceModule = modules.find(m => m.id === conn.sourceModuleId);
+const targetModule = modules.find(m => m.id === conn.targetModuleId);
+
+// Calcular posición del puerto (no la bola visual)
+const sourcePort = sourceModule.ports.output.find(p => p.id === conn.sourcePortId);
+const targetPort = targetModule.ports.input.find(p => p.id === conn.targetPortId);
+
+// Las líneas conectan puertos, no las bolas decorativas
+```
+
+### Validación de Conexiones
+
+```typescript
+// lib/store.ts - validateConnection()
+
+enum ConnectionErrorType {
+  MODULE_NOT_DONE = 'CONNECTION_ERROR_01',      // Módulo fuente no ejecutado
+  EMPTY_OUTPUT = 'CONNECTION_ERROR_02',         // Módulo fuente sin datos
+  TYPE_MISMATCH = 'CONNECTION_ERROR_03',        // Tipos incompatibles
+  CIRCULAR_DEPENDENCY = 'CONNECTION_ERROR_04',  // Ciclo detectado
+  MODULE_IN_ERROR = 'CONNECTION_ERROR_05'       // Módulo en error
+}
+```
+
+### Checklist: Añadir Nuevo Campo a FlowContext
+
+Si necesitas propagar nueva información entre módulos:
+
+- [ ] Añadir campo opcional a `FlowContext` en `types/index.ts`
+- [ ] Actualizar módulo que **crea** el campo (ej: M2)
+- [ ] Actualizar módulos que **consumen** el campo (ej: M3, M4)
+- [ ] Actualizar tipos de outputs de módulos afectados
+- [ ] Documentar el nuevo campo en este archivo
+
+---
+
 **REGLA DE ORO**: Cuando tengas duda, busca primero. El 90% del tiempo ya existe algo que puedes reutilizar.

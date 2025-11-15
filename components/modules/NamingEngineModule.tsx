@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import type { Module, NamingEngineOutputs, NamingPackage, ChosenName, AIConfiguration } from '@/types';
 import { AIProvider } from '@/types';
-import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon, LightBulbIcon, LanguageIcon } from '@heroicons/react/24/outline';
 import aiProvider from '@/lib/ai-provider';
 import '@/lib/adapters'; // Initialize adapters
 import NamingPanel from './NamingPanel';
@@ -43,11 +43,25 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
   const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedNameForUI, setSelectedNameForUI] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const outputs = module.outputs as NamingEngineOutputs;
   const space = getCurrentSpace();
+
+  // Initialize selectedNameForUI with current chosen name (if exists)
+  const [selectedNameForUI, setSelectedNameForUI] = useState<string | null>(
+    outputs?.chosenName?.final_name || null
+  );
+
+  // Get detected language from flowContext
+  const detectedLanguage = outputs?.flowContext?.language || null;
+
+  // Update selectedNameForUI when outputs change
+  React.useEffect(() => {
+    if (outputs?.chosenName?.final_name && !selectedNameForUI) {
+      setSelectedNameForUI(outputs.chosenName.final_name);
+    }
+  }, [outputs?.chosenName?.final_name, selectedNameForUI]);
 
   // Get module inputs (will store AI config here)
   const inputs = (module.inputs || {}) as any;
@@ -115,8 +129,19 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
       const appIntelligence = sourceModule.outputs.appIntelligence;
       const flowContext = sourceModule.outputs.flowContext || { language: 'en' }; // Default to English
 
+      // Debug: Log language detection
+      console.log('=== NAMING ENGINE - Language Detection ===');
+      console.log('Source Module outputs.flowContext:', sourceModule.outputs.flowContext);
+      console.log('Detected language:', flowContext.language);
+      console.log('==========================================');
+
       // Build prompt for AI (with language from flow context)
       const prompt = buildNamingPrompt(appIntelligence, flowContext.language || 'en');
+
+      // Debug: Log prompt excerpt
+      console.log('=== NAMING ENGINE - Prompt Preview ===');
+      console.log(prompt.substring(0, 500));
+      console.log('======================================');
 
       // Get API key from space configuration
       const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
@@ -151,23 +176,51 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         }
       }
 
-      // Create outputs (without chosen name yet) + propagate flow context
+      // Auto-select recommended name as default chosen name
+      const defaultChosenName: ChosenName = {
+        final_name: namingPackage.recommended_name,
+        chosen_at: new Date().toISOString(),
+        source_module: 'NamingEngine',
+        engine_version: '2.0.0'
+      };
+
+      // Enrich flow context with naming data
+      const enrichedFlowContext: FlowContext = {
+        ...flowContext, // Keep all data from Module 2
+        appName: defaultChosenName.final_name, // Add final app name
+        slogan: namingPackage.slogan, // Add slogan
+      };
+
+      // Debug: Log flow context enrichment
+      console.log('=== NAMING ENGINE - Flow Context Enriched ===');
+      console.log('App Name added:', enrichedFlowContext.appName);
+      console.log('Slogan added:', enrichedFlowContext.slogan);
+      console.log('Brand Colors (from M2):', enrichedFlowContext.brandColors);
+      console.log('Full enriched FlowContext:', enrichedFlowContext);
+      console.log('=============================================');
+
+      // Create outputs with auto-selected recommended name + enriched flow context
       const newOutputs: NamingEngineOutputs = {
         namingPackage,
+        chosenName: defaultChosenName, // Auto-select recommended name
         namingLog: `Naming package generated using ${response.providerUsed} (${response.model})\n` +
                    `Tokens used: ${response.tokensUsed || 'N/A'}\n` +
                    `Language: ${flowContext.language}\n` +
+                   `Default name selected: ${defaultChosenName.final_name}\n` +
                    `Timestamp: ${new Date().toISOString()}`,
-        flowContext, // Propagate to downstream modules
+        flowContext: enrichedFlowContext, // Propagate enriched context to downstream modules
       };
 
-      // Update module - status is 'warning' to indicate pending selection
+      // Update module - status is 'done' (with auto-selected recommended name)
       updateModule(module.id, {
-        status: 'warning', // Yellow state = pending selection
+        status: 'done', // Done with auto-selected recommended name
         outputs: newOutputs
       });
 
-      addLog('success', `Naming package generated. Please select a final name.`, module.id);
+      // Auto-select recommended name in UI
+      setSelectedNameForUI(namingPackage.recommended_name);
+
+      addLog('success', `Naming package generated. Recommended name: "${namingPackage.recommended_name}"`, module.id);
 
     } catch (err: any) {
       const errorMsg = err.message || 'Unknown error occurred';
@@ -186,7 +239,7 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
   const handleSetFinalName = () => {
     if (!selectedNameForUI || !outputs?.namingPackage) return;
 
-    // Create chosen name object
+    // Update chosen name object
     const chosenName: ChosenName = {
       final_name: selectedNameForUI,
       chosen_at: new Date().toISOString(),
@@ -194,19 +247,27 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
       engine_version: '2.0.0'
     };
 
-    // Update outputs with chosen name
-    const updatedOutputs: NamingEngineOutputs = {
-      ...outputs,
-      chosenName
+    // Update flow context with new app name
+    const updatedFlowContext: FlowContext = {
+      ...outputs.flowContext,
+      appName: selectedNameForUI, // Update app name
     };
 
-    // Update module to 'done' state
+    // Update outputs with new chosen name and updated flow context
+    const updatedOutputs: NamingEngineOutputs = {
+      ...outputs,
+      chosenName,
+      flowContext: updatedFlowContext, // Update flow context with new name
+      namingLog: outputs.namingLog?.replace(/Default name selected:.*\n/, `Final name updated: ${selectedNameForUI}\n`) || ''
+    };
+
+    // Update module (stays in 'done' state)
     updateModule(module.id, {
       status: 'done',
       outputs: updatedOutputs
     });
 
-    addLog('success', `Final name selected: "${selectedNameForUI}"`, module.id);
+    addLog('success', `Final name updated to: "${selectedNameForUI}"`, module.id);
   };
 
   // Listen for external run trigger from ModuleBlock Play button
@@ -259,6 +320,36 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         </p>
       </div>
 
+      {/* Language Indicator - Show detected language from upstream */}
+      {detectedLanguage ? (
+        <div className={`px-3 py-2 ${detectedLanguage === 'en' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-blue-500/10 border-blue-500/30'} border rounded-lg`}>
+          <div className="flex items-center gap-2">
+            <LanguageIcon className={`w-4 h-4 ${detectedLanguage === 'en' ? 'text-yellow-400' : 'text-blue-400'}`} />
+            <span className={`text-xs ${detectedLanguage === 'en' ? 'text-yellow-300' : 'text-blue-300'} font-medium`}>Target Language:</span>
+            <span className="text-lg">{getLanguageFlag(detectedLanguage)}</span>
+            <span className={`text-xs ${detectedLanguage === 'en' ? 'text-yellow-200' : 'text-blue-200'} font-semibold`}>{getLanguageName(detectedLanguage)}</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            Names and descriptions will be generated in this language
+          </p>
+          {detectedLanguage === 'en' && (
+            <div className="mt-2 px-2 py-1 bg-yellow-500/20 border border-yellow-500/40 rounded text-xs text-yellow-200">
+              ⚠️ If you changed the language in Module 2, you need to <strong>re-run Module 2</strong> first!
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <div className="flex items-center gap-2">
+            <ExclamationTriangleIcon className="w-4 h-4 text-yellow-400" />
+            <span className="text-xs text-yellow-300 font-medium">No language detected</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            Please run AIE Engine (Module 2) first to set the language
+          </p>
+        </div>
+      )}
+
       {/* AI Model Selector */}
       <div className="space-y-3">
         <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
@@ -306,12 +397,14 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         </div>
       )}
 
-      {/* Pending Selection Warning */}
-      {module.status === 'warning' && outputs?.namingPackage && !outputs?.chosenName && (
-        <div className="px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+      {/* Info: Recommended name auto-selected */}
+      {module.status === 'done' && outputs?.chosenName && outputs?.namingPackage && (
+        <div className="px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
           <div className="flex items-center gap-2">
-            <ExclamationTriangleIcon className="w-4 h-4 text-yellow-400" />
-            <span className="text-xs text-yellow-300 font-medium">⚠ Please choose a final name to continue.</span>
+            <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <span className="text-xs text-blue-300 font-medium">Current name: <strong>{outputs.chosenName.final_name}</strong> - You can change it below.</span>
           </div>
         </div>
       )}
@@ -332,56 +425,59 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
             <p className="text-sm text-gray-300 mt-1 italic">"{outputs.namingPackage.slogan}"</p>
           </div>
 
-          {/* Final Name Selection UI - Only show if no name chosen yet */}
-          {!outputs.chosenName && (
-            <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
-              <span className="text-sm text-gray-400 font-semibold mb-3 block">FINAL NAME SELECTION</span>
+          {/* Name Selection UI - Always visible, allows changing selection */}
+          <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+            <span className="text-sm text-gray-400 font-semibold mb-3 block">
+              {outputs.chosenName ? 'CHANGE NAME (Optional)' : 'SELECT NAME'}
+            </span>
 
-              <div className="space-y-2">
-                {/* Recommended */}
-                <label className="flex items-center gap-3 p-2 bg-[#1A1A1A] border border-[#3A3A3A] rounded cursor-pointer hover:border-orange-500/50 transition-colors">
+            <div className="space-y-2">
+              {/* Recommended */}
+              <label className="flex items-center gap-3 p-2 bg-[#1A1A1A] border border-[#3A3A3A] rounded cursor-pointer hover:border-orange-500/50 transition-colors">
+                <input
+                  type="radio"
+                  name="finalName"
+                  value={outputs.namingPackage.recommended_name}
+                  checked={selectedNameForUI === outputs.namingPackage.recommended_name}
+                  onChange={(e) => handleNameSelection(e.target.value)}
+                  className="w-4 h-4 text-orange-500"
+                />
+                <span className="text-sm text-white font-medium">{outputs.namingPackage.recommended_name}</span>
+                <span className="text-xs text-orange-400 ml-auto">★ Recommended</span>
+              </label>
+
+              {/* Alternatives */}
+              {outputs.namingPackage.alternatives.map((alt, i) => (
+                <label key={i} className="flex items-center gap-3 p-2 bg-[#1A1A1A] border border-[#3A3A3A] rounded cursor-pointer hover:border-orange-500/50 transition-colors">
                   <input
                     type="radio"
                     name="finalName"
-                    value={outputs.namingPackage.recommended_name}
-                    checked={selectedNameForUI === outputs.namingPackage.recommended_name}
+                    value={alt}
+                    checked={selectedNameForUI === alt}
                     onChange={(e) => handleNameSelection(e.target.value)}
                     className="w-4 h-4 text-orange-500"
                   />
-                  <span className="text-sm text-white font-medium">{outputs.namingPackage.recommended_name}</span>
-                  <span className="text-xs text-orange-400 ml-auto">★ Recommended</span>
+                  <span className="text-sm text-white">{alt}</span>
                 </label>
+              ))}
+            </div>
 
-                {/* Alternatives */}
-                {outputs.namingPackage.alternatives.map((alt, i) => (
-                  <label key={i} className="flex items-center gap-3 p-2 bg-[#1A1A1A] border border-[#3A3A3A] rounded cursor-pointer hover:border-orange-500/50 transition-colors">
-                    <input
-                      type="radio"
-                      name="finalName"
-                      value={alt}
-                      checked={selectedNameForUI === alt}
-                      onChange={(e) => handleNameSelection(e.target.value)}
-                      className="w-4 h-4 text-orange-500"
-                    />
-                    <span className="text-sm text-white">{alt}</span>
-                  </label>
-                ))}
-              </div>
-
-              {/* Set Final Name Button */}
+            {/* Update Name Button - only show if selection is different from current */}
+            {selectedNameForUI && selectedNameForUI !== outputs.chosenName?.final_name && (
               <button
                 onClick={handleSetFinalName}
-                disabled={!selectedNameForUI}
-                className={`w-full mt-4 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                  selectedNameForUI
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                }`}
+                className="w-full mt-4 px-4 py-2 rounded-lg font-medium text-sm bg-orange-500 hover:bg-orange-600 text-white transition-colors"
               >
-                🔵 Set as Final Name
+                ✓ Update to "{selectedNameForUI}"
               </button>
-            </div>
-          )}
+            )}
+
+            {selectedNameForUI === outputs.chosenName?.final_name && (
+              <div className="mt-4 px-4 py-2 text-center text-xs text-green-400">
+                ✓ This is your current selection
+              </div>
+            )}
+          </div>
 
           {/* Final Name Display (when chosen) */}
           {outputs.chosenName && (
@@ -406,6 +502,58 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
               <p className="text-sm text-white mt-1">{outputs.namingPackage.tone}</p>
             </div>
           </div>
+
+          {/* Flow Context Preview - Data ready for Module 4+ */}
+          {outputs.flowContext && (
+            <div className="px-4 py-3 bg-gradient-to-br from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm text-green-400 font-semibold">Data Ready for Next Modules</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {outputs.flowContext.appName && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">App:</span>
+                    <span className="text-white font-medium">{outputs.flowContext.appName}</span>
+                  </div>
+                )}
+                {outputs.flowContext.brandColors && outputs.flowContext.brandColors.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Colors:</span>
+                    <div className="flex gap-1">
+                      {outputs.flowContext.brandColors.slice(0, 3).map((color, i) => (
+                        <div
+                          key={i}
+                          className="w-4 h-4 rounded border border-white/20"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {outputs.flowContext.category && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Category:</span>
+                    <span className="text-white">{outputs.flowContext.category}</span>
+                  </div>
+                )}
+                {outputs.flowContext.designStyle && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Style:</span>
+                    <span className="text-white truncate" title={outputs.flowContext.designStyle}>
+                      {outputs.flowContext.designStyle.substring(0, 20)}...
+                    </span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2 italic">
+                ℹ️ This data will be available to Icon Generator and future modules
+              </p>
+            </div>
+          )}
 
           {/* Open Naming Panel Button */}
           <button
@@ -445,12 +593,49 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
  * Build optimized prompt for naming generation
  */
 function buildNamingPrompt(appIntelligence: any, language: string = 'en'): string {
-  // Language-specific instructions
+  // Get market and cultural context based on language
+  const marketContext = getMarketContext(language);
+
+  // Language-specific instructions - EXTREMELY ENFORCED
   const languageInstructions = language === 'en'
     ? ''
-    : `\n\nIMPORTANT: Generate ALL text outputs (names, slogans, descriptions, rationale) in ${getLanguageName(language)}. The JSON structure remains the same, but all string values must be in ${getLanguageName(language)}.`;
+    : `
 
-  return `You are an expert brand naming specialist. Generate creative, memorable names for an app based on this intelligence:
+═══════════════════════════════════════════════════════════
+🚨 CRITICAL LANGUAGE REQUIREMENT - READ CAREFULLY 🚨
+═══════════════════════════════════════════════════════════
+
+YOU MUST RESPOND ENTIRELY IN ${getLanguageName(language).toUpperCase()}.
+
+This is NOT optional. This is MANDATORY.
+
+Required language for ALL text fields: ${getLanguageName(language).toUpperCase()}
+
+Specifically, these fields MUST be in ${getLanguageName(language)}:
+✓ slogan - MUST be in ${getLanguageName(language)}
+✓ creative_rationale - MUST be in ${getLanguageName(language)}
+✓ style - MUST be in ${getLanguageName(language)}
+✓ tone - MUST be in ${getLanguageName(language)}
+✓ short_descriptions - MUST be in ${getLanguageName(language)}
+✓ naming_keywords - MUST be in ${getLanguageName(language)}
+
+The brand name itself (recommended_name, alternatives) can be in English
+if it's a brandable English word, BUT all descriptions, rationale,
+and explanatory text MUST be in ${getLanguageName(language)}.
+
+If you respond in English when ${getLanguageName(language)} is required,
+the output will be REJECTED.
+
+═══════════════════════════════════════════════════════════
+`;
+
+  const languageHeader = `LANGUAGE: ${getLanguageName(language).toUpperCase()}
+TARGET MARKET: ${marketContext.market}
+CULTURAL CONTEXT: ${marketContext.culture}${languageInstructions}`;
+
+  return `${languageHeader}
+
+You are an expert brand naming specialist for the ${marketContext.market} market. Generate creative, memorable names for an app based on this intelligence:
 
 APP SUMMARY:
 ${appIntelligence.summary}
@@ -489,11 +674,28 @@ Generate a naming package with the following structure:
 }
 
 Important guidelines:
-- Names should be 1-2 words, easy to pronounce and remember
-- Consider domain availability (.com, .app, .io)
-- Match the tone and style of the app
-- Be creative but professional
-- Consider international audiences (avoid problematic meanings)${languageInstructions}
+- Names should be 1-2 words, easy to pronounce and remember in ${marketContext.market}
+- Consider domain availability (.com, .app, .io) and ${marketContext.domainPreference}
+- Match the tone and style of the app for ${marketContext.market} audiences
+- ${marketContext.namingGuidelines}
+- Avoid cultural sensitivities or problematic meanings in ${marketContext.culture}
+- Names should resonate with ${marketContext.market} users
+
+${language !== 'en' ? `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚨 FINAL REMINDER: OUTPUT LANGUAGE = ${getLanguageName(language).toUpperCase()} 🚨
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Write ALL text fields in ${getLanguageName(language)}:
+- slogan → in ${getLanguageName(language)}
+- creative_rationale → in ${getLanguageName(language)}
+- style → in ${getLanguageName(language)}
+- tone → in ${getLanguageName(language)}
+- short_descriptions → in ${getLanguageName(language)}
+- naming_keywords → in ${getLanguageName(language)}
+
+DO NOT write these in English. Use ${getLanguageName(language)}.
+` : ''}
 
 Respond ONLY with the JSON object, no additional text.`;
 }
@@ -513,6 +715,91 @@ function getLanguageName(code: string): string {
     zh: 'Chinese',
   };
   return languageMap[code] || 'English';
+}
+
+/**
+ * Get language flag emoji from language code
+ */
+function getLanguageFlag(code: string): string {
+  const flagMap: Record<string, string> = {
+    en: '🇺🇸',
+    es: '🇪🇸',
+    fr: '🇫🇷',
+    de: '🇩🇪',
+    pt: '🇵🇹',
+    it: '🇮🇹',
+    ja: '🇯🇵',
+    zh: '🇨🇳',
+  };
+  return flagMap[code] || '🌐';
+}
+
+/**
+ * Get market context based on language code
+ */
+function getMarketContext(code: string): {
+  market: string;
+  culture: string;
+  domainPreference: string;
+  namingGuidelines: string;
+} {
+  const marketMap: Record<string, {
+    market: string;
+    culture: string;
+    domainPreference: string;
+    namingGuidelines: string;
+  }> = {
+    en: {
+      market: 'United States / English-speaking countries',
+      culture: 'American/Anglo-Saxon culture - values innovation, simplicity, and tech-forward branding',
+      domainPreference: 'prefer .com, .io, or .app extensions',
+      namingGuidelines: 'Be creative and modern - tech startups often use invented words, portmanteaus, or shortened names (e.g., Stripe, Figma, Notion)',
+    },
+    es: {
+      market: 'Spain / Spanish-speaking countries (LATAM)',
+      culture: 'Spanish/Latin American culture - values warmth, personal connection, and clear communication',
+      domainPreference: 'prefer .com or .es extensions',
+      namingGuidelines: 'Names should be pronounceable in Spanish and avoid anglicisms that sound awkward - consider using Spanish words or international terms that work well in Spanish',
+    },
+    fr: {
+      market: 'France / French-speaking countries',
+      culture: 'French culture - values elegance, sophistication, and linguistic purity',
+      domainPreference: 'prefer .com or .fr extensions',
+      namingGuidelines: 'French audiences appreciate names that respect the language - avoid anglicisms unless they are widely adopted tech terms',
+    },
+    de: {
+      market: 'Germany / German-speaking countries',
+      culture: 'German culture - values precision, efficiency, and quality',
+      domainPreference: 'prefer .com or .de extensions',
+      namingGuidelines: 'German names often favor compound words or descriptive names - clarity and functionality are key',
+    },
+    pt: {
+      market: 'Brazil / Portuguese-speaking countries',
+      culture: 'Brazilian/Portuguese culture - values creativity, energy, and accessibility',
+      domainPreference: 'prefer .com or .com.br extensions',
+      namingGuidelines: 'Names should be easy to pronounce in Portuguese and feel approachable - avoid complex English terms',
+    },
+    it: {
+      market: 'Italy / Italian-speaking regions',
+      culture: 'Italian culture - values style, creativity, and craftsmanship',
+      domainPreference: 'prefer .com or .it extensions',
+      namingGuidelines: 'Italian audiences appreciate melodic, aesthetically pleasing names - consider Italian words or international terms that sound good in Italian',
+    },
+    ja: {
+      market: 'Japan / Japanese-speaking regions',
+      culture: 'Japanese culture - values harmony, precision, and attention to detail',
+      domainPreference: 'prefer .com or .jp extensions',
+      namingGuidelines: 'Names should be easy to write in katakana if using foreign words, or use simple kanji/hiragana combinations - avoid complex foreign pronunciations',
+    },
+    zh: {
+      market: 'China / Chinese-speaking regions',
+      culture: 'Chinese culture - values auspiciousness, harmony, and modernity',
+      domainPreference: 'prefer .com or .cn extensions',
+      namingGuidelines: 'Consider Chinese phonetics and meanings - foreign brand names often need Chinese adaptations that sound similar and have positive meanings',
+    },
+  };
+
+  return marketMap[code] || marketMap['en'];
 }
 
 /**
