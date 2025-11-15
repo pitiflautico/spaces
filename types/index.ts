@@ -235,17 +235,48 @@ export interface FlowContext {
   customPreferences?: Record<string, any>;
 }
 
-// Naming Engine types (V2.0 - Module 3)
+// Naming Engine types (V3.0 - Module 3 with Complete Branding)
+export interface BrandingIdentity {
+  // Visual Style
+  design_style: string; // e.g., "modern minimalist", "vintage elegant", "bold futuristic"
+  color_palette: string[]; // Array of hex colors (3-5 colors)
+  color_meanings: string[]; // What each color represents
+
+  // Typography
+  primary_font_family: string; // Main font recommendation
+  secondary_font_family: string; // Complementary font
+  font_style: string; // e.g., "sans-serif modern", "serif classic"
+
+  // Brand Personality
+  brand_tone: string; // e.g., "professional", "playful", "elegant", "bold"
+  brand_values: string[]; // Core values (3-5)
+  target_emotion: string; // Emotion to evoke
+
+  // Visual Elements
+  shape_style: string; // e.g., "rounded soft", "sharp angular", "geometric"
+  icon_style: string; // e.g., "minimalist line", "detailed illustration", "abstract"
+
+  // Concept
+  branding_concept: string; // Overall concept explanation
+  visual_direction: string; // How the brand should look/feel
+}
+
 export interface NamingPackage {
+  // Naming
   recommended_name: string;
   alternatives: string[];
-  style: string;
   slogan: string;
-  creative_rationale: string;
   naming_keywords: string[];
-  tone: string;
   short_descriptions: string[];
   domain_suggestions: string[];
+
+  // Complete Branding Identity
+  branding: BrandingIdentity;
+
+  // Metadata
+  creative_rationale: string;
+  style: string; // Deprecated - use branding.design_style
+  tone: string; // Deprecated - use branding.brand_tone
 }
 
 export interface ChosenName {

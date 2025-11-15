@@ -184,6 +184,116 @@ export default function NamingPanel({ isOpen, onClose, namingPackage, chosenName
                 </div>
               </div>
 
+              {/* BRANDING IDENTITY - NEW SECTION */}
+              {namingPackage.branding && (
+                <div className="space-y-4 pt-6 border-t-2 border-pink-500/30">
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>🎨</span>
+                    Complete Branding Identity
+                  </h2>
+
+                  {/* Visual Style */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-pink-400">Visual Style</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Design Style</p>
+                        <p className="text-white font-medium">{namingPackage.branding.design_style}</p>
+                      </div>
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Shape Style</p>
+                        <p className="text-white font-medium">{namingPackage.branding.shape_style}</p>
+                      </div>
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Icon Style</p>
+                        <p className="text-white font-medium">{namingPackage.branding.icon_style}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Color Palette */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-pink-400">Color Palette</h3>
+                    <div className="px-4 py-4 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                      <div className="flex gap-3 mb-4">
+                        {namingPackage.branding.color_palette.map((color, i) => (
+                          <div key={i} className="flex-1">
+                            <div
+                              className="w-full h-20 rounded-lg border-2 border-white/20 shadow-lg"
+                              style={{ backgroundColor: color }}
+                            />
+                            <p className="text-xs text-gray-300 mt-2 text-center font-mono">{color}</p>
+                            {namingPackage.branding.color_meanings?.[i] && (
+                              <p className="text-xs text-gray-400 mt-1 text-center italic">
+                                {namingPackage.branding.color_meanings[i]}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Typography */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-pink-400">Typography</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Primary Font</p>
+                        <p className="text-white font-medium text-lg">{namingPackage.branding.primary_font_family}</p>
+                      </div>
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Secondary Font</p>
+                        <p className="text-white font-medium text-lg">{namingPackage.branding.secondary_font_family}</p>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-1">Font Style</p>
+                      <p className="text-white">{namingPackage.branding.font_style}</p>
+                    </div>
+                  </div>
+
+                  {/* Brand Personality */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-pink-400">Brand Personality</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Brand Tone</p>
+                        <p className="text-white font-medium">{namingPackage.branding.brand_tone}</p>
+                      </div>
+                      <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400 mb-1">Target Emotion</p>
+                        <p className="text-white font-medium">{namingPackage.branding.target_emotion}</p>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Brand Values</p>
+                      <div className="flex flex-wrap gap-2">
+                        {namingPackage.branding.brand_values.map((value, i) => (
+                          <span
+                            key={i}
+                            className="px-3 py-1 bg-pink-500/20 text-pink-300 text-sm rounded-full border border-pink-500/30 font-medium"
+                          >
+                            {value}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Branding Concept & Visual Direction */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-pink-400">Concept & Direction</h3>
+                    <div className="px-6 py-4 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-xl">
+                      <p className="text-xs text-gray-400 mb-2">Branding Concept</p>
+                      <p className="text-gray-200 leading-relaxed mb-4">{namingPackage.branding.branding_concept}</p>
+                      <p className="text-xs text-gray-400 mb-2">Visual Direction</p>
+                      <p className="text-gray-200 leading-relaxed">{namingPackage.branding.visual_direction}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Naming Keywords */}
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold text-white">Naming Keywords</h3>

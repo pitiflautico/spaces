@@ -618,6 +618,10 @@ Specifically, these fields MUST be in ${getLanguageName(language)}:
 ✓ tone - MUST be in ${getLanguageName(language)}
 ✓ short_descriptions - MUST be in ${getLanguageName(language)}
 ✓ naming_keywords - MUST be in ${getLanguageName(language)}
+✓ branding.branding_concept - MUST be in ${getLanguageName(language)}
+✓ branding.visual_direction - MUST be in ${getLanguageName(language)}
+✓ branding.color_meanings - MUST be in ${getLanguageName(language)}
+✓ branding.brand_values - MUST be in ${getLanguageName(language)}
 
 The brand name itself (recommended_name, alternatives) can be in English
 if it's a brandable English word, BUT all descriptions, rationale,
@@ -652,16 +656,14 @@ KEYWORDS: ${appIntelligence.keywords.slice(0, 10).join(', ')}
 
 COMPETITIVE ANGLE: ${appIntelligence.competitiveAngle}
 
-Generate a naming package with the following structure:
+Generate a COMPLETE BRANDING PACKAGE with naming AND visual identity:
 
 {
   "recommended_name": "Best name suggestion (short, memorable, brandable)",
   "alternatives": ["Alternative 1", "Alternative 2", "Alternative 3"],
-  "style": "Description of naming style (e.g., Modern / Short / Tech-friendly)",
   "slogan": "A catchy slogan or tagline",
   "creative_rationale": "Explanation of why the recommended name works",
   "naming_keywords": ["keyword1", "keyword2", "keyword3"],
-  "tone": "Tone of the names (e.g., friendly / energetic / professional)",
   "short_descriptions": [
     "Short description option 1",
     "Short description option 2"
@@ -670,16 +672,50 @@ Generate a naming package with the following structure:
     "domain1.com",
     "domain2.app",
     "domain3.io"
-  ]
+  ],
+  "style": "Overall design style",
+  "tone": "Brand tone",
+
+  "branding": {
+    "design_style": "Complete style description (e.g., modern minimalist, vintage elegant, bold futuristic)",
+    "color_palette": ["#HEX1", "#HEX2", "#HEX3", "#HEX4"],
+    "color_meanings": ["What color 1 represents", "What color 2 represents", "..."],
+
+    "primary_font_family": "Main font recommendation (e.g., Inter, Roboto, Playfair Display)",
+    "secondary_font_family": "Complementary font (e.g., Open Sans, Montserrat)",
+    "font_style": "Typography style description (e.g., sans-serif modern, serif classic)",
+
+    "brand_tone": "Overall personality (e.g., professional, playful, elegant, bold)",
+    "brand_values": ["Core value 1", "Core value 2", "Core value 3"],
+    "target_emotion": "Main emotion to evoke (e.g., trust, excitement, calm)",
+
+    "shape_style": "Geometric style (e.g., rounded soft, sharp angular, geometric)",
+    "icon_style": "Icon approach (e.g., minimalist line, detailed illustration, abstract)",
+
+    "branding_concept": "Overall concept explanation - what this brand represents visually",
+    "visual_direction": "How the brand should look and feel - concrete visual guidance"
+  }
 }
 
 Important guidelines:
+
+NAMING:
 - Names should be 1-2 words, easy to pronounce and remember in ${marketContext.market}
 - Consider domain availability (.com, .app, .io) and ${marketContext.domainPreference}
 - Match the tone and style of the app for ${marketContext.market} audiences
 - ${marketContext.namingGuidelines}
 - Avoid cultural sensitivities or problematic meanings in ${marketContext.culture}
-- Names should resonate with ${marketContext.market} users
+
+BRANDING - CRITICAL FOR LOGO GENERATION:
+- color_palette: Select 3-4 HEX colors that work harmoniously and match the app's purpose
+- design_style: Be specific (e.g., "modern minimalist with rounded edges" not just "modern")
+- primary_font_family: Choose real font names that exist (Inter, Roboto, Playfair, Montserrat, etc.)
+- shape_style: Guide the geometric style of logos/icons (rounded, sharp, geometric, organic)
+- icon_style: Describe the visual style clearly for logo generation
+- branding_concept: Explain the WHY behind the visual choices
+- visual_direction: Give concrete guidance on how logos/icons should look
+
+The branding information will be used by AI to generate logos, so be SPECIFIC and DETAILED.
 
 ${language !== 'en' ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -693,6 +729,12 @@ Write ALL text fields in ${getLanguageName(language)}:
 - tone → in ${getLanguageName(language)}
 - short_descriptions → in ${getLanguageName(language)}
 - naming_keywords → in ${getLanguageName(language)}
+- branding.branding_concept → in ${getLanguageName(language)}
+- branding.visual_direction → in ${getLanguageName(language)}
+- branding.color_meanings → in ${getLanguageName(language)}
+- branding.brand_values → in ${getLanguageName(language)}
+
+Font names and technical terms (like "Inter", "Roboto", color hex codes) stay in English.
 
 DO NOT write these in English. Use ${getLanguageName(language)}.
 ` : ''}

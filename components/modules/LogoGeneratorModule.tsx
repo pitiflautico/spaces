@@ -59,16 +59,27 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       const aieEngineModule = space?.modules.find(m => m.type === 'reader-engine');
       const appIntelligence = aieEngineModule?.outputs.appIntelligence;
 
-      // Build logo brief
+      // Build logo brief from branding identity (V3.0 - Complete Branding)
+      const branding = namingPackage?.branding;
+
       const logoBrief: LogoBrief = {
         brand_name: chosenName.final_name,
         final_name: chosenName.final_name,
         tagline: namingPackage?.slogan,
         category: appIntelligence?.category || 'General',
-        color_palette: appIntelligence?.brandColorsSuggested || ['#1A3B5D', '#FFC700'],
-        style: namingPackage?.style || appIntelligence?.designStyle || 'modern minimalistic',
+
+        // Use branding colors if available, fallback to AIE suggestions
+        color_palette: branding?.color_palette || appIntelligence?.brandColorsSuggested || ['#1A3B5D', '#FFC700'],
+
+        // Use complete branding style
+        style: branding?.design_style || namingPackage?.style || appIntelligence?.designStyle || 'modern minimalistic',
+
         brand_keywords: namingPackage?.naming_keywords || appIntelligence?.keywords || [],
-        num_variants: numVariants, // Use selected number of variants
+
+        // Add shape preferences from branding
+        shape_preferences: branding?.shape_style,
+
+        num_variants: numVariants,
       };
 
       // TODO: Call AI provider for logo generation
@@ -94,7 +105,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
           colors_used: logoBrief.color_palette,
           strengths: `Creative interpretation of ${logoBrief.brand_name}`,
           weaknesses: 'Placeholder image - needs AI generation',
-          ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en'),
+          ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en', branding),
         };
       });
 
@@ -313,28 +324,79 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 }
 
 /**
- * Build logo generation prompt
+ * Build logo generation prompt with complete branding context (V3.0)
  */
-function buildLogoPrompt(brief: LogoBrief, variantNumber: number, language: string = 'en'): string {
+function buildLogoPrompt(brief: LogoBrief, variantNumber: number, language: string = 'en', branding?: any): string {
   const colors = brief.color_palette.join(', ');
   const keywords = brief.brand_keywords.join(', ');
 
-  return `Create a professional logo for the brand "${brief.brand_name}".
+  // Build comprehensive branding section if available
+  let brandingSection = '';
+  if (branding) {
+    brandingSection = `
+COMPLETE BRANDING IDENTITY:
 
-Style: ${brief.style}
-Category: ${brief.category}
-Colors: ${colors}
-Keywords: ${keywords}
-${brief.tagline ? `Tagline: "${brief.tagline}"` : ''}
-${brief.shape_preferences ? `Shape preferences: ${brief.shape_preferences}` : ''}
-${brief.avoid_elements ? `Avoid: ${brief.avoid_elements.join(', ')}` : ''}
+Visual Style:
+- Design Style: ${branding.design_style}
+- Shape Style: ${branding.shape_style}
+- Icon Style: ${branding.icon_style}
 
-This is variant #${variantNumber}. Make it unique while maintaining brand consistency.
+Typography Context:
+- Primary Font: ${branding.primary_font_family}
+- Secondary Font: ${branding.secondary_font_family}
+- Font Style: ${branding.font_style}
 
-Requirements:
+Brand Personality:
+- Brand Tone: ${branding.brand_tone}
+- Target Emotion: ${branding.target_emotion}
+- Brand Values: ${branding.brand_values.join(', ')}
+
+Color Palette with Meanings:
+${branding.color_palette.map((color: string, i: number) =>
+  `- ${color}: ${branding.color_meanings?.[i] || 'Primary brand color'}`
+).join('\n')}
+
+Branding Concept:
+${branding.branding_concept}
+
+Visual Direction:
+${branding.visual_direction}
+`;
+  }
+
+  return `Create a professional, AI-generated logo for the brand "${brief.brand_name}".
+
+BRAND NAME: ${brief.brand_name}
+${brief.tagline ? `TAGLINE: "${brief.tagline}"` : ''}
+
+BASIC INFO:
+- Style: ${brief.style}
+- Category: ${brief.category}
+- Colors: ${colors}
+- Keywords: ${keywords}
+${brief.shape_preferences ? `- Shape preferences: ${brief.shape_preferences}` : ''}
+${brief.avoid_elements ? `- Avoid: ${brief.avoid_elements.join(', ')}` : ''}
+${brandingSection}
+
+VARIANT NUMBER: #${variantNumber}
+This is variant #${variantNumber}. Create a UNIQUE interpretation while maintaining brand consistency.
+${variantNumber === 1 ? 'Focus on a bold, primary interpretation.' : ''}
+${variantNumber === 2 ? 'Explore a more abstract or conceptual approach.' : ''}
+${variantNumber === 3 ? 'Try a minimalist or simplified version.' : ''}
+${variantNumber >= 4 ? 'Experiment with alternative compositions or styles.' : ''}
+
+TECHNICAL REQUIREMENTS:
 - Clean, vector-style design
 - High contrast and legibility
 - Works in both color and monochrome
-- Scalable to different sizes
-- Modern and professional`;
+- Scalable from 16px to 1024px
+- Professional quality
+- No text in the logo (brand name is separate)
+- Simple enough to be memorable
+- Unique enough to stand out
+
+${branding ? `STYLE GUIDANCE:
+Follow the ${branding.design_style} aesthetic with ${branding.shape_style} geometric forms.
+Icon should be ${branding.icon_style}.
+Overall feel should evoke ${branding.target_emotion} and communicate ${branding.brand_values[0]}.` : ''}`;
 }
