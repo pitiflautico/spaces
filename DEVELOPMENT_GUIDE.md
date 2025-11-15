@@ -916,6 +916,97 @@ enum DataType {
 - **out-2 (Chosen Name)**: Solo el nombre FINAL que el usuario seleccionó
   - Útil para módulos que solo necesitan el nombre definitivo (ej: generador de iconos, branding)
 
+#### Ejemplo: Módulo 5 (Metadata Generator)
+
+```typescript
+// lib/store.ts:223-243
+
+'metadata-generator': {
+  name: 'Metadata Generator',
+  size: { width: 450, height: 520 },
+  ports: {
+    input: [
+      {
+        id: 'in-1',
+        type: 'input',
+        label: 'App Intelligence',
+        connected: false,
+        acceptedTypes: [DataType.JSON]
+      },
+      {
+        id: 'in-2',
+        type: 'input',
+        label: 'Naming Package',
+        connected: false,
+        acceptedTypes: [DataType.JSON]
+      },
+      {
+        id: 'in-3',
+        type: 'input',
+        label: 'Chosen Name',
+        connected: false,
+        acceptedTypes: [DataType.JSON]
+      },
+      {
+        id: 'in-4',
+        type: 'input',
+        label: 'Icon Options',
+        connected: false,
+        acceptedTypes: [DataType.JSON]
+      }
+    ],
+    output: [
+      {
+        id: 'out-1',
+        type: 'output',
+        label: 'Metadata Package',
+        connected: false,
+        dataType: DataType.JSON
+      },
+      {
+        id: 'out-2',
+        type: 'output',
+        label: 'Chosen Metadata',
+        connected: false,
+        dataType: DataType.JSON
+      },
+      {
+        id: 'out-3',
+        type: 'output',
+        label: 'Metadata Log',
+        connected: false,
+        dataType: DataType.TEXT
+      },
+      {
+        id: 'out-4',
+        type: 'output',
+        label: 'Flow Context',
+        connected: false,
+        dataType: DataType.JSON
+      }
+    ],
+  },
+}
+```
+
+**¿Por qué 4 entradas en el Módulo 5?**
+
+- **in-1 (App Intelligence)**: Información del proyecto (categoría, features, keywords) desde Módulo 2
+- **in-2 (Naming Package)**: Todos los nombres sugeridos y slogan desde Módulo 3
+- **in-3 (Chosen Name)**: Nombre final seleccionado desde Módulo 3
+- **in-4 (Icon Options)**: [OPCIONAL] Información de iconos para contexto visual
+
+**¿Por qué 4 salidas en el Módulo 5?**
+
+- **out-1 (Metadata Package)**: TODAS las variantes generadas (1-5 versiones)
+  - Útil para comparar, exportar, o analizar diferentes enfoques
+- **out-2 (Chosen Metadata)**: Solo la variante FINAL seleccionada
+  - Lista para usar en App Store Connect o Google Play Console
+- **out-3 (Metadata Log)**: Log textual del proceso de generación
+  - Útil para debugging, auditoría, o documentación
+- **out-4 (Flow Context)**: Propaga contexto a módulos downstream
+  - Mantiene language, brandColors, y otra metadata de branding
+
 ### Conexión Visual y Datos
 
 **IMPORTANTE**: Las conexiones visuales (líneas SVG) se dibujan desde el **centro del puerto de salida** hasta el **centro del puerto de entrada**, NO desde las bolas de los puertos.
@@ -956,6 +1047,195 @@ Si necesitas propagar nueva información entre módulos:
 - [ ] Actualizar módulos que **consumen** el campo (ej: M3, M4)
 - [ ] Actualizar tipos de outputs de módulos afectados
 - [ ] Documentar el nuevo campo en este archivo
+
+---
+
+## 🤖 PATRONES ESPECÍFICOS: LOCAL AUTOMATION DAEMON
+
+### Arquitectura del Daemon
+
+El Local Automation Daemon es un servidor Express.js que corre localmente en `localhost:5050` y proporciona 13 endpoints REST para automatizar iOS Simulator.
+
+```
+local-automation-daemon/
+├── bin/daemon.js          # Servidor principal (700+ líneas)
+├── config/
+│   ├── devices.json       # Configuración de simuladores
+│   ├── settings.json      # Configuración del daemon
+│   └── .env.example       # Variables de entorno
+├── scripts/navigation/    # Scripts de navegación JSON
+│   ├── onboarding-example.json
+│   └── main-features-example.json
+└── test/
+    └── test-endpoints.sh  # Suite de pruebas bash
+```
+
+### Endpoints Principales
+
+```javascript
+// Health check
+GET  /health
+
+// Simulator control
+GET  /list-simulators
+POST /boot-simulator
+POST /shutdown-simulator
+
+// App control
+POST /install-app
+POST /launch-app
+POST /kill-app
+
+// Automation
+POST /tap              // Tap en coordenadas (x, y)
+POST /move             // Swipe/drag
+POST /scroll           // Scroll vertical/horizontal
+POST /screenshot       // Captura de pantalla
+POST /run-script       // Ejecutar script de navegación JSON
+POST /resize-images    // Redimensionar imágenes
+```
+
+### Patrón: Navigation Scripts
+
+Los scripts de navegación son archivos JSON que definen secuencias de acciones:
+
+```json
+{
+  "name": "Onboarding Flow",
+  "description": "Navigate through app onboarding screens",
+  "steps": [
+    {
+      "action": "wait",
+      "seconds": 3,
+      "comment": "Wait for app to fully load"
+    },
+    {
+      "action": "screenshot",
+      "name": "01_welcome.png",
+      "comment": "Capture welcome screen"
+    },
+    {
+      "action": "tap",
+      "x": 375,
+      "y": 750,
+      "comment": "Tap 'Get Started' button"
+    },
+    {
+      "action": "scroll",
+      "direction": "down",
+      "amount": 200
+    }
+  ]
+}
+```
+
+**Acciones soportadas**:
+- `wait` - Esperar N segundos
+- `screenshot` - Capturar pantalla
+- `tap` - Tap en coordenadas
+- `move` - Swipe/drag
+- `scroll` - Scroll en dirección
+
+### Seguridad del Daemon
+
+**Restricciones implementadas**:
+
+1. **CORS**: Solo permite `http://localhost:3000`
+2. **Host binding**: Solo escucha en `127.0.0.1` (localhost)
+3. **Path validation**: Valida que los paths estén en directorios permitidos
+4. **Command whitelisting**: Solo permite comandos específicos de `xcrun`, `cliclick`, `sips`
+5. **Timeouts**: Todos los comandos tienen timeout de 30s
+
+### Patrón: Validación de Paths
+
+```javascript
+function isPathSafe(filePath) {
+  const normalizedPath = path.normalize(filePath);
+  const allowedDirs = [
+    path.join(process.cwd(), 'captures'),
+    path.join(process.cwd(), 'uploads'),
+    '/tmp'
+  ];
+
+  return allowedDirs.some(dir => normalizedPath.startsWith(dir));
+}
+```
+
+### Logging con Winston
+
+```javascript
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+    })
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({
+      filename: 'logs/daemon.log',
+      maxsize: 5242880,  // 5MB
+      maxFiles: 5
+    })
+  ]
+});
+```
+
+### Checklist: Añadir Nuevo Endpoint al Daemon
+
+Si necesitas añadir un nuevo endpoint:
+
+- [ ] Definir ruta y método HTTP en `daemon.js`
+- [ ] Implementar validación de parámetros
+- [ ] Añadir logging con winston
+- [ ] Implementar timeout de 30s
+- [ ] Validar paths si es necesario
+- [ ] Añadir manejo de errores try/catch
+- [ ] Documentar en `LOCAL_AUTOMATION_DAEMON.md`
+- [ ] Añadir test case en `test/test-endpoints.sh`
+- [ ] Actualizar `daemonState` si es necesario
+
+### Ejemplo: Añadir Endpoint /custom-action
+
+```javascript
+app.post('/custom-action', async (req, res) => {
+  try {
+    // 1. Validar parámetros
+    const { param1, param2 } = req.body;
+    if (!param1) {
+      return res.status(400).json({ error: 'param1 is required' });
+    }
+
+    // 2. Log inicio
+    logger.info(`Custom action started: ${param1}`);
+
+    // 3. Ejecutar con timeout
+    const command = `xcrun simctl ...`;
+    const result = executeCommand(command, 30000);
+
+    // 4. Actualizar estado
+    daemonState.status = 'CUSTOM_ACTION_DONE';
+
+    // 5. Responder
+    res.json({
+      status: 'success',
+      result: result
+    });
+
+    // 6. Log éxito
+    logger.info(`Custom action completed: ${param1}`);
+
+  } catch (error) {
+    // 7. Log error
+    logger.error(`Custom action failed: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+});
+```
 
 ---
 

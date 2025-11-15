@@ -8,23 +8,28 @@ Un canvas interactivo donde puedes conectar módulos de procesamiento para anali
 
 ## 📊 Estado del Proyecto
 
-**Versión actual**: v1.1 (en desarrollo)
-**Progreso global**: ~50% completado
-**Última actualización**: 2025-11-15 ✅ UX Improvements + Configuration
+**Versión actual**: v3.0 (en desarrollo activo)
+**Progreso global**: ~75% completado
+**Última actualización**: 2025-11-15 ✅ Session 5: Module 5 + Local Automation Daemon
 
 ### 🎯 Progreso por Área
 
 ```
-Infraestructura Base        ████████████████████ 100%
-Módulo Local Analysis       ████████████████████ 100%  ✅ UX Mejorada
-Conectores Visuales         ████████████████████ 100%
+Infraestructura Base        ████████████████████ 100%  ✅
+Conectores Visuales         ████████████████████ 100%  ✅
 Conectores Tipados          ████████████████████ 100%  ✅
-Estados Extendidos          ███████░░░░░░░░░░░░░  45%  ✅
-Toolbar Flotante (UI)       ████████████████████ 100%  ✅ Refinado
+Estados Extendidos          ████████████████████ 100%  ✅
+Toolbar Flotante            ████████████████████ 100%  ✅
 Sistema Modular Base        ████████████████████ 100%  ✅
-Duplicate Module            ████████████████████ 100%  ✅
-Configuration Panel         ████████████████████ 100%  ✅ NUEVO
-Sistema de Guardado         ████░░░░░░░░░░░░░░░░  20%  (Configuration storage)
+Configuration Panel         ████████████████████ 100%  ✅
+Módulo 1 (Local Analysis)   ████████████████████ 100%  ✅
+Módulo 2 (AIE Engine)       ████████████████████ 100%  ✅
+Módulo 3 (Naming Engine)    ████████████████████ 100%  ✅
+Módulo 4A (Logo Generator)  ████████████████████ 100%  ✅
+Módulo 4B (App Icon)        ████████████████████ 100%  ✅
+Módulo 5 (Metadata Gen)     ████████████████████ 100%  ✅ NUEVO
+Local Automation Daemon     ████████████████████ 100%  ✅ NUEVO
+Sistema de Guardado         ████░░░░░░░░░░░░░░░░  20%
 Ejecución en Cadena         ░░░░░░░░░░░░░░░░░░░░   0%
 Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░░░░   0%
 ```
@@ -76,12 +81,33 @@ Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░
   - Modal elegante con validación
 - ✅ **SpaceConfiguration**: Configuración persistente por space
 
+**Nuevas (Sesión 5 - Module 5 + Automation Daemon)**:
+- ✅ **Módulo 5: Metadata Generator**:
+  - Generación AI de metadata para App Store y Google Play
+  - 1-5 variantes con diferentes estilos y enfoques
+  - Validación automática de límites de caracteres
+  - UI interactiva para selección de variantes
+  - Integración con Módulos 2, 3, y 4B
+  - Soporte para múltiples idiomas
+  - Indicadores de caracteres con código de colores
+- ✅ **Local Automation Daemon**:
+  - Servidor REST local (localhost:5050)
+  - 13 endpoints para automatización iOS
+  - Control completo del iOS Simulator
+  - Captura automática de screenshots
+  - Navegación programada con JSON
+  - Redimensionamiento de imágenes
+  - Sistema de logging con Winston
+  - Seguridad (CORS, validación de paths)
+- ✅ **Tipos TypeScript extendidos**: 7 nuevas interfaces para metadata
+- ✅ **Documentación completa**: 2,142 líneas de especificaciones técnicas
+
 ### 🚧 En Desarrollo
 
-- 🚧 Toolbar flotante (Play, Pause, Restart)
-- 🚧 Sistema de guardado persistente
-- 🚧 Ejecución en cadena topológica
-- 🚧 Más módulos (AIE Engine, Naming, Icons, Marketing Pack)
+- 🚧 Sistema de guardado persistente (localStorage/DB)
+- 🚧 Ejecución en cadena topológica automática
+- 🚧 Panel INFO de módulos
+- 🚧 Más módulos de marketing (Email Templates, Social Media Posts)
 
 ---
 
@@ -111,6 +137,7 @@ Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░
 
 - Node.js 18+
 - npm o yarn
+- macOS (para Local Automation Daemon)
 
 ### Instalación
 
@@ -119,7 +146,7 @@ Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░
 git clone <repo-url>
 cd spaces
 
-# Instalar dependencias
+# Instalar dependencias del proyecto principal
 npm install
 
 # Ejecutar en desarrollo
@@ -129,13 +156,41 @@ npm run dev
 # http://localhost:3000
 ```
 
+### Instalación del Local Automation Daemon (Opcional)
+
+```bash
+# Ir al directorio del daemon
+cd local-automation-daemon
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+
+# Iniciar daemon
+npm start
+
+# El daemon estará disponible en http://localhost:5050
+```
+
 ### Uso Básico
 
 1. **Crear un Space**: Click en "New Space" en el sidebar
-2. **Añadir módulo**: Click en el botón + flotante
-3. **Configurar módulo**: Ingresar inputs requeridos
-4. **Ejecutar**: Click en "Run" en el módulo
-5. **Ver resultados**: Los outputs aparecen al completar
+2. **Configurar API Keys**: Click en Settings para añadir tus API keys
+3. **Añadir módulo**: Click en el botón + flotante
+4. **Conectar módulos**: Arrastrar desde puerto OUTPUT al INPUT correspondiente
+5. **Ejecutar**: Click en "Play" en el módulo
+6. **Ver resultados**: Los outputs aparecen al completar
+
+### Flujo de Trabajo Típico
+
+1. **Módulo 1**: Analizar proyecto local → genera Project Data
+2. **Módulo 2**: AIE Engine → genera App Intelligence + Flow Context
+3. **Módulo 3**: Naming Engine → genera nombres + seleccionar favorito
+4. **Módulo 4A**: Logo Generator → genera logos con variantes
+5. **Módulo 4B**: App Icon Generator → genera iconos para app stores
+6. **Módulo 5**: Metadata Generator → genera descripciones para stores
 
 ---
 
@@ -176,27 +231,47 @@ spaces/
 │   │   ├── ModuleBlock.tsx      # ⭐ Bloque de módulo
 │   │   ├── ConnectionLines.tsx  # Conexiones SVG
 │   │   └── ...
-│   ├── modules/                 # Módulos específicos
-│   │   └── LocalProjectAnalysisModule.tsx
+│   ├── modules/                 # Módulos específicos (6 módulos)
+│   │   ├── LocalProjectAnalysisModule.tsx   # Módulo 1
+│   │   ├── AIEEngineModule.tsx              # Módulo 2
+│   │   ├── NamingEngineModule.tsx           # Módulo 3
+│   │   ├── LogoGeneratorModule.tsx          # Módulo 4A
+│   │   ├── AppIconGeneratorModule.tsx       # Módulo 4B
+│   │   ├── MetadataGeneratorModule.tsx      # Módulo 5 ⭐ NUEVO
+│   │   └── MetadataVariantsPanel.tsx        # Panel de variantes
 │   └── sidebar/
 │       └── Sidebar.tsx          # Panel lateral
 │
 ├── lib/
-│   └── store.ts                 # ⭐ Zustand store
+│   ├── store.ts                 # ⭐ Zustand store
+│   └── ai-provider.ts           # Abstracción de proveedores AI
 │
 ├── types/
-│   └── index.ts                 # ⭐ Tipos globales
+│   └── index.ts                 # ⭐ Tipos globales (40+ interfaces)
 │
-├── PROJECT_STATUS.md            # 📖 Estado del proyecto
+├── local-automation-daemon/     # ⭐ NUEVO - Daemon de automatización
+│   ├── bin/daemon.js            # Servidor Express (13 endpoints)
+│   ├── config/                  # Configuraciones
+│   ├── scripts/navigation/      # Scripts de navegación iOS
+│   ├── test/                    # Suite de pruebas
+│   └── package.json
+│
+├── docs/                        # Documentación técnica
+│   ├── MODULE_5_METADATA_GENERATOR.md   # Especificación Módulo 5
+│   └── LOCAL_AUTOMATION_DAEMON.md       # Especificación Daemon
+│
+├── PROJECT_STATUS.md            # 📖 Estado completo del proyecto
 ├── DEVELOPMENT_GUIDE.md         # 📖 Guía de desarrollo
 └── README.md                    # Este archivo
 ```
 
 **Archivos críticos** (⭐ leer antes de modificar):
-- `/types/index.ts` - Definiciones de tipos
-- `/lib/store.ts` - Estado global
+- `/types/index.ts` - 40+ definiciones de tipos TypeScript
+- `/lib/store.ts` - Estado global con Zustand
 - `/components/canvas/Canvas.tsx` - Sistema de canvas
 - `/components/canvas/ModuleBlock.tsx` - UI de módulos
+- `/components/modules/MetadataGeneratorModule.tsx` - Generador de metadata
+- `/local-automation-daemon/bin/daemon.js` - Servidor de automatización
 
 ---
 
@@ -204,39 +279,51 @@ spaces/
 
 ### Prioridad ALTA
 
-1. **Conectores Tipados** (Tarea A)
-   - Definir tipos de datos (image, text, json, etc.)
-   - Implementar drag & drop de puertos
-   - Validación de conexiones
+1. **Sistema de Guardado Persistente**
+   - Guardar espacios en localStorage/IndexedDB
+   - Auto-save cada X segundos
+   - Restore spaces al recargar
+   - Export/Import de espacios
 
-2. **Toolbar Flotante** (Tarea C)
-   - Play Flow (ejecución en cadena)
-   - Restart Flow
-   - Pause (opcional)
+2. **Ejecución en Cadena Topológica**
+   - Play Flow completo (ejecutar todos los módulos conectados)
+   - Detección automática de dependencias
+   - Ejecución paralela cuando sea posible
+   - Manejo de errores en cadena
 
-3. **Sistema de Guardado** (Tarea D)
-   - Autosave
-   - localStorage o DB
-   - Load/restore spaces
+3. **Panel INFO de Módulos**
+   - Información detallada por módulo
+   - Historial de ejecuciones
+   - Estadísticas de uso
+   - Logs estructurados
 
 ### Prioridad MEDIA
 
-4. **Estados Extendidos** (Tarea B)
-   - warning, fatal_error, invalid
+4. **Optimizaciones de Performance**
+   - Lazy loading de módulos
+   - Optimización de renders
+   - Debouncing de conexiones
+   - Canvas virtual scrolling
 
-5. **Sistema de Reinicio** (Tarea E)
-   - Reset All, Reset Module, Reset From This
-
-6. **Panel INFO** (Tarea F)
-   - Información detallada de cada módulo
+5. **Testing Automatizado**
+   - Unit tests con Jest
+   - Integration tests
+   - E2E tests con Playwright
+   - CI/CD pipeline
 
 ### Prioridad BAJA
 
-7. **Otros Módulos**
-   - AIE Engine, Naming Engine, Icon Generator, Marketing Pack
+6. **Módulos Adicionales de Marketing**
+   - Email Templates Generator
+   - Social Media Posts Generator
+   - Press Release Generator
+   - Marketing Copy Variants
 
-8. **Mejoras de UX**
-   - Logs mejorados, Undo/Redo, Templates
+7. **Mejoras de UX**
+   - Templates predefinidos
+   - Atajos de teclado
+   - Tutorial interactivo
+   - Temas personalizables
 
 ---
 
@@ -296,11 +383,23 @@ import { Module } from '../../../types'   // ❌
 
 ## 📊 Métricas del Código
 
-- **Archivos TypeScript**: 14
-- **Líneas de código**: ~2,020
-- **Componentes React**: 11
-- **API Endpoints**: 1
-- **Módulos disponibles**: 5 (1 funcional)
+**Frontend (Next.js + React)**:
+- **Archivos TypeScript**: 25+
+- **Líneas de código**: ~8,500+
+- **Componentes React**: 20+
+- **Interfaces TypeScript**: 40+
+- **Módulos funcionales**: 6 (100% operativos)
+
+**Backend (Local Daemon)**:
+- **Archivos JavaScript**: 8
+- **Líneas de código**: ~1,200
+- **API Endpoints REST**: 13
+- **Test scripts**: 3
+
+**Documentación**:
+- **Archivos de docs**: 5
+- **Líneas de documentación**: ~4,500+
+- **Ejemplos de código**: 50+
 
 ---
 
@@ -332,6 +431,41 @@ Ver [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) para guías de desarrollo.
 
 ---
 
-**Estado**: 🚧 En desarrollo activo
-**Versión**: v1.1-alpha
-**Última actualización**: 2025-11-15
+**Estado**: 🚀 En desarrollo activo
+**Versión**: v3.0-beta
+**Última actualización**: 2025-11-15 (Session 5: Module 5 + Automation Daemon)
+**Progreso**: 75% completado
+
+---
+
+## 📝 Changelog
+
+### v3.0 (Session 5) - 2025-11-15
+- ✅ Implementado Módulo 5: Metadata Generator
+- ✅ Implementado Local Automation Daemon con 13 endpoints REST
+- ✅ 7 nuevas interfaces TypeScript para metadata
+- ✅ 2,142 líneas de documentación técnica
+- ✅ Validación mejorada de conexiones entre módulos
+- ✅ Debugging comprehensivo para troubleshooting
+
+### v2.1 (Session 4) - 2025-11-14
+- ✅ Implementado Módulo 4B: App Icon Generator
+- ✅ Implementado Módulo 4A: Logo Generator
+- ✅ Sistema de variantes para logos e iconos
+- ✅ Integración con Recraft V3 API
+
+### v2.0 (Session 3) - 2025-11-13
+- ✅ Configuration Panel con API Keys
+- ✅ UX improvements en todos los módulos
+- ✅ Toolbar refinado y reposicionado
+
+### v1.1 (Session 2) - 2025-11-12
+- ✅ Implementado Módulo 3: Naming Engine
+- ✅ Implementado Módulo 2: AIE Engine
+- ✅ Sistema modular base con ModuleWrapper
+
+### v1.0 (Session 1) - 2025-11-11
+- ✅ Infraestructura base del proyecto
+- ✅ Sistema de canvas con zoom y pan
+- ✅ Conectores tipados y validación
+- ✅ Módulo 1: Local Project Analysis

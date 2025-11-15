@@ -4,13 +4,287 @@
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15 (Session 4 - Browser-based Analysis + Embedded AI Config)
-**Versión del sistema**: v2.1 (browser file scanning + embedded AI selector)
-**Fase actual**: ✅ Session 4: Browser-based architecture + Module-level AI configuration
+**Última actualización**: 2025-11-15 (Session 5 - Module 5 Metadata Generator + Local Automation Daemon)
+**Versión del sistema**: v3.0 (complete marketing pipeline + local automation)
+**Fase actual**: ✅ Session 5: Metadata Generator + iOS Simulator Automation
 
 ---
 
 ## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
+
+### ✅ SESIÓN 5: Metadata Generator Module + Local Automation Daemon (NUEVO)
+
+**MÓDULOS IMPLEMENTADOS**: 2 módulos completos + daemon de automatización
+
+#### 1. ✅ **Módulo 5 - Metadata Generator (100% Completo)**
+
+**Archivos NUEVOS**:
+- ✅ `/components/modules/MetadataGeneratorModule.tsx` - Componente principal (900 líneas)
+- ✅ `/components/modules/MetadataVariantsPanel.tsx` - Panel de selección de variantes (400 líneas)
+- ✅ `/docs/MODULE_5_METADATA_GENERATOR.md` - Documentación completa (898 líneas)
+
+**Archivos MODIFICADOS**:
+- ✅ `/types/index.ts` - Añadidos 9 interfaces nuevas (90 líneas):
+  - `AppStoreMetadata` - iOS App Store metadata (title, subtitle, promotional_text, description, keywords)
+  - `GooglePlayMetadata` - Android Google Play metadata (title, short_description, full_description, tags)
+  - `MetadataVariant` - Variante completa con metadata iOS + Android
+  - `MetadataPackage` - Paquete con N variantes generadas
+  - `ChosenMetadata` - Metadata final seleccionada por usuario
+  - `MetadataGeneratorInputs` - Inputs del módulo (configuración + AI settings)
+  - `MetadataGeneratorOutputs` - Outputs del módulo (package + chosen + log + context)
+- ✅ `/lib/store.ts` - Añadido moduleDefaults para 'metadata-generator':
+  - 4 Input Ports: App Intelligence, Naming Package, Chosen Name, Icon Options
+  - 4 Output Ports: Metadata Package, Chosen Metadata, Log, Flow Context
+- ✅ `/components/canvas/ModuleBlock.tsx` - Integrado Metadata Generator
+- ✅ `/components/canvas/AddModulePanel.tsx` - Añadido a categoría Marketing
+
+**Funcionalidades Implementadas**:
+
+**A. Generación de Metadata con IA**:
+- ✅ N variantes configurables (1, 3, 5)
+- ✅ Multi-idioma via FlowContext (en, es, fr, de, pt, it, ja, zh)
+- ✅ Multi-mercado (Global, US, EU, LATAM, ASIA)
+- ✅ 3 estilos de escritura (balanced, creative, conservative)
+- ✅ AI Provider configurable por módulo (Together, Replicate, OpenAI, Anthropic, Local)
+- ✅ Prompt engineering con guidelines oficiales de App Store y Google Play
+
+**B. Validación Automática**:
+- ✅ App Store requirements:
+  - Title ≤ 30 caracteres
+  - Subtitle ≤ 30 caracteres
+  - Promotional Text ≤ 170 caracteres
+  - Keywords ≤ 100 caracteres (sin repetir palabras del título)
+  - Description (sin límite estricto)
+- ✅ Google Play requirements:
+  - Title ≤ 30 caracteres
+  - Short Description ≤ 80 caracteres
+  - Full Description ≤ 4,000 caracteres
+  - Tags array
+- ✅ Detección de palabras prohibidas (#1, best, download now, free forever)
+- ✅ Character count con color coding (verde OK, amarillo warning, rojo error)
+
+**C. Panel de Variantes Interactivo**:
+- ✅ Modal full-screen elegante (90vw x 85vh)
+- ✅ Tarjetas por variante con preview completo
+- ✅ Expand/collapse para ver descripciones completas
+- ✅ Sistema de selección de variante final
+- ✅ Indicadores visuales de validación
+- ✅ Vista previa iOS + Android lado a lado
+
+**D. Integración con Pipeline**:
+- ✅ Conecta con Módulo 2 (AIE Engine) - App Intelligence
+- ✅ Conecta con Módulo 3 (Naming Engine) - Naming Package + Chosen Name
+- ✅ Conecta con Módulo 4B (App Icon) - Icon Options (opcional)
+- ✅ Propaga FlowContext a módulos downstream
+
+**Código de referencia**:
+```typescript
+// Generación de 3 variantes con diferentes tonos
+const metadataPackage: MetadataPackage = {
+  brand_name: "FoxTimer",
+  num_variants: 3,
+  variants: [
+    { id: 1, variant_name: "Professional Focus", target_persona: "Professionals", ... },
+    { id: 2, variant_name: "Student Friendly", target_persona: "Students", ... },
+    { id: 3, variant_name: "Creative Minimalist", target_persona: "Creators", ... }
+  ],
+  language: "en",
+  category: "Productivity",
+  validation_passed: true
+};
+
+// Cada variante incluye metadata completa iOS + Android
+interface MetadataVariant {
+  app_store: {
+    title: string;              // ≤ 30 chars
+    subtitle: string;           // ≤ 30 chars
+    promotional_text: string;   // ≤ 170 chars
+    description: string;        // Full description
+    keywords: string;           // ≤ 100 chars
+  };
+  google_play: {
+    title: string;              // ≤ 30 chars
+    short_description: string;  // ≤ 80 chars
+    full_description: string;   // ≤ 4000 chars
+    tags: string[];
+  };
+}
+```
+
+---
+
+#### 2. ✅ **Local Automation Daemon (100% Completo)**
+
+**Archivos NUEVOS**:
+- ✅ `/local-automation-daemon/bin/daemon.js` - Servidor Express.js (700 líneas)
+- ✅ `/local-automation-daemon/package.json` - Dependencias y scripts
+- ✅ `/local-automation-daemon/.env.example` - Variables de entorno
+- ✅ `/local-automation-daemon/README.md` - Quick start guide
+- ✅ `/local-automation-daemon/config/devices.json` - Simuladores predefinidos
+- ✅ `/local-automation-daemon/config/settings.json` - Configuración del daemon
+- ✅ `/local-automation-daemon/scripts/navigation/onboarding-example.json` - Script de navegación ejemplo
+- ✅ `/local-automation-daemon/scripts/navigation/main-features-example.json` - Otro ejemplo
+- ✅ `/local-automation-daemon/test/test-endpoints.sh` - Suite de tests
+- ✅ `/local-automation-daemon/.gitignore` - Archivos a ignorar
+- ✅ `/docs/LOCAL_AUTOMATION_DAEMON.md` - Documentación completa (1244 líneas)
+
+**Arquitectura del Sistema**:
+```
+┌─────────────────────────────┐
+│  Web Interface (Browser)   │
+│  http://localhost:3000      │
+└──────────┬──────────────────┘
+           │ REST API
+           ▼
+┌─────────────────────────────┐
+│  Local Automation Daemon    │
+│  http://localhost:5050      │
+│  Node.js Express Server     │
+└──────────┬──────────────────┘
+           │ Child Process
+           ▼
+┌─────────────────────────────┐
+│  macOS Native Commands      │
+│  - xcrun simctl             │
+│  - cliclick                 │
+│  - sips                     │
+│  - osascript                │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│  iOS Simulator + App        │
+└─────────────────────────────┘
+```
+
+**13 Endpoints REST Implementados**:
+
+1. **GET /health** - Health check del daemon
+2. **GET /list-simulators** - Lista simuladores iOS disponibles
+3. **POST /boot-simulator** - Bootea simulador específico
+4. **POST /install-app** - Instala .app en simulador booteado
+5. **POST /launch-app** - Lanza app instalada
+6. **POST /tap** - Simula tap en coordenadas (x, y)
+7. **POST /move** - Mueve cursor a coordenadas
+8. **POST /scroll** - Simula scroll (up/down)
+9. **POST /screenshot** - Captura screenshot del simulador
+10. **POST /run-script** - Ejecuta script de navegación completo
+11. **POST /resize-images** - Redimensiona a tamaños oficiales App Store/Google Play
+12. **POST /kill-app** - Termina app en simulador
+13. **POST /shutdown-simulator** - Apaga simulador
+
+**Comandos Nativos Ejecutados**:
+```bash
+# Simulador
+xcrun simctl boot "iPhone 15 Pro"
+xcrun simctl install booted "/path/to/app.app"
+xcrun simctl launch booted com.company.myapp
+xcrun simctl io booted screenshot "output.png"
+xcrun simctl shutdown booted
+
+# Mouse automation
+cliclick c:300,800  # Click
+cliclick m:300,800  # Move
+
+# Image processing
+sips -z 2796 1290 input.png --out output.png
+
+# AppleScript (scroll)
+osascript -e 'tell application "Simulator" to activate'
+```
+
+**Seguridad Implementada**:
+- ✅ Solo localhost (no accesible desde red)
+- ✅ CORS restringido a http://localhost:3000
+- ✅ Path validation (previene directory traversal)
+- ✅ Command whitelisting (no eval() ni ejecución arbitraria)
+- ✅ Timeout en comandos (30s default, configurable)
+
+**Logging con Winston**:
+```javascript
+[2025-11-15T19:10:00.123Z] [INFO] Daemon started on http://localhost:5050
+[2025-11-15T19:10:15.456Z] [INFO] POST /boot-simulator - device: iPhone 15 Pro
+[2025-11-15T19:10:19.789Z] [INFO] Simulator booted successfully
+[2025-11-15T19:10:22.012Z] [INFO] POST /run-script - variant_id: 1, steps: 7
+[2025-11-15T19:10:30.901Z] [INFO] Script execution completed - 5 screenshots
+```
+
+**Ejemplo de Script de Navegación**:
+```json
+{
+  "navigation_script": [
+    {"action": "wait", "seconds": 2},
+    {"action": "tap", "x": 375, "y": 750},
+    {"action": "screenshot", "name": "01_welcome.png"},
+    {"action": "scroll", "direction": "down", "amount": 200},
+    {"action": "screenshot", "name": "02_features.png"}
+  ],
+  "variant_id": 1,
+  "app_bundle_id": "com.company.myapp"
+}
+```
+
+**Integración con Módulo 6 (Screenshot Generator)**:
+```typescript
+// En Screenshot Generator Module
+async function generateScreenshots() {
+  // 1. Boot simulator
+  await fetch('http://localhost:5050/boot-simulator', {
+    method: 'POST',
+    body: JSON.stringify({ device: 'iPhone 15 Pro' })
+  });
+
+  // 2. Install + Launch app
+  await fetch('http://localhost:5050/install-app', { ... });
+  await fetch('http://localhost:5050/launch-app', { ... });
+
+  // 3. Run navigation script
+  const result = await fetch('http://localhost:5050/run-script', {
+    method: 'POST',
+    body: JSON.stringify({ navigation_script, variant_id: 1 })
+  });
+
+  // 4. Returns: { screenshots: [...paths], execution_time_ms: 8500 }
+}
+```
+
+**Requisitos del Sistema**:
+- macOS 13.0+ (Ventura o superior)
+- Xcode 14.0+ con Command Line Tools
+- Node.js 18.0+
+- cliclick: `brew install cliclick`
+- iOS Simulators configurados
+
+**Instalación**:
+```bash
+cd local-automation-daemon
+npm install
+cp .env.example .env
+npm start  # Daemon running on http://localhost:5050
+```
+
+---
+
+### Métricas de la Sesión 5
+
+**Código Nuevo**:
+- Módulo 5: ~1,400 líneas TypeScript
+- Daemon: ~900 líneas JavaScript/JSON
+- Tipos: ~90 líneas TypeScript
+- **Total**: ~2,400 líneas de código
+
+**Documentación Nueva**:
+- MODULE_5_METADATA_GENERATOR.md: 898 líneas
+- LOCAL_AUTOMATION_DAEMON.md: 1,244 líneas
+- READMEs y configs: ~200 líneas
+- **Total**: ~2,342 líneas de documentación
+
+**Archivos Creados**: 17 archivos nuevos
+**Archivos Modificados**: 4 archivos existentes
+
+---
+
+## 🆕 CAMBIOS SESIÓN 4 (2025-11-15)
 
 ### ✅ SESIÓN 4: Browser-Based File Scanning + Embedded AI Configuration
 

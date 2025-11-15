@@ -155,45 +155,139 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
       // Get inputs from connected modules
       const connections = space?.connections || [];
 
+      // Debug: Log all connections to this module
+      console.log('=== METADATA GENERATOR - Connection Debug ===');
+      console.log('Module ID:', module.id);
+      console.log('All connections:', connections);
+      console.log('Connections to this module:', connections.filter(c => c.targetModuleId === module.id));
+      console.log('===========================================');
+
       // Input 1: App Intelligence (from Module 2 - AIE Engine)
       const conn1 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1');
       const sourceModule1 = conn1 ? space?.modules.find((m) => m.id === conn1.sourceModuleId) : null;
-      const appIntelligence: AppIntelligence | undefined = sourceModule1?.outputs.appIntelligence;
+
+      console.log('=== Input 1 (App Intelligence) ===');
+      console.log('Connection found:', conn1);
+      console.log('Source module:', sourceModule1 ? sourceModule1.name : 'NOT FOUND');
+      console.log('Source module outputs:', sourceModule1?.outputs);
+      console.log('App Intelligence data:', sourceModule1?.outputs?.appIntelligence);
+      console.log('===================================');
+
+      const appIntelligence: AppIntelligence | undefined = sourceModule1?.outputs?.appIntelligence;
 
       // Input 2: Naming Package (from Module 3 - Naming Engine)
       const conn2 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-2');
       const sourceModule2 = conn2 ? space?.modules.find((m) => m.id === conn2.sourceModuleId) : null;
-      const namingPackage: NamingPackage | undefined = sourceModule2?.outputs.namingPackage;
+
+      console.log('=== Input 2 (Naming Package) ===');
+      console.log('Connection found:', conn2);
+      console.log('Source module:', sourceModule2 ? sourceModule2.name : 'NOT FOUND');
+      console.log('Naming Package data:', sourceModule2?.outputs?.namingPackage);
+      console.log('===================================');
+
+      const namingPackage: NamingPackage | undefined = sourceModule2?.outputs?.namingPackage;
 
       // Input 3: Chosen Name (from Module 3 - Naming Engine)
       const conn3 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-3');
       const sourceModule3 = conn3 ? space?.modules.find((m) => m.id === conn3.sourceModuleId) : null;
-      const chosenName: ChosenName | undefined = sourceModule3?.outputs.chosenName;
+
+      console.log('=== Input 3 (Chosen Name) ===');
+      console.log('Connection found:', conn3);
+      console.log('Source module:', sourceModule3 ? sourceModule3.name : 'NOT FOUND');
+      console.log('Chosen Name data:', sourceModule3?.outputs?.chosenName);
+      console.log('===================================');
+
+      const chosenName: ChosenName | undefined = sourceModule3?.outputs?.chosenName;
 
       // Input 4: Icon Options (from Module 4B - App Icon Generator) - OPTIONAL
       const conn4 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-4');
       const sourceModule4 = conn4 ? space?.modules.find((m) => m.id === conn4.sourceModuleId) : null;
-      const iconOptions = sourceModule4?.outputs.iconOptions;
+      const iconOptions = sourceModule4?.outputs?.iconOptions;
 
-      // Validate required inputs
+      // Validate required inputs with better error messages
+      if (!conn1) {
+        throw new Error(
+          'No connection to input port 1.\n\n' +
+          'Please connect the "App Intelligence" output from Module 2 (AIE Engine) to input port 1 of this module.'
+        );
+      }
+
+      if (!sourceModule1) {
+        throw new Error(
+          'Source module not found for input port 1.\n\n' +
+          'The connection exists but the source module was not found. Try reconnecting.'
+        );
+      }
+
+      if (!sourceModule1.outputs || !sourceModule1.outputs.appIntelligence) {
+        throw new Error(
+          `Module "${sourceModule1.name}" has not been executed yet.\n\n` +
+          'Please run Module 2 (AIE Engine) first before generating metadata.'
+        );
+      }
+
       if (!appIntelligence) {
         throw new Error(
-          'No App Intelligence connected.\n\n' +
-          'Please connect the output from Module 2 (AIE Engine) to input port 1.'
+          'No App Intelligence data available.\n\n' +
+          'Please run Module 2 (AIE Engine) first to generate App Intelligence data.'
+        );
+      }
+
+      // Validate naming package
+      if (!conn2) {
+        throw new Error(
+          'No connection to input port 2.\n\n' +
+          'Please connect the "Naming Package" output from Module 3 (Naming Engine) to input port 2 of this module.'
+        );
+      }
+
+      if (!sourceModule2) {
+        throw new Error(
+          'Source module not found for input port 2.\n\n' +
+          'The connection exists but the source module was not found. Try reconnecting.'
+        );
+      }
+
+      if (!sourceModule2.outputs || !sourceModule2.outputs.namingPackage) {
+        throw new Error(
+          `Module "${sourceModule2.name}" has not been executed yet or has no Naming Package output.\n\n` +
+          'Please run Module 3 (Naming Engine) first before generating metadata.'
         );
       }
 
       if (!namingPackage) {
         throw new Error(
-          'No Naming Package connected.\n\n' +
-          'Please connect the output from Module 3 (Naming Engine) to input port 2.'
+          'No Naming Package data available.\n\n' +
+          'Please run Module 3 (Naming Engine) first to generate naming data.'
+        );
+      }
+
+      // Validate chosen name
+      if (!conn3) {
+        throw new Error(
+          'No connection to input port 3.\n\n' +
+          'Please connect the "Chosen Name" output from Module 3 (Naming Engine) to input port 3 of this module.'
+        );
+      }
+
+      if (!sourceModule3) {
+        throw new Error(
+          'Source module not found for input port 3.\n\n' +
+          'The connection exists but the source module was not found. Try reconnecting.'
+        );
+      }
+
+      if (!sourceModule3.outputs || !sourceModule3.outputs.chosenName) {
+        throw new Error(
+          `Module "${sourceModule3.name}" has no Chosen Name output.\n\n` +
+          'Please select a name variant in Module 3 (Naming Engine) before generating metadata.'
         );
       }
 
       if (!chosenName) {
         throw new Error(
-          'No Chosen Name connected.\n\n' +
-          'Please connect the "Chosen Name" output from Module 3 (Naming Engine) to input port 3.'
+          'No Chosen Name data available.\n\n' +
+          'Please select a name in Module 3 (Naming Engine) before generating metadata.'
         );
       }
 
