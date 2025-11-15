@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import type { Module, LogoGeneratorOutputs, LogoBrief, LogoOption, LogoOptionsPackage, ChosenLogo, FlowContext } from '@/types';
+import type { Module, LogoGeneratorOutputs, LogoBrief, LogoOption, LogoOptionsPackage, ChosenLogo, FlowContext, LogoVariantOutputs } from '@/types';
 import { CheckCircleIcon, PhotoIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface LogoGeneratorModuleProps {
@@ -10,10 +10,9 @@ interface LogoGeneratorModuleProps {
 }
 
 export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps) {
-  const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
+  const { updateModule, getCurrentSpace, addLog, addModule, addConnection } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLogoId, setSelectedLogoId] = useState<number | null>(null);
   const [numVariants, setNumVariants] = useState<number>(3);
 
   const outputs = module.outputs as LogoGeneratorOutputs;
@@ -99,13 +98,87 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         };
       });
 
+      // Delete any existing variant nodes from previous runs
+      const existingVariants = space?.modules.filter(
+        m => m.type === 'logo-variant' && m.inputs.generatorModuleId === module.id
+      ) || [];
+
+      for (const variant of existingVariants) {
+        // Delete connections to variant
+        const variantConnections = space?.connections.filter(
+          conn => conn.sourceModuleId === variant.id || conn.targetModuleId === variant.id
+        ) || [];
+        for (const conn of variantConnections) {
+          useSpaceStore.getState().deleteConnection(conn.id);
+        }
+        // Delete variant module
+        useSpaceStore.getState().deleteModule(variant.id);
+      }
+
+      // Create variant nodes on the canvas
+      const VARIANT_SPACING_Y = 480; // Vertical spacing between variants
+      const VARIANT_OFFSET_X = 500; // Horizontal distance from generator
+
+      for (let i = 0; i < mockLogos.length; i++) {
+        const logo = mockLogos[i];
+
+        // Calculate position to the right of the generator
+        const variantPosition = {
+          x: module.position.x + VARIANT_OFFSET_X,
+          y: module.position.y + (i * VARIANT_SPACING_Y)
+        };
+
+        // Create variant module node
+        addModule('logo-variant', variantPosition);
+
+        // Get the newly created module (it's the last one)
+        const updatedSpace = useSpaceStore.getState().getCurrentSpace();
+        const newVariantModule = updatedSpace?.modules[updatedSpace.modules.length - 1];
+
+        if (newVariantModule) {
+          // Update variant module with logo data
+          const variantOutputs: LogoVariantOutputs = {
+            logoData: {
+              image_url: logo.image_url,
+              brand_name: logoBrief.brand_name,
+              style_summary: logo.style_summary,
+              colors_used: logo.colors_used,
+              ai_prompt_used: logo.ai_prompt_used,
+            },
+            flowContext: {
+              ...flowContext,
+              // Add logo-specific context
+            },
+          };
+
+          updateModule(newVariantModule.id, {
+            name: `Logo Variant #${logo.id} (Generated)`,
+            status: 'done',
+            inputs: {
+              variantId: logo.id,
+              generatorModuleId: module.id,
+            },
+            outputs: variantOutputs,
+          });
+
+          // Create connection from generator to variant
+          addConnection({
+            sourceModuleId: module.id,
+            sourcePortId: 'out-1',
+            targetModuleId: newVariantModule.id,
+            targetPortId: 'in-1',
+            dataType: 'json' as any,
+          });
+        }
+      }
+
+      // Update generator module status
       const logoOptions: LogoOptionsPackage = {
         brand_name: logoBrief.brand_name,
         num_variants: mockLogos.length,
         options: mockLogos,
       };
 
-      // Create outputs (without chosen logo yet)
       const newOutputs: LogoGeneratorOutputs = {
         logoOptions,
         logoLog: `Logo generation completed\n` +
@@ -113,16 +186,15 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
                  `Variants: ${mockLogos.length}\n` +
                  `Language: ${flowContext.language}\n` +
                  `Timestamp: ${new Date().toISOString()}`,
-        flowContext, // Propagate to downstream modules
+        flowContext,
       };
 
-      // Update module - status is 'warning' to indicate pending selection
       updateModule(module.id, {
-        status: 'warning', // Yellow state = pending selection
+        status: 'done',
         outputs: newOutputs
       });
 
-      addLog('success', `Logo variants generated. Please select a final logo.`, module.id);
+      addLog('success', `${mockLogos.length} logo variants generated as separate nodes.`, module.id);
 
     } catch (err: any) {
       const errorMsg = err.message || 'Unknown error occurred';
@@ -134,39 +206,6 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
     }
   };
 
-  const handleLogoSelection = (logoId: number) => {
-    setSelectedLogoId(logoId);
-  };
-
-  const handleSetFinalLogo = () => {
-    if (!selectedLogoId || !outputs?.logoOptions) return;
-
-    const selectedOption = outputs.logoOptions.options.find(opt => opt.id === selectedLogoId);
-    if (!selectedOption) return;
-
-    // Create chosen logo object
-    const chosenLogo: ChosenLogo = {
-      brand_name: outputs.logoOptions.brand_name,
-      final_logo_option_id: selectedLogoId,
-      final_logo_url: selectedOption.image_url,
-      chosen_at: new Date().toISOString(),
-      source_module: 'LogoGenerator4A',
-    };
-
-    // Update outputs with chosen logo
-    const updatedOutputs: LogoGeneratorOutputs = {
-      ...outputs,
-      chosenLogo,
-    };
-
-    // Update module to 'done' state
-    updateModule(module.id, {
-      status: 'done',
-      outputs: updatedOutputs
-    });
-
-    addLog('success', `Final logo selected: Option #${selectedLogoId}`, module.id);
-  };
 
   // Listen for external run trigger from ModuleBlock Play button
   React.useEffect(() => {
@@ -182,10 +221,8 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
   // Determine status light color
   const getStatusLight = () => {
-    if (module.status === 'done' && outputs?.chosenLogo) {
-      return '🟢'; // Green - final logo selected
-    } else if (module.status === 'warning' && outputs?.logoOptions) {
-      return '🟡'; // Yellow - pending selection
+    if (module.status === 'done' && outputs?.logoOptions) {
+      return '🟢'; // Green - variants generated
     } else if (module.status === 'error') {
       return '🔴'; // Red - error
     } else if (module.status === 'invalid') {
@@ -202,8 +239,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         <div className="flex items-center gap-2">
           <span className="text-2xl">{getStatusLight()}</span>
           <span className="text-xs text-gray-400">
-            {module.status === 'warning' && outputs?.logoOptions ? `Pending Logo Selection (${outputs.logoOptions.num_variants} options)` :
-             module.status === 'done' && outputs?.chosenLogo ? `Selected: Option #${outputs.chosenLogo.final_logo_option_id}` :
+            {module.status === 'done' && outputs?.logoOptions ? `Generated ${outputs.logoOptions.num_variants} logo variants` :
              module.status === 'invalid' ? 'Outdated - Re-run Required' :
              'Ready to Generate Logos'}
           </span>
@@ -214,7 +250,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       {/* Info */}
       <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#3A3A3A]/50 rounded-lg">
         <p className="text-xs text-gray-400 mb-3">
-          Generate logo variants using AI. Connect from Naming Engine to get started.
+          Generate logo variants using AI. Each variant will appear as a separate node on the canvas. Connect from Naming Engine to get started.
         </p>
 
         {/* Variants selector - only show when module is idle/ready */}
@@ -249,92 +285,17 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         </div>
       )}
 
-      {/* Pending Selection Warning */}
-      {module.status === 'warning' && outputs?.logoOptions && !outputs?.chosenLogo && (
-        <div className="px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+      {/* Success Display */}
+      {module.status === 'done' && outputs?.logoOptions && (
+        <div className="px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-lg">
           <div className="flex items-center gap-2">
-            <ExclamationTriangleIcon className="w-4 h-4 text-yellow-400" />
-            <span className="text-xs text-yellow-300 font-medium">⚠ Please choose a final logo to continue.</span>
+            <CheckCircleIcon className="w-5 h-5 text-green-400" />
+            <span className="text-xs text-green-300 font-medium">Generated Successfully</span>
           </div>
-        </div>
-      )}
-
-      {/* Logo Options Display */}
-      {outputs?.logoOptions && (
-        <div className="space-y-4 pt-4 border-t-2 border-pink-500/30 bg-pink-500/5 -mx-3 px-3 py-4 rounded-b-xl">
-          {/* Header */}
-          <div className="text-sm text-pink-400 uppercase tracking-wider font-bold flex items-center gap-2">
-            <PhotoIcon className="w-5 h-5 text-pink-400" />
-            {outputs.chosenLogo ? '✓ Logo Selected' : `📝 ${outputs.logoOptions.num_variants} Logo Options`}
-          </div>
-
-          {/* Final Logo Display (when chosen) */}
-          {outputs.chosenLogo && (
-            <div className="px-4 py-3 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircleIcon className="w-5 h-5 text-green-400" />
-                <span className="text-sm text-green-400 font-semibold">Final Logo Selected</span>
-              </div>
-              <div className="flex gap-4">
-                <img
-                  src={outputs.chosenLogo.final_logo_url}
-                  alt={`Logo ${outputs.chosenLogo.final_logo_option_id}`}
-                  className="w-32 h-32 rounded-lg border-2 border-green-500/50"
-                />
-                <div className="flex-1">
-                  <p className="text-lg text-white font-bold">Option #{outputs.chosenLogo.final_logo_option_id}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Selected: {new Date(outputs.chosenLogo.chosen_at).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Logo Selection UI - Only show if no logo chosen yet */}
-          {!outputs.chosenLogo && (
-            <div className="space-y-3">
-              {outputs.logoOptions.options.map((option) => (
-                <label
-                  key={option.id}
-                  className={`flex items-center gap-3 p-3 bg-[#1A1A1A] border rounded-lg cursor-pointer hover:border-pink-500/50 transition-colors ${
-                    selectedLogoId === option.id ? 'border-pink-500 bg-pink-500/10' : 'border-[#3A3A3A]'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="finalLogo"
-                    value={option.id}
-                    checked={selectedLogoId === option.id}
-                    onChange={() => handleLogoSelection(option.id)}
-                    className="w-4 h-4 text-pink-500"
-                  />
-                  <img
-                    src={option.image_url}
-                    alt={`Logo option ${option.id}`}
-                    className="w-16 h-16 rounded border border-[#3A3A3A]"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm text-white font-medium">Option #{option.id}</p>
-                    <p className="text-xs text-gray-400">{option.style_summary}</p>
-                  </div>
-                </label>
-              ))}
-
-              {/* Set Final Logo Button */}
-              <button
-                onClick={handleSetFinalLogo}
-                disabled={!selectedLogoId}
-                className={`w-full mt-4 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                  selectedLogoId
-                    ? 'bg-pink-500 hover:bg-pink-600 text-white'
-                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                🔵 Set as Final Logo
-              </button>
-            </div>
-          )}
+          <p className="text-xs text-green-200 mt-1">
+            {outputs.logoOptions.num_variants} logo variant{outputs.logoOptions.num_variants > 1 ? 's' : ''} created as separate nodes.
+            Look to the right to see them →
+          </p>
         </div>
       )}
 

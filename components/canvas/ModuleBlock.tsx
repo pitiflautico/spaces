@@ -15,6 +15,7 @@ import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysi
 import AIEEngineModule from '@/components/modules/AIEEngineModule';
 import NamingEngineModule from '@/components/modules/NamingEngineModule';
 import LogoGeneratorModule from '@/components/modules/LogoGeneratorModule';
+import LogoVariantModule from '@/components/modules/LogoVariantModule';
 
 interface ModuleBlockProps {
   module: Module;
@@ -46,6 +47,8 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <SparklesIcon className="w-5 h-5 text-yellow-400" />;
       case 'icon-generator':
         return <PhotoIcon className="w-5 h-5 text-pink-400" />;
+      case 'logo-variant':
+        return <PhotoIcon className="w-5 h-5 text-purple-400" />;
       case 'marketing-pack':
         return <MegaphoneIcon className="w-5 h-5 text-green-400" />;
       default:
@@ -181,6 +184,9 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
 
       case 'icon-generator':
         return <LogoGeneratorModule module={module} />;
+
+      case 'logo-variant':
+        return <LogoVariantModule module={module} />;
 
       case 'marketing-pack':
         return (

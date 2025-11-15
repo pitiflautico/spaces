@@ -15,6 +15,7 @@ export type ModuleType =
   | 'reader-engine'
   | 'naming-engine'
   | 'icon-generator'
+  | 'logo-variant'
   | 'marketing-pack';
 
 // Data types for connections (v1.1)
@@ -304,4 +305,21 @@ export interface LogoGeneratorOutputs {
   chosenLogo?: ChosenLogo;
   logoLog?: string;
   flowContext?: FlowContext; // Propagate language and preferences to downstream modules
+}
+
+// Logo Variant types (V2.0 - Module 4A individual variants)
+export interface LogoVariantInputs {
+  variantId: number;
+  generatorModuleId: string; // ID of parent Logo Generator module
+}
+
+export interface LogoVariantOutputs {
+  logoData: {
+    image_url: string;
+    brand_name: string;
+    style_summary: string;
+    colors_used: string[];
+    ai_prompt_used: string;
+  };
+  flowContext?: FlowContext; // Propagate language, colors, naming data
 }

@@ -155,8 +155,17 @@ export const useSpaceStore = create<SpaceStore>()(
         ports: {
           input: [{ id: 'in-1', type: 'input', label: 'Naming Package', connected: false, acceptedTypes: [DataType.JSON] }],
           output: [
-            { id: 'out-1', type: 'output', label: 'Logo Options', connected: false, dataType: DataType.IMAGE },
-            { id: 'out-2', type: 'output', label: 'Chosen Logo', connected: false, dataType: DataType.JSON }
+            { id: 'out-1', type: 'output', label: 'Generation Trigger', connected: false, dataType: DataType.JSON },
+          ],
+        },
+      },
+      'logo-variant': {
+        name: 'Logo Variant',
+        size: { width: 320, height: 450 },
+        ports: {
+          input: [{ id: 'in-1', type: 'input', label: 'From Generator', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Logo + Context', connected: false, dataType: DataType.IMAGE }
           ],
         },
       },
