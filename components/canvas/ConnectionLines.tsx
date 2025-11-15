@@ -28,7 +28,8 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
       : (portIndex + 1) / (ports.length + 1);
 
     // The port container has: top: portTop%, transform: translateY(-50%)
-    // This means the port is positioned at portTopPercentage of module height, then shifted up by 50% of its own height
+    // IMPORTANT: Use module.size.height which is the base height
+    // The ports are positioned relative to this height percentage
     const portContainerTop = module.position.y + (module.size.height * portTopPercentage);
 
     // The ball is w-14 h-14 (56px x 56px) and centered in the port container

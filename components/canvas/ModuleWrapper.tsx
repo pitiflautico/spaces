@@ -70,6 +70,26 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
     }
   }, [module.status, module.id, updateModule]);
 
+  // Update module height when content changes (for accurate port positioning)
+  React.useEffect(() => {
+    if (!wrapperRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newHeight = entry.contentRect.height;
+        // Only update if height changed significantly (more than 10px)
+        if (Math.abs(newHeight - module.size.height) > 10) {
+          updateModule(module.id, {
+            size: { ...module.size, height: newHeight }
+          });
+        }
+      }
+    });
+
+    observer.observe(wrapperRef.current);
+    return () => observer.disconnect();
+  }, [module.id, module.size, updateModule]);
+
   // Dragging del módulo completo
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.module-content')) {
