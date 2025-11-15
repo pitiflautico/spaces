@@ -14,6 +14,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedLogoId, setSelectedLogoId] = useState<number | null>(null);
+  const [numVariants, setNumVariants] = useState<number>(3);
 
   const outputs = module.outputs as LogoGeneratorOutputs;
   const space = getCurrentSpace();
@@ -68,7 +69,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         color_palette: appIntelligence?.brandColorsSuggested || ['#1A3B5D', '#FFC700'],
         style: namingPackage?.style || appIntelligence?.designStyle || 'modern minimalistic',
         brand_keywords: namingPackage?.naming_keywords || appIntelligence?.keywords || [],
-        num_variants: 3, // Default to 3 variants
+        num_variants: numVariants, // Use selected number of variants
       };
 
       // TODO: Call AI provider for logo generation
@@ -78,15 +79,25 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       // Simulate AI generation (replace with actual AI call)
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const mockLogos: LogoOption[] = Array.from({ length: logoBrief.num_variants || 3 }, (_, i) => ({
-        id: i + 1,
-        image_url: `https://via.placeholder.com/512x512/1A3B5D/FFC700?text=${encodeURIComponent(logoBrief.brand_name)}+${i + 1}`,
-        style_summary: `${logoBrief.style} logo variant ${i + 1}`,
-        colors_used: logoBrief.color_palette,
-        strengths: `Creative interpretation of ${logoBrief.brand_name}`,
-        weaknesses: 'Placeholder image - needs AI generation',
-        ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en'),
-      }));
+      // Generate logo color from brand palette
+      const primaryColor = logoBrief.color_palette[0]?.replace('#', '') || '3B82F6';
+      const secondaryColor = logoBrief.color_palette[1]?.replace('#', '') || '10B981';
+
+      const mockLogos: LogoOption[] = Array.from({ length: logoBrief.num_variants || 3 }, (_, i) => {
+        // Alternate colors for variety
+        const bgColor = i % 2 === 0 ? primaryColor : secondaryColor;
+        const textColor = i % 2 === 0 ? secondaryColor : primaryColor;
+
+        return {
+          id: i + 1,
+          image_url: `https://placehold.co/512x512/${bgColor}/${textColor}/png?text=${encodeURIComponent(logoBrief.brand_name)}`,
+          style_summary: `${logoBrief.style} logo variant ${i + 1}`,
+          colors_used: logoBrief.color_palette,
+          strengths: `Creative interpretation of ${logoBrief.brand_name}`,
+          weaknesses: 'Placeholder image - needs AI generation',
+          ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en'),
+        };
+      });
 
       const logoOptions: LogoOptionsPackage = {
         brand_name: logoBrief.brand_name,
@@ -202,9 +213,29 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
       {/* Info */}
       <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#3A3A3A]/50 rounded-lg">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 mb-3">
           Generate logo variants using AI. Connect from Naming Engine to get started.
         </p>
+
+        {/* Variants selector - only show when module is idle/ready */}
+        {(!module.status || module.status === 'idle' || module.status === 'invalid') && (
+          <div className="mt-3 pt-3 border-t border-[#3A3A3A]/50">
+            <label className="flex items-center justify-between">
+              <span className="text-xs text-gray-300 font-medium">Number of variants:</span>
+              <select
+                value={numVariants}
+                onChange={(e) => setNumVariants(Number(e.target.value))}
+                className="ml-3 px-3 py-1.5 bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg text-xs text-white focus:outline-none focus:border-pink-500 transition-colors"
+              >
+                <option value={1}>1 variant</option>
+                <option value={2}>2 variants</option>
+                <option value={3}>3 variants</option>
+                <option value={4}>4 variants</option>
+                <option value={5}>5 variants</option>
+              </select>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Error Display */}
