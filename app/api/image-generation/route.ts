@@ -100,10 +100,10 @@ async function handleReplicate(params: {
     // Model-specific parameters
     if (model.includes('recraft-ai/recraft-v3')) {
       input.num_images = num_outputs;
-      input.size = '1024';
-      if (aspect_ratio) {
-        input.aspect_ratio = aspect_ratio;
-      }
+      // Recraft V3 requires size in "WIDTHxHEIGHT" format
+      // Valid sizes: "1024x1024", "1365x1024", "1024x1365", etc.
+      input.size = '1024x1024';
+      // Recraft V3 uses size parameter instead of aspect_ratio
     } else if (model.includes('flux')) {
       input.num_outputs = num_outputs;
       input.aspect_ratio = aspect_ratio || '1:1';
