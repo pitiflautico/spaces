@@ -11,7 +11,6 @@ interface LocalProjectAnalysisModuleProps {
 
 export default function LocalProjectAnalysisModule({ module }: LocalProjectAnalysisModuleProps) {
   const { updateModule } = useSpaceStore();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [inputs, setInputs] = useState<LocalProjectAnalysisInputs>({
     localProjectPath: module.inputs.localProjectPath || '',
@@ -25,77 +24,69 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
     updateModule(module.id, { inputs: newInputs });
   };
 
-  const handleFolderIconClick = () => {
-    // Show info message before opening folder selector
-    const proceed = confirm(
-      '📁 Path Detection\n\n' +
-      'This will open a folder selector to detect the project path.\n\n' +
-      '⚠️ IMPORTANT: No files will be uploaded!\n' +
-      'We only read the folder name to auto-complete the path field.\n\n' +
-      'Click OK to continue.'
-    );
+  const handleSelectFolder = async () => {
+    try {
+      // Check if File System Access API is supported
+      if ('showDirectoryPicker' in window) {
+        // @ts-ignore - File System Access API
+        const dirHandle = await window.showDirectoryPicker();
+        const folderName = dirHandle.name;
 
-    if (proceed) {
-      fileInputRef.current?.click();
-    }
-  };
+        // Detect OS and construct path
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isMac = userAgent.includes('mac');
+        const isWindows = userAgent.includes('win');
 
-  const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      // Get the first file to extract the path
-      const firstFile = files[0];
-      // Extract path from webkitRelativePath (format: "foldername/...")
-      const pathParts = firstFile.webkitRelativePath.split('/');
-      const folderName = pathParts[0];
+        let detectedPath = '';
+        if (isMac) {
+          detectedPath = `/Users/${process.env.USER || 'user'}/Projects/${folderName}`;
+        } else if (isWindows) {
+          detectedPath = `C:\\Users\\${process.env.USERNAME || 'user'}\\Documents\\${folderName}`;
+        } else {
+          detectedPath = `/home/${process.env.USER || 'user'}/projects/${folderName}`;
+        }
 
-      // Detect OS
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMac = userAgent.includes('mac');
-      const isWindows = userAgent.includes('win');
+        // Set the path
+        handleInputChange('localProjectPath', detectedPath);
 
-      let detectedPath = '';
-      if (isMac) {
-        detectedPath = `/Users/${process.env.USER || 'user'}/Projects/${folderName}`;
-      } else if (isWindows) {
-        detectedPath = `C:\\Users\\${process.env.USERNAME || 'user'}\\Documents\\${folderName}`;
+        // Generate mock outputs and mark module as done
+        const mockOutputs: LocalProjectAnalysisOutputs = {
+          repositoryMetadata: {
+            name: folderName,
+            path: detectedPath,
+            totalFiles: 127,
+            totalSize: '2.4 MB',
+            languages: ['TypeScript', 'JavaScript', 'CSS'],
+            framework: 'Next.js',
+            dependencies: 23,
+          },
+          fileContents: {
+            totalFiles: 127,
+            analyzedFiles: 89,
+            skippedFiles: 38,
+          },
+          repoStructure: {
+            rootFolder: folderName,
+            depth: 5,
+            folders: 18,
+            files: 127,
+          },
+          analysisLog: `Analysis completed for ${folderName}\nFiles processed: 127\nTotal size: 2.4 MB`,
+        };
+
+        // Update module status and outputs
+        updateModule(module.id, {
+          status: 'done',
+          outputs: mockOutputs
+        });
       } else {
-        detectedPath = `/home/${process.env.USER || 'user'}/projects/${folderName}`;
+        alert('Folder selection not supported in this browser. Please use Chrome or Edge, or enter the path manually.');
       }
-
-      // Set the path automatically
-      handleInputChange('localProjectPath', detectedPath);
-
-      // Generate mock outputs and mark module as done
-      const mockOutputs: LocalProjectAnalysisOutputs = {
-        repositoryMetadata: {
-          name: folderName,
-          path: detectedPath,
-          totalFiles: 127,
-          totalSize: '2.4 MB',
-          languages: ['TypeScript', 'JavaScript', 'CSS'],
-          framework: 'Next.js',
-          dependencies: 23,
-        },
-        fileContents: {
-          totalFiles: 127,
-          analyzedFiles: 89,
-          skippedFiles: 38,
-        },
-        repoStructure: {
-          rootFolder: folderName,
-          depth: 5,
-          folders: 18,
-          files: 127,
-        },
-        analysisLog: `Analysis completed for ${folderName}\nFiles processed: 127\nTotal size: 2.4 MB`,
-      };
-
-      // Update module status and outputs
-      updateModule(module.id, {
-        status: 'done',
-        outputs: mockOutputs
-      });
+    } catch (error: any) {
+      // User cancelled or error occurred
+      if (error.name !== 'AbortError') {
+        console.error('Error selecting folder:', error);
+      }
     }
   };
 
@@ -124,24 +115,15 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
             />
             <button
               type="button"
-              onClick={handleFolderIconClick}
+              onClick={handleSelectFolder}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors cursor-pointer"
-              title="Select folder to auto-detect path"
+              title="Select folder (Chrome/Edge only)"
             >
               <FolderIcon className="w-4 h-4" />
             </button>
-            {/* Hidden file input for folder selection - only used to detect path */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              {...({ webkitdirectory: '', directory: '' } as any)}
-              onChange={handleFolderSelect}
-              className="hidden"
-              multiple
-            />
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Type the path manually or click <FolderIcon className="w-3 h-3 inline" /> to select folder and auto-detect
+            Enter the path manually or click <FolderIcon className="w-3 h-3 inline" /> to select folder (Chrome/Edge)
           </p>
         </div>
 
