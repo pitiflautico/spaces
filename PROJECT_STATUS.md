@@ -4,15 +4,69 @@
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15 (UX Improvements + Configuration System)
+**Última actualización**: 2025-11-15 (UX Final Refinements + Custom Dialogs)
 **Versión del sistema**: v1.1 (en desarrollo)
-**Fase actual**: ✅ UI refinement + Configuration panel | Próximo: Play/Restart Flow
+**Fase actual**: ✅ UI final polish + Custom dialogs | Próximo: Play/Restart Flow + Persistence
 
 ---
 
 ## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
 
-### ✅ SESIÓN 3: UX Improvements + Configuration System
+### ✅ SESIÓN 3 (Parte 2): UX Final Refinements
+
+**Archivos MODIFICADOS**:
+- ✅ `/components/canvas/ModuleWrapper.tsx` - Play button oculto cuando módulo está "done"
+- ✅ `/components/modules/LocalProjectAnalysisModule.tsx` - Dialog personalizado de permisos
+- ✅ `/components/sidebar/Sidebar.tsx` - Input de espacio acepta espacios (onKeyDown)
+
+**Funcionalidad implementada**:
+1. ✅ **Custom Permission Dialog**: Dialog personalizado antes de abrir folder selector
+   - Reemplaza el alert del sistema con UI elegante
+   - Mensaje claro: "Solo lectura, no upload de archivos"
+   - Botones Cancel/Allow Access
+   - z-index alto para overlay completo
+2. ✅ **Play button inteligente**: Se oculta completamente cuando módulo está "done"
+   - Antes: Deshabilitado (confuso)
+   - Ahora: Oculto (más claro)
+   - Solo visible cuando módulo está idle o puede ejecutarse
+3. ✅ **Settings button condicional**: Solo aparece en módulos que lo necesitan
+   - hasSettings prop en ModuleWrapper
+   - Solo LocalProjectAnalysis muestra settings
+   - Otros módulos: espaciador vacío
+4. ✅ **Input de nombre de espacio arreglado**:
+   - Cambiado onKeyPress → onKeyDown
+   - Ahora acepta espacios correctamente
+   - Mejora compatibilidad con navegadores
+
+**Código de referencia**:
+```tsx
+// ModuleWrapper.tsx - Play button oculto
+{onRun && module.status !== 'done' && (
+  <button onClick={onRun} disabled={module.status === 'running'}>
+    <PlayIcon />
+  </button>
+)}
+
+// LocalProjectAnalysisModule.tsx - Dialog personalizado
+{showPermissionDialog && (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center">
+    <div className="bg-[#1A1A1A] rounded-2xl p-6">
+      <h3>Folder Access Permission</h3>
+      <p>This will only read folder information...</p>
+      <button onClick={handleConfirmFolderSelection}>Allow Access</button>
+    </div>
+  </div>
+)}
+
+// Sidebar.tsx - onKeyDown en lugar de onKeyPress
+<input
+  value={newSpaceName}
+  onChange={(e) => setNewSpaceName(e.target.value)}
+  onKeyDown={(e) => e.key === 'Enter' && handleCreateSpace()}
+/>
+```
+
+### ✅ SESIÓN 3 (Parte 1): UX Improvements + Configuration System
 
 **Archivos NUEVOS**:
 - ✅ `/components/configuration/ConfigurationPanel.tsx` - Panel de configuración completo
@@ -22,7 +76,7 @@
 - ✅ `/components/modules/LocalProjectAnalysisModule.tsx` - Mejora UX folder selection + outputs
 - ✅ `/components/sidebar/Sidebar.tsx` - Limpieza de items no usados + botón Configuration
 - ✅ `/types/index.ts` - Añadido SpaceConfiguration interface
-- ✅ `/lib/store.ts` - Añadido updateSpaceConfiguration()
+- ✅ `/lib/store.ts` - Añadido updateSpaceConfiguration() + persist middleware
 
 **Funcionalidad implementada**:
 1. ✅ **FloatingToolbar reposicionado**: Ahora está a la derecha del sidebar (left: 272px)
@@ -30,7 +84,7 @@
 3. ✅ **Toolbar simplificado**: Removidos History y Templates (7 botones → 6 botones)
 4. ✅ **LocalProjectAnalysis UX mejorado**:
    - Al seleccionar carpeta, automáticamente detecta path y genera outputs
-   - No más alerts molestos
+   - Dialog personalizado reemplaza alert del sistema
    - Outputs ahora muestran información formateada (no botones de descarga)
    - Estado automático a "done" con metadata mock
 5. ✅ **Sidebar limpio**: Removidas secciones no usadas (Home, AI Suite, Stock, Community, Pinned, History, Get a plan)
@@ -40,6 +94,10 @@
    - Preferences (Auto Save)
    - Modal elegante con save/cancel
 7. ✅ **SpaceConfiguration**: Tipo nuevo para configuración persistente por space
+8. ✅ **Persistence con Zustand**: Auto-save a localStorage implementado
+   - Middleware persist configurado
+   - Guarda spaces y currentSpaceId automáticamente
+   - Recarga estado al iniciar aplicación
 
 **Mejoras de UX**:
 ```tsx

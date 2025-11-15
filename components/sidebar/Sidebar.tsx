@@ -74,7 +74,7 @@ export default function Sidebar() {
                   type="text"
                   value={newSpaceName}
                   onChange={(e) => setNewSpaceName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateSpace()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateSpace()}
                   onBlur={handleCreateSpace}
                   placeholder="Space name..."
                   className="w-full bg-[#2A2A2A] border border-[#3A3A3A] rounded px-2 py-1 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"

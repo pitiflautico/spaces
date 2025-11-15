@@ -258,13 +258,13 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
           <div /> /* Spacer para mantener el play button a la derecha */
         )}
 
-        {/* Play button */}
-        {onRun && (
+        {/* Play button - ocultar cuando ya está done */}
+        {onRun && module.status !== 'done' && (
           <button
             onClick={onRun}
-            disabled={module.status === 'running' || module.status === 'done'}
+            disabled={module.status === 'running'}
             className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
-            title={module.status === 'done' ? 'Module already completed' : 'Run module'}
+            title="Run module"
           >
             <PlayIcon className="w-6 h-6" />
           </button>

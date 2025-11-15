@@ -11,6 +11,7 @@ interface LocalProjectAnalysisModuleProps {
 
 export default function LocalProjectAnalysisModule({ module }: LocalProjectAnalysisModuleProps) {
   const { updateModule } = useSpaceStore();
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   const [inputs, setInputs] = useState<LocalProjectAnalysisInputs>({
     localProjectPath: module.inputs.localProjectPath || '',
@@ -24,7 +25,13 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
     updateModule(module.id, { inputs: newInputs });
   };
 
-  const handleSelectFolder = async () => {
+  const handleSelectFolderClick = () => {
+    setShowPermissionDialog(true);
+  };
+
+  const handleConfirmFolderSelection = async () => {
+    setShowPermissionDialog(false);
+
     try {
       // Check if File System Access API is supported
       if ('showDirectoryPicker' in window) {
@@ -115,7 +122,7 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
             />
             <button
               type="button"
-              onClick={handleSelectFolder}
+              onClick={handleSelectFolderClick}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors cursor-pointer"
               title="Select folder (Chrome/Edge only)"
             >
@@ -224,6 +231,36 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Custom Permission Dialog */}
+      {showPermissionDialog && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1A1A1A] border border-[#3A3A3A] rounded-2xl p-6 max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <FolderIcon className="w-6 h-6 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">Folder Access Permission</h3>
+            </div>
+            <p className="text-sm text-gray-300 mb-6">
+              Marketing Spaces needs to access your project folder to analyze its structure and contents.
+              This will only read folder information and won't upload any files.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowPermissionDialog(false)}
+                className="px-4 py-2 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-gray-300 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmFolderSelection}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+              >
+                Allow Access
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
