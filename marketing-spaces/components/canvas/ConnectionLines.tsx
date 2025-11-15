@@ -1,12 +1,50 @@
 'use client';
 
 import React from 'react';
-import type { Module, ModuleConnection } from '@/types';
+import type { Module, ModuleConnection, DataType } from '@/types';
 
 interface ConnectionLinesProps {
   connections: ModuleConnection[];
   modules: Module[];
 }
+
+const getDataTypeColor = (type: DataType): string => {
+  switch (type) {
+    case 'image':
+      return 'rgb(168, 85, 247)'; // purple-500
+    case 'text':
+      return 'rgb(59, 130, 246)'; // blue-500
+    case 'json':
+      return 'rgb(34, 197, 94)'; // green-500
+    case 'audio':
+      return 'rgb(234, 179, 8)'; // yellow-500
+    case 'video':
+      return 'rgb(239, 68, 68)'; // red-500
+    case 'mixed':
+      return 'rgb(139, 92, 246)'; // violet-500
+    default:
+      return 'rgb(107, 114, 128)'; // gray-500
+  }
+};
+
+const getDataTypeIcon = (type: DataType): string => {
+  switch (type) {
+    case 'image':
+      return '🖼️';
+    case 'text':
+      return '📄';
+    case 'json':
+      return '{ }';
+    case 'audio':
+      return '🔊';
+    case 'video':
+      return '🎬';
+    case 'mixed':
+      return '🔗';
+    default:
+      return '📦';
+  }
+};
 
 export default function ConnectionLines({ connections, modules }: ConnectionLinesProps) {
   const getModuleCenter = (moduleId: string, side: 'left' | 'right') => {
@@ -43,6 +81,12 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
         const end = getModuleCenter(connection.targetModuleId, 'left');
 
         const path = createBezierPath(start.x, start.y, end.x, end.y);
+        const color = getDataTypeColor(connection.dataType);
+        const icon = getDataTypeIcon(connection.dataType);
+
+        // Calculate midpoint for icon
+        const midX = (start.x + end.x) / 2;
+        const midY = (start.y + end.y) / 2;
 
         return (
           <g key={connection.id}>
@@ -50,7 +94,7 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
             <path
               d={path}
               fill="none"
-              stroke="rgba(139, 92, 246, 0.3)"
+              stroke={color.replace('rgb', 'rgba').replace(')', ', 0.3)')}
               strokeWidth="8"
               filter="blur(4px)"
             />
@@ -58,14 +102,15 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
             <path
               d={path}
               fill="none"
-              stroke="rgb(139, 92, 246)"
+              stroke={color}
               strokeWidth="2"
+              className={connection.isValid === false ? 'animate-pulse' : ''}
             />
             {/* Animated dashes */}
             <path
               d={path}
               fill="none"
-              stroke="rgb(199, 162, 255)"
+              stroke={color}
               strokeWidth="2"
               strokeDasharray="5 5"
               opacity="0.5"
@@ -78,6 +123,25 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
                 repeatCount="indefinite"
               />
             </path>
+            {/* Type icon in the middle */}
+            <circle
+              cx={midX}
+              cy={midY}
+              r="12"
+              fill="#1A1A1A"
+              stroke={color}
+              strokeWidth="2"
+            />
+            <text
+              x={midX}
+              y={midY}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="10"
+              fill="white"
+            >
+              {icon}
+            </text>
           </g>
         );
       })}
