@@ -1,17 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import { XMarkIcon, KeyIcon, FolderIcon, Cog6ToothIcon, CpuChipIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, KeyIcon, FolderIcon, Cog6ToothIcon, CpuChipIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import type { SpaceConfiguration } from '@/types';
 import { AIProvider } from '@/types';
+import {
+  getSavedFolders,
+  pickAndSaveFolder,
+  removeFolderHandle,
+  isFileSystemAccessSupported
+} from '@/lib/folder-permissions';
 
 interface ConfigurationPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type Tab = 'general' | 'ai' | 'apikeys';
+type Tab = 'general' | 'ai' | 'apikeys' | 'folders';
 
 export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPanelProps) {
   const { getCurrentSpace, updateSpaceConfiguration } = useSpaceStore();
@@ -28,6 +34,50 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
       },
     }
   );
+
+  const [savedFolders, setSavedFolders] = useState<Array<{ id: string; name: string; path: string; addedAt: number }>>([]);
+  const [isLoadingFolders, setIsLoadingFolders] = useState(false);
+
+  // Load saved folders when panel opens
+  useEffect(() => {
+    if (isOpen) {
+      loadSavedFolders();
+    }
+  }, [isOpen]);
+
+  const loadSavedFolders = async () => {
+    setIsLoadingFolders(true);
+    try {
+      const folders = await getSavedFolders();
+      setSavedFolders(folders.map(f => ({ id: f.id, name: f.name, path: f.path, addedAt: f.addedAt })));
+    } catch (error) {
+      console.error('Error loading saved folders:', error);
+    } finally {
+      setIsLoadingFolders(false);
+    }
+  };
+
+  const handleAddFolder = async () => {
+    try {
+      const folder = await pickAndSaveFolder();
+      if (folder) {
+        await loadSavedFolders();
+      }
+    } catch (error: any) {
+      alert(`Error adding folder: ${error.message}`);
+    }
+  };
+
+  const handleRemoveFolder = async (id: string) => {
+    if (confirm('Remove this folder from saved folders?')) {
+      try {
+        await removeFolderHandle(id);
+        await loadSavedFolders();
+      } catch (error: any) {
+        alert(`Error removing folder: ${error.message}`);
+      }
+    }
+  };
 
   const handleSave = () => {
     if (currentSpace) {
@@ -104,6 +154,19 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
             <div className="flex items-center gap-2">
               <KeyIcon className="w-4 h-4" />
               API Keys
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('folders')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'folders'
+                ? 'bg-[#2A2A2A] text-white'
+                : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <FolderIcon className="w-4 h-4" />
+              Project Folders
             </div>
           </button>
         </div>
@@ -452,6 +515,114 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* FOLDERS TAB */}
+          {activeTab === 'folders' && (
+            <div className="space-y-6">
+              <div className="px-4 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-sm text-blue-300 font-medium mb-2">
+                  📁 Persistent Folder Access
+                </p>
+                <p className="text-xs text-gray-400">
+                  Grant access to project folders once, and Marketing Spaces will remember them.
+                  This eliminates the need to grant permission every time you analyze a project.
+                </p>
+              </div>
+
+              {!isFileSystemAccessSupported() ? (
+                <div className="px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <p className="text-sm text-yellow-300 font-medium">
+                    ⚠️ Not Supported
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Your browser doesn't support the File System Access API. Please use Chrome or Edge.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Add Folder Button */}
+                  <div>
+                    <button
+                      onClick={handleAddFolder}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+                    >
+                      <PlusIcon className="w-5 h-5" />
+                      Add Project Folder
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Select a folder that contains your projects (e.g., ~/Projects or ~/Documents/Code)
+                    </p>
+                  </div>
+
+                  {/* Saved Folders List */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-white">
+                      Saved Folders ({savedFolders.length})
+                    </h3>
+
+                    {isLoadingFolders ? (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-gray-400">Loading folders...</p>
+                      </div>
+                    ) : savedFolders.length === 0 ? (
+                      <div className="px-4 py-8 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg text-center">
+                        <FolderIcon className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        <p className="text-sm text-gray-400">No folders saved yet</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Click "Add Project Folder" above to get started
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {savedFolders.map((folder) => (
+                          <div
+                            key={folder.id}
+                            className="px-4 py-3 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg hover:border-blue-500/50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <FolderIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                  <span className="text-sm font-medium text-white truncate">
+                                    {folder.name}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 truncate font-mono">
+                                  {folder.path}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Added {new Date(folder.addedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveFolder(folder.id)}
+                                className="p-2 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded-lg transition-colors flex-shrink-0"
+                                title="Remove folder"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {savedFolders.length > 0 && (
+                    <div className="px-4 py-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <p className="text-sm text-green-300 font-medium mb-1">
+                        ✓ Folders Saved
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        You can now select projects from these folders in the Local Project Analysis module
+                        without granting permission each time.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
