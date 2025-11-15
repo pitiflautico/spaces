@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import type { Module, LocalProjectAnalysisInputs, LocalProjectAnalysisOutputs } from '@/types';
 import { FolderIcon, DocumentTextIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
@@ -19,10 +19,22 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
     includeNodeModules: module.inputs.includeNodeModules || false,
   });
 
+  // Sync local state with module.inputs when module updates
+  useEffect(() => {
+    setInputs({
+      localProjectPath: module.inputs.localProjectPath || '',
+      includeHiddenFiles: module.inputs.includeHiddenFiles || false,
+      includeNodeModules: module.inputs.includeNodeModules || false,
+    });
+  }, [module.inputs]);
+
   const handleInputChange = (field: keyof LocalProjectAnalysisInputs, value: any) => {
     const newInputs = { ...inputs, [field]: value };
+    console.log('[LocalProjectAnalysis] handleInputChange:', field, '=', value);
+    console.log('[LocalProjectAnalysis] newInputs:', newInputs);
     setInputs(newInputs);
     updateModule(module.id, { inputs: newInputs });
+    console.log('[LocalProjectAnalysis] updateModule called with inputs:', newInputs);
   };
 
   const handleSelectFolderClick = () => {
@@ -53,39 +65,9 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
           detectedPath = `/home/${process.env.USER || 'user'}/projects/${folderName}`;
         }
 
-        // Set the path
+        // ONLY set the path - don't mark as done
+        // User must click Play button to actually analyze the project
         handleInputChange('localProjectPath', detectedPath);
-
-        // Generate mock outputs and mark module as done
-        const mockOutputs: LocalProjectAnalysisOutputs = {
-          repositoryMetadata: {
-            name: folderName,
-            path: detectedPath,
-            totalFiles: 127,
-            totalSize: '2.4 MB',
-            languages: ['TypeScript', 'JavaScript', 'CSS'],
-            framework: 'Next.js',
-            dependencies: 23,
-          },
-          fileContents: {
-            totalFiles: 127,
-            analyzedFiles: 89,
-            skippedFiles: 38,
-          },
-          repoStructure: {
-            rootFolder: folderName,
-            depth: 5,
-            folders: 18,
-            files: 127,
-          },
-          analysisLog: `Analysis completed for ${folderName}\nFiles processed: 127\nTotal size: 2.4 MB`,
-        };
-
-        // Update module status and outputs
-        updateModule(module.id, {
-          status: 'done',
-          outputs: mockOutputs
-        });
       } else {
         alert('Folder selection not supported in this browser. Please use Chrome or Edge, or enter the path manually.');
       }

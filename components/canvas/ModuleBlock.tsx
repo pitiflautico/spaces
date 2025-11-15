@@ -61,8 +61,12 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
       if (module.type === 'local-project-analysis') {
         const inputs = module.inputs as any;
 
+        console.log('[ModuleBlock] handleRun - module.inputs:', module.inputs);
+        console.log('[ModuleBlock] handleRun - inputs.localProjectPath:', inputs.localProjectPath);
+
         // Validate that project path is configured
         if (!inputs.localProjectPath || inputs.localProjectPath.trim() === '') {
+          console.error('[ModuleBlock] Validation failed - localProjectPath is empty or missing');
           throw new Error(
             'No has configurado la ruta del proyecto.\n\n' +
             'Por favor:\n' +
@@ -71,6 +75,8 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
             '3. Luego ejecuta el módulo con el botón Play ▶'
           );
         }
+
+        console.log('[ModuleBlock] Validation passed - calling API with path:', inputs.localProjectPath);
 
         const response = await fetch('/api/local-analysis', {
           method: 'POST',
