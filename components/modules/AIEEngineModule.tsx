@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import type { Module, AIEEngineOutputs, AppIntelligence, AIConfiguration } from '@/types';
+import type { Module, AIEEngineOutputs, AppIntelligence, AIConfiguration, FlowContext } from '@/types';
 import { AIProvider } from '@/types';
-import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon, LanguageIcon } from '@heroicons/react/24/outline';
 import aiProvider from '@/lib/ai-provider';
 import '@/lib/adapters'; // Initialize adapters
 
@@ -38,6 +38,18 @@ const AI_MODELS = {
   ],
 };
 
+// Supported languages for the pipeline
+const LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'ja', name: '日本語', flag: '🇯🇵' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
+];
+
 export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -46,10 +58,11 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const outputs = module.outputs as AIEEngineOutputs;
   const space = getCurrentSpace();
 
-  // Get module inputs (will store AI config here)
+  // Get module inputs (will store AI config and language here)
   const inputs = (module.inputs || {}) as any;
   const selectedProvider: AIProvider = inputs.aiProvider || space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || AI_MODELS[selectedProvider as keyof typeof AI_MODELS]?.[0]?.id;
+  const selectedLanguage = inputs.language || 'en'; // Default to English
 
   const handleProviderChange = (provider: AIProvider) => {
     const defaultModel = AI_MODELS[provider]?.[0]?.id;
@@ -67,6 +80,15 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       inputs: {
         ...inputs,
         aiModel: modelId,
+      },
+    });
+  };
+
+  const handleLanguageChange = (languageCode: string) => {
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        language: languageCode,
       },
     });
   };
@@ -151,12 +173,21 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         }
       }
 
+      // Create flow context to propagate to downstream modules
+      const flowContext: FlowContext = {
+        language: selectedLanguage,
+        targetMarket: appIntelligence.targetAudience, // Infer from AI analysis
+        brandTone: appIntelligence.tone,
+      };
+
       // Create outputs
       const newOutputs: AIEEngineOutputs = {
         appIntelligence,
         aieLog: `Analysis completed using ${response.providerUsed} (${response.model})\n` +
                 `Tokens used: ${response.tokensUsed || 'N/A'}\n` +
-                `Timestamp: ${new Date().toISOString()}`
+                `Language: ${selectedLanguage}\n` +
+                `Timestamp: ${new Date().toISOString()}`,
+        flowContext, // Propagate to downstream modules
       };
 
       // Update module
@@ -222,6 +253,28 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Language Selector */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5 flex items-center gap-2">
+            <LanguageIcon className="w-4 h-4" />
+            Output Language
+          </label>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.flag} {lang.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1.5">
+            This language will be used for all outputs in the pipeline
+          </p>
         </div>
 
         {/* API Key Status - Only show if missing or error */}

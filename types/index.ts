@@ -196,6 +196,7 @@ export interface AppIntelligence {
 export interface AIEEngineOutputs {
   appIntelligence?: AppIntelligence;
   aieLog?: string;
+  flowContext?: FlowContext; // Propagate language and preferences to downstream modules
 }
 
 // AI Provider response (V2.0)
@@ -205,6 +206,15 @@ export interface AIProviderResponse {
   tokensUsed?: number;
   providerUsed: string;
   model: string;
+}
+
+// Flow Context (V2.0 - Global Pipeline Configuration)
+// This context is propagated through all modules in the pipeline
+export interface FlowContext {
+  language?: string; // 'en', 'es', 'fr', 'de', 'pt', 'it', 'ja', 'zh', etc.
+  targetMarket?: string; // 'US', 'EU', 'LATAM', 'ASIA', 'Global', etc.
+  brandTone?: string; // Inherited from AIE Engine
+  customPreferences?: Record<string, any>; // Extensible for future needs
 }
 
 // Naming Engine types (V2.0 - Module 3)
@@ -231,4 +241,5 @@ export interface NamingEngineOutputs {
   namingPackage?: NamingPackage;
   chosenName?: ChosenName;
   namingLog?: string;
+  flowContext?: FlowContext; // Propagate language and preferences to downstream modules
 }

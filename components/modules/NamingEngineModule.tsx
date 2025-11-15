@@ -111,11 +111,12 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         );
       }
 
-      // Get the app intelligence data
+      // Get the app intelligence data and flow context
       const appIntelligence = sourceModule.outputs.appIntelligence;
+      const flowContext = sourceModule.outputs.flowContext || { language: 'en' }; // Default to English
 
-      // Build prompt for AI
-      const prompt = buildNamingPrompt(appIntelligence);
+      // Build prompt for AI (with language from flow context)
+      const prompt = buildNamingPrompt(appIntelligence, flowContext.language || 'en');
 
       // Get API key from space configuration
       const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
@@ -150,12 +151,14 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         }
       }
 
-      // Create outputs (without chosen name yet)
+      // Create outputs (without chosen name yet) + propagate flow context
       const newOutputs: NamingEngineOutputs = {
         namingPackage,
         namingLog: `Naming package generated using ${response.providerUsed} (${response.model})\n` +
                    `Tokens used: ${response.tokensUsed || 'N/A'}\n` +
-                   `Timestamp: ${new Date().toISOString()}`
+                   `Language: ${flowContext.language}\n` +
+                   `Timestamp: ${new Date().toISOString()}`,
+        flowContext, // Propagate to downstream modules
       };
 
       // Update module - status is 'warning' to indicate pending selection
@@ -441,7 +444,12 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
 /**
  * Build optimized prompt for naming generation
  */
-function buildNamingPrompt(appIntelligence: any): string {
+function buildNamingPrompt(appIntelligence: any, language: string = 'en'): string {
+  // Language-specific instructions
+  const languageInstructions = language === 'en'
+    ? ''
+    : `\n\nIMPORTANT: Generate ALL text outputs (names, slogans, descriptions, rationale) in ${getLanguageName(language)}. The JSON structure remains the same, but all string values must be in ${getLanguageName(language)}.`;
+
   return `You are an expert brand naming specialist. Generate creative, memorable names for an app based on this intelligence:
 
 APP SUMMARY:
@@ -485,9 +493,26 @@ Important guidelines:
 - Consider domain availability (.com, .app, .io)
 - Match the tone and style of the app
 - Be creative but professional
-- Consider international audiences (avoid problematic meanings)
+- Consider international audiences (avoid problematic meanings)${languageInstructions}
 
 Respond ONLY with the JSON object, no additional text.`;
+}
+
+/**
+ * Get language name from language code
+ */
+function getLanguageName(code: string): string {
+  const languageMap: Record<string, string> = {
+    en: 'English',
+    es: 'Spanish',
+    fr: 'French',
+    de: 'German',
+    pt: 'Portuguese',
+    it: 'Italian',
+    ja: 'Japanese',
+    zh: 'Chinese',
+  };
+  return languageMap[code] || 'English';
 }
 
 /**
