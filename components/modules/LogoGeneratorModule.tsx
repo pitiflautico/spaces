@@ -379,25 +379,29 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
           )}
         </div>
 
-        {/* Variants selector - only show when module is idle/ready */}
-        {(!module.status || module.status === 'idle' || module.status === 'invalid') && (
-          <div className="mt-3 pt-3 border-t border-[#3A3A3A]/50">
-            <label className="flex items-center justify-between">
-              <span className="text-xs text-gray-300 font-medium">Number of variants:</span>
-              <select
-                value={numVariants}
-                onChange={(e) => setNumVariants(Number(e.target.value))}
-                className="ml-3 px-3 py-1.5 bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg text-xs text-white focus:outline-none focus:border-pink-500 transition-colors"
-              >
-                <option value={1}>1 variant</option>
-                <option value={2}>2 variants</option>
-                <option value={3}>3 variants</option>
-                <option value={4}>4 variants</option>
-                <option value={5}>5 variants</option>
-              </select>
-            </label>
-          </div>
-        )}
+        {/* Variants selector - always visible */}
+        <div className="mt-3 pt-3 border-t border-[#3A3A3A]/50">
+          <label className="flex items-center justify-between">
+            <span className="text-xs text-gray-300 font-medium">Number of variants:</span>
+            <select
+              value={numVariants}
+              onChange={(e) => setNumVariants(Number(e.target.value))}
+              disabled={isProcessing}
+              className="ml-3 px-3 py-1.5 bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg text-xs text-white focus:outline-none focus:border-pink-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value={1}>1 variant</option>
+              <option value={2}>2 variants</option>
+              <option value={3}>3 variants</option>
+              <option value={4}>4 variants</option>
+              <option value={5}>5 variants</option>
+            </select>
+          </label>
+          {module.status === 'done' && outputs?.logoOptions && (
+            <p className="text-xs text-gray-500 mt-1.5">
+              Last run: {outputs.logoOptions.num_variants} variant{outputs.logoOptions.num_variants > 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Error Display */}

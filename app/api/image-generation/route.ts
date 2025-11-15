@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     console.log(`🎨 Image generation request: ${provider} - ${model}`);
+    console.log(`📊 Request params: num_outputs=${num_outputs}, width=${width}, height=${height}`);
 
     // Validate inputs
     if (!provider || !model || !prompt) {
@@ -117,7 +118,7 @@ async function handleReplicate(params: {
     }
 
     console.log(`🔄 Calling Replicate API: ${model}`);
-    console.log(`📝 Input:`, JSON.stringify(input, null, 2));
+    console.log(`📝 Input (num_outputs=${num_outputs}):`, JSON.stringify(input, null, 2));
 
     // Create prediction using model endpoint
     const apiUrl = `https://api.replicate.com/v1/models/${model}/predictions`;
@@ -185,15 +186,21 @@ async function handleReplicate(params: {
 
     // Extract image URLs
     let images: string[] = [];
+    console.log(`📦 Result output type:`, typeof result.output);
+    console.log(`📦 Result output:`, JSON.stringify(result.output).substring(0, 200));
+
     if (Array.isArray(result.output)) {
       images = result.output;
+      console.log(`✅ Extracted ${images.length} images from array`);
     } else if (typeof result.output === 'string') {
       images = [result.output];
+      console.log(`✅ Extracted 1 image from string`);
     } else if (result.output?.images) {
       images = result.output.images;
+      console.log(`✅ Extracted ${images.length} images from output.images`);
     }
 
-    console.log(`✅ Generated ${images.length} images`);
+    console.log(`✅ Final: Generated ${images.length} images (requested: ${num_outputs})`);
 
     return NextResponse.json({
       success: true,
