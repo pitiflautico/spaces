@@ -11,10 +11,13 @@ interface ConfigurationPanelProps {
   onClose: () => void;
 }
 
+type Tab = 'general' | 'ai' | 'apikeys';
+
 export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPanelProps) {
   const { getCurrentSpace, updateSpaceConfiguration } = useSpaceStore();
   const currentSpace = getCurrentSpace();
 
+  const [activeTab, setActiveTab] = useState<Tab>('general');
   const [config, setConfig] = useState<SpaceConfiguration>(
     currentSpace?.configuration || {
       projectPath: '',
@@ -47,7 +50,7 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#2A2A2A]">
           <div className="flex items-center gap-3">
@@ -62,114 +65,130 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 px-6 pt-4 border-b border-[#2A2A2A]">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'general'
+                ? 'bg-[#2A2A2A] text-white'
+                : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <FolderIcon className="w-4 h-4" />
+              General
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('ai')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'ai'
+                ? 'bg-[#2A2A2A] text-white'
+                : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <CpuChipIcon className="w-4 h-4" />
+              AI Provider
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('apikeys')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'apikeys'
+                ? 'bg-[#2A2A2A] text-white'
+                : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <KeyIcon className="w-4 h-4" />
+              API Keys
+            </div>
+          </button>
+        </div>
+
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          {/* Project Path */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <FolderIcon className="w-5 h-5 text-blue-400" />
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                Project Path
-              </h3>
-            </div>
-            <input
-              type="text"
-              value={config.projectPath || ''}
-              onChange={(e) => setConfig({ ...config, projectPath: e.target.value })}
-              placeholder="/Users/dani/Projects/myapp"
-              className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              Default path for this space's project files
-            </p>
-          </div>
-
-          {/* API Keys */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <KeyIcon className="w-5 h-5 text-purple-400" />
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                API Keys
-              </h3>
-            </div>
-            <div className="space-y-3">
-              {/* OpenAI */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          {/* GENERAL TAB */}
+          {activeTab === 'general' && (
+            <div className="space-y-6">
+              {/* Project Path */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">OpenAI API Key</label>
+                <h3 className="text-sm font-semibold text-white mb-3">Project Path</h3>
                 <input
-                  type="password"
-                  value={config.apiKeys?.openai || ''}
-                  onChange={(e) => handleApiKeyChange('openai', e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  type="text"
+                  value={config.projectPath || ''}
+                  onChange={(e) => setConfig({ ...config, projectPath: e.target.value })}
+                  placeholder="/Users/dani/Projects/myapp"
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Default path for this space's project files
+                </p>
               </div>
 
-              {/* Anthropic */}
+              {/* Preferences */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Anthropic API Key</label>
-                <input
-                  type="password"
-                  value={config.apiKeys?.anthropic || ''}
-                  onChange={(e) => handleApiKeyChange('anthropic', e.target.value)}
-                  placeholder="sk-ant-..."
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-
-              {/* Stability AI */}
-              <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Stability AI API Key</label>
-                <input
-                  type="password"
-                  value={config.apiKeys?.stability || ''}
-                  onChange={(e) => handleApiKeyChange('stability', e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-
-              {/* Replicate */}
-              <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Replicate API Key</label>
-                <input
-                  type="password"
-                  value={config.apiKeys?.replicate || ''}
-                  onChange={(e) => handleApiKeyChange('replicate', e.target.value)}
-                  placeholder="r8_..."
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-
-              {/* Together */}
-              <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Together API Key</label>
-                <input
-                  type="password"
-                  value={config.apiKeys?.together || ''}
-                  onChange={(e) => handleApiKeyChange('together', e.target.value)}
-                  placeholder="..."
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
-                />
+                <h3 className="text-sm font-semibold text-white mb-3">Preferences</h3>
+                <div className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg">
+                  <div>
+                    <label className="text-sm text-gray-300 font-medium">Auto Save</label>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Automatically save changes as you work
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="autoSave"
+                        checked={config.preferences?.autoSave === true}
+                        onChange={() =>
+                          setConfig({
+                            ...config,
+                            preferences: { ...config.preferences, autoSave: true },
+                          })
+                        }
+                        className="text-green-500"
+                      />
+                      <span className="text-sm text-gray-400">On</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="autoSave"
+                        checked={config.preferences?.autoSave === false}
+                        onChange={() =>
+                          setConfig({
+                            ...config,
+                            preferences: { ...config.preferences, autoSave: false },
+                          })
+                        }
+                        className="text-green-500"
+                      />
+                      <span className="text-sm text-gray-400">Off</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3">
-              Your API keys are stored locally and never shared
-            </p>
-          </div>
+          )}
 
-          {/* AI Provider Configuration */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <CpuChipIcon className="w-5 h-5 text-orange-400" />
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                AI Provider (V2.0)
-              </h3>
-            </div>
-            <div className="space-y-3">
+          {/* AI PROVIDER TAB */}
+          {activeTab === 'ai' && (
+            <div className="space-y-6">
+              <div className="px-4 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-sm text-blue-300">
+                  Configure which AI provider will be used for AI-powered modules (AIE Engine, etc.)
+                </p>
+              </div>
+
               {/* Provider Selection */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">AI Provider</label>
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Select AI Provider
+                </label>
                 <select
                   value={config.aiConfig?.provider || AIProvider.LOCAL}
                   onChange={(e) =>
@@ -182,7 +201,7 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                       },
                     })
                   }
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
                 >
                   <option value={AIProvider.LOCAL}>Mock / Local (for testing)</option>
                   <option value={AIProvider.TOGETHER}>Together AI</option>
@@ -190,11 +209,14 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                   <option value={AIProvider.OPENAI}>OpenAI</option>
                   <option value={AIProvider.ANTHROPIC}>Anthropic</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-2">
+                  Choose your preferred AI provider for text generation and analysis
+                </p>
               </div>
 
               {/* Model */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Model</label>
+                <label className="block text-sm font-semibold text-white mb-2">Model</label>
                 <input
                   type="text"
                   value={config.aiConfig?.model || ''}
@@ -215,16 +237,21 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                       ? 'claude-3-opus-20240229'
                       : config.aiConfig?.provider === AIProvider.TOGETHER
                       ? 'together_ai/llama-3-70b'
+                      : config.aiConfig?.provider === AIProvider.REPLICATE
+                      ? 'meta/llama-2-70b-chat'
                       : 'mock-gpt-4'
                   }
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Specific model to use (leave empty for default)
+                </p>
               </div>
 
               {/* Temperature */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">
-                  Temperature: {config.aiConfig?.temperature || 0.7}
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Temperature: <span className="text-orange-400">{config.aiConfig?.temperature || 0.7}</span>
                 </label>
                 <input
                   type="range"
@@ -243,13 +270,16 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                       },
                     })
                   }
-                  className="w-full"
+                  className="w-full h-2 bg-[#0A0A0A] rounded-lg appearance-none cursor-pointer accent-orange-500"
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Controls randomness: 0 = focused, 2 = creative
+                </p>
               </div>
 
               {/* Max Tokens */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Max Tokens</label>
+                <label className="block text-sm font-semibold text-white mb-2">Max Tokens</label>
                 <input
                   type="number"
                   value={config.aiConfig?.maxTokens || 4096}
@@ -260,72 +290,138 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                         ...config.aiConfig,
                         provider: config.aiConfig?.provider || AIProvider.LOCAL,
                         model: config.aiConfig?.model || '',
-                        maxTokens: parseInt(e.target.value),
+                        maxTokens: parseInt(e.target.value) || 4096,
                       },
                     })
                   }
                   placeholder="4096"
-                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Maximum length of AI responses
+                </p>
               </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-3">
-              Configure which AI provider modules will use for generation
-            </p>
-          </div>
 
-          {/* Preferences */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Cog6ToothIcon className="w-5 h-5 text-green-400" />
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                Preferences
-              </h3>
-            </div>
-            <div className="space-y-3">
-              {/* Auto Save */}
-              <div className="flex items-center justify-between px-4 py-3 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg">
-                <div>
-                  <label className="text-sm text-gray-300 font-medium">Auto Save</label>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Automatically save changes as you work
+              {/* API Key Link */}
+              {config.aiConfig?.provider && config.aiConfig.provider !== AIProvider.LOCAL && (
+                <div className="px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <p className="text-sm text-yellow-300">
+                    Don't forget to add your{' '}
+                    <button
+                      onClick={() => setActiveTab('apikeys')}
+                      className="underline font-medium hover:text-yellow-200"
+                    >
+                      {config.aiConfig.provider === AIProvider.OPENAI && 'OpenAI'}
+                      {config.aiConfig.provider === AIProvider.ANTHROPIC && 'Anthropic'}
+                      {config.aiConfig.provider === AIProvider.REPLICATE && 'Replicate'}
+                      {config.aiConfig.provider === AIProvider.TOGETHER && 'Together AI'}
+                      {' '}API key
+                    </button>
+                    {' '}in the API Keys tab
                   </p>
                 </div>
-                <div className="flex gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="autoSave"
-                      checked={config.preferences?.autoSave === true}
-                      onChange={() =>
-                        setConfig({
-                          ...config,
-                          preferences: { ...config.preferences, autoSave: true },
-                        })
-                      }
-                      className="text-green-500"
-                    />
-                    <span className="text-sm text-gray-400">On</span>
+              )}
+            </div>
+          )}
+
+          {/* API KEYS TAB */}
+          {activeTab === 'apikeys' && (
+            <div className="space-y-6">
+              <div className="px-4 py-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <p className="text-sm text-purple-300">
+                  Your API keys are stored locally in your browser and never shared with anyone
+                </p>
+              </div>
+
+              {/* Show all API key inputs */}
+              <div className="space-y-4">
+                {/* OpenAI */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    OpenAI API Key
+                    {config.aiConfig?.provider === AIProvider.OPENAI && (
+                      <span className="ml-2 text-xs text-green-400">(Currently selected)</span>
+                    )}
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="autoSave"
-                      checked={config.preferences?.autoSave === false}
-                      onChange={() =>
-                        setConfig({
-                          ...config,
-                          preferences: { ...config.preferences, autoSave: false },
-                        })
-                      }
-                      className="text-green-500"
-                    />
-                    <span className="text-sm text-gray-400">Off</span>
+                  <input
+                    type="password"
+                    value={config.apiKeys?.openai || ''}
+                    onChange={(e) => handleApiKeyChange('openai', e.target.value)}
+                    placeholder="sk-..."
+                    className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Anthropic */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Anthropic API Key
+                    {config.aiConfig?.provider === AIProvider.ANTHROPIC && (
+                      <span className="ml-2 text-xs text-green-400">(Currently selected)</span>
+                    )}
                   </label>
+                  <input
+                    type="password"
+                    value={config.apiKeys?.anthropic || ''}
+                    onChange={(e) => handleApiKeyChange('anthropic', e.target.value)}
+                    placeholder="sk-ant-..."
+                    className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Replicate */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Replicate API Key
+                    {config.aiConfig?.provider === AIProvider.REPLICATE && (
+                      <span className="ml-2 text-xs text-green-400">(Currently selected)</span>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    value={config.apiKeys?.replicate || ''}
+                    onChange={(e) => handleApiKeyChange('replicate', e.target.value)}
+                    placeholder="r8_..."
+                    className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Together */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Together AI API Key
+                    {config.aiConfig?.provider === AIProvider.TOGETHER && (
+                      <span className="ml-2 text-xs text-green-400">(Currently selected)</span>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    value={config.apiKeys?.together || ''}
+                    onChange={(e) => handleApiKeyChange('together', e.target.value)}
+                    placeholder="..."
+                    className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Stability AI */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Stability AI API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={config.apiKeys?.stability || ''}
+                    onChange={(e) => handleApiKeyChange('stability', e.target.value)}
+                    placeholder="sk-..."
+                    className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    For image generation modules
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
