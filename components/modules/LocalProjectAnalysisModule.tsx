@@ -115,11 +115,11 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
               type="button"
               onClick={handleFolderIconClick}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors cursor-pointer"
-              title="Browse folders"
+              title="Select folder to auto-detect path"
             >
               <FolderIcon className="w-4 h-4" />
             </button>
-            {/* Hidden file input for folder selection */}
+            {/* Hidden file input for folder selection - only used to detect path */}
             <input
               ref={fileInputRef}
               type="file"
@@ -130,7 +130,7 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Enter the absolute path or click the folder icon to browse
+            Type the path manually or click <FolderIcon className="w-3 h-3 inline" /> to select folder and auto-detect
           </p>
         </div>
 
