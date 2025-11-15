@@ -55,6 +55,21 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
 
   const isSelected = selectedModuleId === module.id;
 
+  // Auto-reset stuck modules (after 5 minutes)
+  React.useEffect(() => {
+    if (module.status === 'running') {
+      const timeout = setTimeout(() => {
+        console.warn(`Module ${module.id} stuck in running state for 5 minutes, auto-resetting`);
+        updateModule(module.id, {
+          status: 'error',
+          errorMessage: 'Module timeout - execution took too long. Please try again.'
+        });
+      }, 5 * 60 * 1000); // 5 minutes
+
+      return () => clearTimeout(timeout);
+    }
+  }, [module.status, module.id, updateModule]);
+
   // Dragging del módulo completo
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.module-content')) {
@@ -221,6 +236,30 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
             {/* Título */}
             <h3 className="text-white font-medium text-sm flex-1">{module.name}</h3>
 
+            {/* Status Badge */}
+            {module.status === 'done' && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/20 border border-green-500/40 rounded-full">
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-xs font-semibold text-green-400">Done</span>
+              </div>
+            )}
+            {module.status === 'running' && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/20 border border-blue-500/40 rounded-full">
+                <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-semibold text-blue-400">Running</span>
+              </div>
+            )}
+            {module.status === 'error' && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500/20 border border-red-500/40 rounded-full">
+                <svg className="w-3.5 h-3.5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs font-semibold text-red-400">Error</span>
+              </div>
+            )}
+
             {/* Input types badges (si tiene inputs) */}
             {module.ports.input.length > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 bg-dark-card/50 rounded-full border border-dark-border">
@@ -263,17 +302,35 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
 
           {/* Footer con botones Play y Settings (condicionales) */}
           <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between pointer-events-none">
-            {/* Settings button - solo si el módulo tiene configuración */}
-            {hasSettings ? (
-              <button
-                className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-dark-card/80 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
-                title="Module settings"
-              >
-                <Cog6ToothIcon className="w-5 h-5" />
-              </button>
-            ) : (
-              <div /> /* Spacer para mantener el play button a la derecha */
-            )}
+            {/* Left side buttons */}
+            <div className="flex gap-2">
+              {/* Settings button - solo si el módulo tiene configuración */}
+              {hasSettings && (
+                <button
+                  className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-dark-card/80 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
+                  title="Module settings"
+                >
+                  <Cog6ToothIcon className="w-5 h-5" />
+                </button>
+              )}
+
+              {/* Force Reset button - solo si está bloqueado en running */}
+              {module.status === 'running' && (
+                <button
+                  onClick={() => {
+                    if (confirm('Reset this module? This will stop any running process.')) {
+                      updateModule(module.id, { status: 'idle' });
+                    }
+                  }}
+                  className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-400 hover:text-yellow-300 transition-all"
+                  title="Force reset - Module stuck in running state"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
 
             {/* Play button - SIEMPRE visible para poder re-ejecutar */}
             {onRun && (
@@ -282,12 +339,38 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
                 disabled={module.status === 'running'}
                 className={`pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full transition-all shadow-lg hover:shadow-xl ${
                   module.status === 'done'
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    ? 'bg-green-500 hover:bg-green-600 text-white ring-2 ring-green-400/50'
+                    : module.status === 'error'
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
                     : 'bg-blue-500 hover:bg-blue-600 text-white'
                 } disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50`}
-                title={module.status === 'done' ? 'Re-run module' : 'Run module'}
+                title={
+                  module.status === 'done'
+                    ? '✓ Completed - Click to re-run'
+                    : module.status === 'error'
+                    ? '✗ Error - Click to retry'
+                    : module.status === 'running'
+                    ? 'Running...'
+                    : 'Run module'
+                }
               >
-                <PlayIcon className="w-6 h-6" />
+                {module.status === 'done' ? (
+                  // Checkmark icon
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : module.status === 'error' ? (
+                  // Retry/refresh icon
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                ) : module.status === 'running' ? (
+                  // Spinning loader
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  // Play icon
+                  <PlayIcon className="w-6 h-6" />
+                )}
               </button>
             )}
           </div>

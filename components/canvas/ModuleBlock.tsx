@@ -133,9 +133,9 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
 
         addLog('success', `${module.name} completado exitosamente`, module.id);
       } else if (module.type === 'reader-engine') {
-        // AIE Engine Module - execution handled by AIEEngineModule component internally
-        // The module has its own play button and configuration
-        // So we don't execute from here
+        // AIE Engine Module - trigger the component's internal handleRun via event
+        const event = new CustomEvent('aie-engine-run', { detail: { moduleId: module.id } });
+        window.dispatchEvent(event);
         return;
       } else {
         // Otros módulos: simulación

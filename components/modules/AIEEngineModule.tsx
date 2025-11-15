@@ -177,6 +177,18 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
     }
   };
 
+  // Listen for external run trigger from ModuleBlock Play button
+  React.useEffect(() => {
+    const handleExternalRun = (event: any) => {
+      if (event.detail?.moduleId === module.id) {
+        handleRun();
+      }
+    };
+
+    window.addEventListener('aie-engine-run', handleExternalRun as EventListener);
+    return () => window.removeEventListener('aie-engine-run', handleExternalRun as EventListener);
+  }, [module.id, handleRun]);
+
   return (
     <div className="space-y-4">
       {/* Info */}
@@ -187,61 +199,40 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         </p>
       </div>
 
-      {/* AI Configuration - Embedded in Module */}
+      {/* AI Model Selector */}
       <div className="space-y-3">
         <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
           <SparklesIcon className="w-4 h-4 text-orange-400" />
-          AI Configuration
-        </div>
-
-        {/* Provider Selector */}
-        <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Provider</label>
-          <select
-            value={selectedProvider}
-            onChange={(e) => handleProviderChange(e.target.value as AIProvider)}
-            className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
-          >
-            <option value={AIProvider.TOGETHER}>Together AI (Recommended)</option>
-            <option value={AIProvider.REPLICATE}>Replicate</option>
-            <option value={AIProvider.OPENAI}>OpenAI</option>
-            <option value={AIProvider.ANTHROPIC}>Anthropic</option>
-            <option value={AIProvider.LOCAL}>Local (Testing)</option>
-          </select>
+          AI Model
         </div>
 
         {/* Model Selector */}
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Model</label>
+          <label className="block text-xs text-gray-400 mb-1.5">
+            Select Model ({selectedProvider})
+          </label>
           <select
             value={selectedModel}
             onChange={(e) => handleModelChange(e.target.value)}
             className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
           >
-            {AI_MODELS[selectedProvider]?.map((model) => (
+            {AI_MODELS[selectedProvider as keyof typeof AI_MODELS]?.map((model) => (
               <option key={model.id} value={model.id}>
                 {model.name} - {model.description}
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1">
-            Selected: <span className="text-gray-400 font-mono">{selectedModel}</span>
-          </p>
         </div>
 
-        {/* API Key Status */}
-        <div className="px-3 py-2 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-400">API Key Status:</span>
-            {selectedProvider === AIProvider.LOCAL ? (
-              <span className="text-green-400">✓ Not required</span>
-            ) : space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] ? (
-              <span className="text-green-400">✓ Configured</span>
-            ) : (
-              <span className="text-red-400">✗ Missing (add in Settings)</span>
-            )}
+        {/* API Key Status - Only show if missing or error */}
+        {selectedProvider !== AIProvider.LOCAL && !space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] && (
+          <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-red-400">⚠️ API Key Missing</span>
+              <span className="text-gray-400">Add {selectedProvider} key in Settings</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Error Display */}
@@ -344,6 +335,35 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
               {outputs.aieLog}
             </div>
           )}
+
+          {/* View Full JSON Button */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                console.log('=== AIE Engine Full Results ===');
+                console.log(JSON.stringify(outputs.appIntelligence, null, 2));
+                alert('Check browser console (F12 → Console) for full JSON output');
+              }}
+              className="flex-1 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-xs text-blue-400 transition-colors"
+            >
+              📋 View Full JSON (Console)
+            </button>
+            <button
+              onClick={() => {
+                const dataStr = JSON.stringify(outputs.appIntelligence, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `app-intelligence-${Date.now()}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex-1 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-lg text-xs text-green-400 transition-colors"
+            >
+              💾 Download JSON
+            </button>
+          </div>
         </div>
       )}
 
