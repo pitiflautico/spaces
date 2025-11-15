@@ -260,3 +260,48 @@ export interface NamingEngineOutputs {
   namingLog?: string;
   flowContext?: FlowContext; // Propagate language and preferences to downstream modules
 }
+
+// Logo Generator types (V2.0 - Module 4A)
+export interface LogoBrief {
+  brand_name: string;
+  final_name: string;
+  tagline?: string;
+  category: string;
+  color_palette: string[];
+  style: string;
+  brand_keywords: string[];
+  shape_preferences?: string;
+  avoid_elements?: string[];
+  num_variants?: number;
+}
+
+export interface LogoOption {
+  id: number;
+  image_url: string;
+  style_summary: string;
+  colors_used: string[];
+  strengths?: string;
+  weaknesses?: string;
+  ai_prompt_used: string;
+}
+
+export interface LogoOptionsPackage {
+  brand_name: string;
+  num_variants: number;
+  options: LogoOption[];
+}
+
+export interface ChosenLogo {
+  brand_name: string;
+  final_logo_option_id: number;
+  final_logo_url: string;
+  chosen_at: string;
+  source_module: string;
+}
+
+export interface LogoGeneratorOutputs {
+  logoOptions?: LogoOptionsPackage;
+  chosenLogo?: ChosenLogo;
+  logoLog?: string;
+  flowContext?: FlowContext; // Propagate language and preferences to downstream modules
+}

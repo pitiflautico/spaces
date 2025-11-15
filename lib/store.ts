@@ -150,11 +150,14 @@ export const useSpaceStore = create<SpaceStore>()(
         },
       },
       'icon-generator': {
-        name: 'Icon Generator',
+        name: 'Logo Generator (Module 4A)',
         size: { width: 400, height: 350 },
         ports: {
-          input: [{ id: 'in-1', type: 'input', label: 'Project Data', connected: false, acceptedTypes: [DataType.JSON, DataType.TEXT] }],
-          output: [{ id: 'out-1', type: 'output', label: 'Generated Icons', connected: false, dataType: DataType.IMAGE }],
+          input: [{ id: 'in-1', type: 'input', label: 'Naming Package', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Logo Options', connected: false, dataType: DataType.IMAGE },
+            { id: 'out-2', type: 'output', label: 'Chosen Logo', connected: false, dataType: DataType.JSON }
+          ],
         },
       },
       'marketing-pack': {

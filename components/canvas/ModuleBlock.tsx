@@ -14,6 +14,7 @@ import ModuleWrapper from './ModuleWrapper';
 import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
 import AIEEngineModule from '@/components/modules/AIEEngineModule';
 import NamingEngineModule from '@/components/modules/NamingEngineModule';
+import LogoGeneratorModule from '@/components/modules/LogoGeneratorModule';
 
 interface ModuleBlockProps {
   module: Module;
@@ -143,6 +144,11 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         const event = new CustomEvent('naming-engine-run', { detail: { moduleId: module.id } });
         window.dispatchEvent(event);
         return;
+      } else if (module.type === 'icon-generator') {
+        // Logo Generator Module - trigger the component's internal handleRun via event
+        const event = new CustomEvent('logo-generator-run', { detail: { moduleId: module.id } });
+        window.dispatchEvent(event);
+        return;
       } else {
         // Otros módulos: simulación
         setTimeout(() => {
@@ -174,17 +180,7 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <NamingEngineModule module={module} />;
 
       case 'icon-generator':
-        return (
-          <div className="py-4">
-            <p className="text-gray-400 text-sm mb-3">Icon Generator</p>
-            <p className="text-gray-500 text-xs">
-              Genera iconos y logos basados en datos del proyecto.
-            </p>
-            <div className="mt-3 p-3 bg-dark-card rounded-lg">
-              <p className="text-gray-600 text-xs">Módulo pendiente de implementación</p>
-            </div>
-          </div>
-        );
+        return <LogoGeneratorModule module={module} />;
 
       case 'marketing-pack':
         return (
