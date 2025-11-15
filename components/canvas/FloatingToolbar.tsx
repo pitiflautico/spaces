@@ -6,11 +6,9 @@ import {
   PlusIcon,
   PlayIcon,
   ArrowPathIcon,
-  ClockIcon,
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   Cog6ToothIcon,
-  PhotoIcon,
 } from '@heroicons/react/24/outline';
 
 export default function FloatingToolbar() {
@@ -41,23 +39,13 @@ export default function FloatingToolbar() {
     alert('Redo: Funcionalidad de historial pendiente');
   };
 
-  const handleHistory = () => {
-    console.log('History - Show timeline');
-    alert('History: Mostrar timeline de cambios pendiente');
-  };
-
   const handleSettings = () => {
     console.log('Settings - Global settings');
     alert('Settings: Configuración global pendiente');
   };
 
-  const handleTemplates = () => {
-    console.log('Templates - Load template');
-    alert('Templates: Cargar plantillas pendiente');
-  };
-
   return (
-    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2 bg-dark-sidebar/95 backdrop-blur-sm rounded-2xl p-2 shadow-2xl border border-dark-border">
+    <div className="fixed left-[272px] top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1 bg-[#1A1A1A]/95 backdrop-blur-sm rounded-xl p-1.5 shadow-2xl border border-[#2A2A2A]">
       {/* Add Module */}
       <button
         onClick={() => {
@@ -65,84 +53,66 @@ export default function FloatingToolbar() {
           const addBtn = document.querySelector('[data-add-module-btn]') as HTMLButtonElement;
           addBtn?.click();
         }}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-all hover:scale-105"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-all hover:scale-105"
         title="Add Module"
       >
-        <PlusIcon className="w-6 h-6" />
+        <PlusIcon className="w-5 h-5" />
       </button>
 
       {/* Separator */}
-      <div className="h-px bg-dark-border my-1" />
+      <div className="h-px bg-[#2A2A2A] my-0.5" />
 
       {/* Play Flow */}
       <button
         onClick={handlePlayFlow}
         disabled={!currentSpace || currentSpace.modules.length === 0}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-all hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 transition-all hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed"
         title="Play Flow (Execute all modules)"
       >
-        <PlayIcon className="w-6 h-6" />
+        <PlayIcon className="w-5 h-5" />
       </button>
 
       {/* Restart Flow */}
       <button
         onClick={handleRestartFlow}
         disabled={!currentSpace || currentSpace.modules.length === 0}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 transition-all hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 transition-all hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed"
         title="Restart Flow (Reset all)"
       >
-        <ArrowPathIcon className="w-6 h-6" />
+        <ArrowPathIcon className="w-5 h-5" />
       </button>
 
       {/* Separator */}
-      <div className="h-px bg-dark-border my-1" />
-
-      {/* History/Timeline */}
-      <button
-        onClick={handleHistory}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-dark-card hover:bg-dark-hover text-gray-400 transition-all hover:scale-105"
-        title="History/Timeline"
-      >
-        <ClockIcon className="w-6 h-6" />
-      </button>
+      <div className="h-px bg-[#2A2A2A] my-0.5" />
 
       {/* Undo */}
       <button
         onClick={handleUndo}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-dark-card hover:bg-dark-hover text-gray-400 transition-all hover:scale-105"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#0A0A0A] hover:bg-[#2A2A2A] text-gray-400 transition-all hover:scale-105"
         title="Undo"
       >
-        <ArrowUturnLeftIcon className="w-6 h-6" />
+        <ArrowUturnLeftIcon className="w-5 h-5" />
       </button>
 
       {/* Redo */}
       <button
         onClick={handleRedo}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-dark-card hover:bg-dark-hover text-gray-400 transition-all hover:scale-105"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#0A0A0A] hover:bg-[#2A2A2A] text-gray-400 transition-all hover:scale-105"
         title="Redo"
       >
-        <ArrowUturnRightIcon className="w-6 h-6" />
+        <ArrowUturnRightIcon className="w-5 h-5" />
       </button>
 
       {/* Separator */}
-      <div className="h-px bg-dark-border my-1" />
+      <div className="h-px bg-[#2A2A2A] my-0.5" />
 
       {/* Settings */}
       <button
         onClick={handleSettings}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-dark-card hover:bg-dark-hover text-gray-400 transition-all hover:scale-105"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#0A0A0A] hover:bg-[#2A2A2A] text-gray-400 transition-all hover:scale-105"
         title="Settings"
       >
-        <Cog6ToothIcon className="w-6 h-6" />
-      </button>
-
-      {/* Templates */}
-      <button
-        onClick={handleTemplates}
-        className="w-12 h-12 flex items-center justify-center rounded-xl bg-dark-card hover:bg-dark-hover text-gray-400 transition-all hover:scale-105"
-        title="Templates"
-      >
-        <PhotoIcon className="w-6 h-6" />
+        <Cog6ToothIcon className="w-5 h-5" />
       </button>
     </div>
   );

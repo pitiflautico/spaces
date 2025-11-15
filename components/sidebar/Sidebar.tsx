@@ -2,14 +2,10 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
+import ConfigurationPanel from '@/components/configuration/ConfigurationPanel';
 import {
-  HomeIcon,
-  SparklesIcon,
   SquaresPlusIcon,
-  UsersIcon,
-  ClockIcon,
   Cog6ToothIcon,
-  ChatBubbleLeftRightIcon,
   PlusIcon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
@@ -19,6 +15,7 @@ export default function Sidebar() {
   const [isSpacesOpen, setIsSpacesOpen] = useState(true);
   const [showCreateSpace, setShowCreateSpace] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
+  const [showConfiguration, setShowConfiguration] = useState(false);
 
   const handleCreateSpace = () => {
     if (newSpaceName.trim()) {
@@ -27,20 +24,6 @@ export default function Sidebar() {
       setShowCreateSpace(false);
     }
   };
-
-  const menuItems = [
-    { icon: HomeIcon, label: 'Home', active: false },
-    { icon: SparklesIcon, label: 'AI Suite', active: false },
-    { icon: SquaresPlusIcon, label: 'Stock', active: false },
-    { icon: UsersIcon, label: 'Community', active: false },
-  ];
-
-  const pinnedTools = [
-    { icon: SparklesIcon, label: 'Image Generator' },
-    { icon: SparklesIcon, label: 'Video Generator' },
-    { icon: ChatBubbleLeftRightIcon, label: 'Assistant' },
-    { icon: SquaresPlusIcon, label: 'All tools' },
-  ];
 
   return (
     <div className="w-[260px] h-screen bg-[#1A1A1A] text-white flex flex-col fixed left-0 top-0 z-50 border-r border-[#2A2A2A]">
@@ -111,68 +94,25 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Main Navigation */}
-      <div className="px-3 py-3 border-b border-[#2A2A2A]">
-        <nav className="space-y-1">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                item.active
-                  ? 'bg-[#2A2A2A] text-white'
-                  : 'text-gray-400 hover:bg-[#232323] hover:text-white'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-sm">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Pinned Tools */}
-      <div className="px-3 py-3 flex-1 overflow-y-auto">
-        <div className="text-xs text-gray-500 uppercase tracking-wider px-3 mb-2">Pinned</div>
-        <div className="space-y-1">
-          {pinnedTools.map((tool, index) => (
-            <button
-              key={index}
-              className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-[#232323] hover:text-white rounded-lg transition-colors"
-            >
-              <tool.icon className="w-5 h-5" />
-              <span className="text-sm">{tool.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6">
-          <div className="text-xs text-gray-500 uppercase tracking-wider px-3 mb-2">Recent</div>
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-[#232323] hover:text-white rounded-lg transition-colors">
-            <ClockIcon className="w-5 h-5" />
-            <span className="text-sm">History</span>
-          </button>
-        </div>
-      </div>
+      {/* Spacer */}
+      <div className="flex-1"></div>
 
       {/* Bottom Section */}
-      <div className="px-3 py-4 border-t border-[#2A2A2A] space-y-2">
-        <div className="px-3 py-3 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg">
-          <p className="text-xs font-medium text-blue-400 mb-1">Get a plan</p>
-          <p className="text-xs text-gray-400">Unlock more features</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button className="flex-1 p-2 hover:bg-[#2A2A2A] rounded-lg transition-colors">
-            <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-400 mx-auto" />
-          </button>
-          <button className="flex-1 p-2 hover:bg-[#2A2A2A] rounded-lg transition-colors">
-            <Cog6ToothIcon className="w-5 h-5 text-gray-400 mx-auto" />
-          </button>
-          <button className="flex-1 p-2 hover:bg-[#2A2A2A] rounded-lg transition-colors">
-            <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-pink-500 rounded-full mx-auto" />
-          </button>
-        </div>
+      <div className="px-3 py-4 border-t border-[#2A2A2A]">
+        <button
+          onClick={() => setShowConfiguration(true)}
+          className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-[#2A2A2A] hover:text-white rounded-lg transition-colors"
+        >
+          <Cog6ToothIcon className="w-5 h-5" />
+          <span className="text-sm">Configuration</span>
+        </button>
       </div>
+
+      {/* Configuration Panel */}
+      <ConfigurationPanel
+        isOpen={showConfiguration}
+        onClose={() => setShowConfiguration(false)}
+      />
     </div>
   );
 }

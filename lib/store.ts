@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError } from '@/types';
+import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError, SpaceConfiguration } from '@/types';
 import { DataType, ConnectionErrorType } from '@/types';
 
 interface SpaceStore {
@@ -13,6 +13,7 @@ interface SpaceStore {
   createSpace: (name: string) => void;
   deleteSpace: (id: string) => void;
   setCurrentSpace: (id: string) => void;
+  updateSpaceConfiguration: (id: string, configuration: Partial<SpaceConfiguration>) => void;
 
   // Module actions
   addModule: (type: ModuleType, position: Position) => void;
@@ -81,6 +82,23 @@ export const useSpaceStore = create<SpaceStore>((set, get) => ({
 
   setCurrentSpace: (id: string) => {
     set({ currentSpaceId: id });
+  },
+
+  updateSpaceConfiguration: (id: string, configuration: Partial<SpaceConfiguration>) => {
+    set((state) => ({
+      spaces: state.spaces.map((space) =>
+        space.id === id
+          ? {
+              ...space,
+              configuration: {
+                ...space.configuration,
+                ...configuration,
+              },
+              updatedAt: new Date(),
+            }
+          : space
+      ),
+    }));
   },
 
   addModule: (type: ModuleType, position: Position) => {

@@ -64,11 +64,27 @@ export interface Module {
   };
 }
 
+export interface SpaceConfiguration {
+  projectPath?: string;
+  apiKeys?: {
+    openai?: string;
+    anthropic?: string;
+    stability?: string;
+    [key: string]: string | undefined;
+  };
+  preferences?: {
+    autoSave?: boolean;
+    darkMode?: boolean;
+    [key: string]: any;
+  };
+}
+
 export interface Space {
   id: string;
   name: string;
   modules: Module[];
   connections: ModuleConnection[];
+  configuration?: SpaceConfiguration;
   createdAt: Date;
   updatedAt: Date;
 }
