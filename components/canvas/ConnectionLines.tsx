@@ -31,10 +31,10 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
       portY = module.position.y + (module.size.height * percentage);
     }
 
-    // Calculate port horizontal position (accounting for -left-4 and -right-4 which is -16px)
+    // Calculate port horizontal position (accounting for left: -24px and right: -24px)
     const portX = side === 'left'
-      ? module.position.x - 16  // -left-4 = -16px
-      : module.position.x + module.size.width + 16;  // -right-4 = +16px beyond
+      ? module.position.x - 24  // left: -24px
+      : module.position.x + module.size.width + 24;  // right: -24px (which is +24px beyond)
 
     return { x: portX, y: portY };
   };

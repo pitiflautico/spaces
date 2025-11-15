@@ -233,23 +233,28 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         return (
           <div
             key={port.id}
-            className="port absolute -left-4 z-50"
-            style={{ top: portTop, transform: 'translateY(-50%)' }}
+            className="port absolute z-50"
+            style={{
+              top: portTop,
+              left: '-24px', // 24px fuera del borde izquierdo
+              transform: 'translateY(-50%)'
+            }}
             onMouseUp={(e) => handleInputPortMouseUp(e, port)}
             onMouseEnter={() => handleInputPortMouseEnter(port)}
             onMouseLeave={handleInputPortMouseLeave}
             title={`Input: ${port.label}\nAccepts: ${port.acceptedTypes?.join(', ') || 'unknown'}`}
           >
             <div
-              className={`w-10 h-10 ${colorClass} rounded-full border-2 transition-all flex items-center justify-center shadow-xl ${
+              className={`w-12 h-12 ${colorClass} rounded-full border-3 transition-all flex items-center justify-center shadow-2xl ${
                 isCompatible
                   ? 'ring-4 ring-green-400 scale-125 border-green-400 animate-pulse cursor-pointer'
                   : isIncompatible
                   ? 'opacity-30 grayscale cursor-not-allowed'
                   : 'border-dark-bg cursor-pointer hover:scale-110'
               } ${isHovered && isCompatible ? 'scale-150' : ''}`}
+              style={{ borderWidth: '3px' }}
             >
-              <Icon className="w-5 h-5 text-white" />
+              <Icon className="w-6 h-6 text-white" />
             </div>
           </div>
         );
@@ -267,15 +272,20 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         return (
           <div
             key={port.id}
-            className="port absolute -right-4 z-50"
-            style={{ top: portTop, transform: 'translateY(-50%)' }}
+            className="port absolute z-50"
+            style={{
+              top: portTop,
+              right: '-24px', // 24px fuera del borde derecho
+              transform: 'translateY(-50%)'
+            }}
             onMouseDown={(e) => handleOutputPortMouseDown(e, port)}
             title={`Output: ${port.label}\nType: ${port.dataType || 'unknown'}`}
           >
             <div
-              className={`w-10 h-10 ${colorClass} rounded-full border-2 border-dark-bg hover:scale-125 active:scale-110 transition-all cursor-grab flex items-center justify-center shadow-xl hover:shadow-2xl`}
+              className={`w-12 h-12 ${colorClass} rounded-full border-dark-bg hover:scale-125 active:scale-110 transition-all cursor-grab flex items-center justify-center shadow-2xl hover:shadow-2xl`}
+              style={{ borderWidth: '3px' }}
             >
-              <Icon className="w-5 h-5 text-white" />
+              <Icon className="w-6 h-6 text-white" />
             </div>
           </div>
         );
