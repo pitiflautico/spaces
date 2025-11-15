@@ -100,7 +100,8 @@ async function handleReplicate(params: {
 
     // Model-specific parameters
     if (model.includes('recraft-ai/recraft-v3')) {
-      input.num_images = num_outputs;
+      // NOTE: Recraft V3 SVG does NOT support batch generation (num_images parameter)
+      // We'll handle multiple images by making separate API calls below
       // Recraft V3 requires size in "WIDTHxHEIGHT" format
       // Valid sizes: "1024x1024", "1365x1024", "1024x1365", etc.
       input.size = '1024x1024';
@@ -120,94 +121,112 @@ async function handleReplicate(params: {
     console.log(`🔄 Calling Replicate API: ${model}`);
     console.log(`📝 Input (num_outputs=${num_outputs}):`, JSON.stringify(input, null, 2));
 
-    // Create prediction using model endpoint
-    const apiUrl = `https://api.replicate.com/v1/models/${model}/predictions`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${apiKey}`
-      },
-      body: JSON.stringify({ input })
-    });
+    // Special handling for Recraft V3 - doesn't support batch generation
+    const isRecraftV3 = model.includes('recraft-ai/recraft-v3');
+    const needsMultipleCalls = isRecraftV3 && num_outputs > 1;
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error(`❌ Replicate API error (${response.status}):`, errorData);
-      return NextResponse.json(
-        { error: errorData.detail || `Replicate API error: HTTP ${response.status}` },
-        { status: response.status }
-      );
+    if (needsMultipleCalls) {
+      console.log(`🔁 Recraft V3 detected: Making ${num_outputs} separate API calls...`);
     }
 
-    const prediction = await response.json();
-    console.log(`✅ Prediction created: ${prediction.id}`);
+    const allImages: string[] = [];
+    const callsNeeded = needsMultipleCalls ? num_outputs : 1;
 
-    // Poll for completion
-    let result = prediction;
-    let attempts = 0;
-    const maxAttempts = 60; // 2 minutes timeout
+    // Make API calls (single or multiple depending on model)
+    for (let i = 0; i < callsNeeded; i++) {
+      if (needsMultipleCalls) {
+        console.log(`📞 API call ${i + 1}/${callsNeeded}`);
+      }
 
-    while ((result.status === 'starting' || result.status === 'processing') && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
-
-      const checkResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      // Create prediction using model endpoint
+      const apiUrl = `https://api.replicate.com/v1/models/${model}/predictions`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Token ${apiKey}`
-        }
+        },
+        body: JSON.stringify({ input })
       });
 
-      if (!checkResponse.ok) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`❌ Replicate API error (${response.status}):`, errorData);
         return NextResponse.json(
-          { error: `Failed to check prediction status: HTTP ${checkResponse.status}` },
-          { status: checkResponse.status }
+          { error: errorData.detail || `Replicate API error: HTTP ${response.status}` },
+          { status: response.status }
         );
       }
 
-      result = await checkResponse.json();
-      attempts++;
-      console.log(`🔄 Polling attempt ${attempts}: ${result.status}`);
+      const prediction = await response.json();
+      console.log(`✅ Prediction created: ${prediction.id}`);
+
+      // Poll for completion
+      let result = prediction;
+      let attempts = 0;
+      const maxAttempts = 60; // 2 minutes timeout
+
+      while ((result.status === 'starting' || result.status === 'processing') && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+
+        const checkResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+          headers: {
+            'Authorization': `Token ${apiKey}`
+          }
+        });
+
+        if (!checkResponse.ok) {
+          return NextResponse.json(
+            { error: `Failed to check prediction status: HTTP ${checkResponse.status}` },
+            { status: checkResponse.status }
+          );
+        }
+
+        result = await checkResponse.json();
+        attempts++;
+        if (attempts % 5 === 0) { // Log every 5th attempt to reduce noise
+          console.log(`🔄 Polling attempt ${attempts}: ${result.status}`);
+        }
+      }
+
+      if (result.status === 'failed') {
+        console.error(`❌ Prediction failed:`, result.error);
+        return NextResponse.json(
+          { error: result.error || 'Prediction failed' },
+          { status: 500 }
+        );
+      }
+
+      if (attempts >= maxAttempts) {
+        return NextResponse.json(
+          { error: 'Prediction timeout after 2 minutes' },
+          { status: 408 }
+        );
+      }
+
+      // Extract image URLs from this prediction
+      let images: string[] = [];
+
+      if (Array.isArray(result.output)) {
+        images = result.output;
+      } else if (typeof result.output === 'string') {
+        images = [result.output];
+      } else if (result.output?.images) {
+        images = result.output.images;
+      }
+
+      allImages.push(...images);
+      console.log(`✅ Call ${i + 1}: Generated ${images.length} image(s)`);
     }
 
-    if (result.status === 'failed') {
-      console.error(`❌ Prediction failed:`, result.error);
-      return NextResponse.json(
-        { error: result.error || 'Prediction failed' },
-        { status: 500 }
-      );
-    }
-
-    if (attempts >= maxAttempts) {
-      return NextResponse.json(
-        { error: 'Prediction timeout after 2 minutes' },
-        { status: 408 }
-      );
-    }
-
-    // Extract image URLs
-    let images: string[] = [];
-    console.log(`📦 Result output type:`, typeof result.output);
-    console.log(`📦 Result output:`, JSON.stringify(result.output).substring(0, 200));
-
-    if (Array.isArray(result.output)) {
-      images = result.output;
-      console.log(`✅ Extracted ${images.length} images from array`);
-    } else if (typeof result.output === 'string') {
-      images = [result.output];
-      console.log(`✅ Extracted 1 image from string`);
-    } else if (result.output?.images) {
-      images = result.output.images;
-      console.log(`✅ Extracted ${images.length} images from output.images`);
-    }
-
-    console.log(`✅ Final: Generated ${images.length} images (requested: ${num_outputs})`);
+    console.log(`✅ Final: Generated ${allImages.length} images (requested: ${num_outputs})`);
 
     return NextResponse.json({
       success: true,
-      images,
+      images: allImages,
       providerUsed: 'Replicate',
       model,
-      count: images.length
+      count: allImages.length
     });
 
   } catch (error: any) {

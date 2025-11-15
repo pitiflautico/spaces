@@ -196,26 +196,38 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         const keyFeatures = appIntelligence?.features?.slice(0, 3).join(', ') || 'core features';
         const competitiveAngle = appIntelligence?.competitiveAngle || 'quality and usability';
 
-        // Create intelligent fallback branding with DETAILED context
+        // Create intelligent fallback branding with MODERN typography and style
         namingPackage.branding = {
-          design_style: namingPackage.style || 'modern minimalist',
-          color_palette: appIntelligence?.brandColorsSuggested || ['#007AFF', '#34C759', '#FF9500', '#AF52DE'],
+          design_style: namingPackage.style || 'Contemporary minimalism with bold typography',
+          color_palette: appIntelligence?.brandColorsSuggested || ['#1A1A1A', '#FF6B6B', '#4A9EFF', '#F5F5F5'],
           color_meanings: [
-            'Primary brand color - represents trust and professionalism',
-            'Success and positive actions',
-            'Attention and important elements',
-            'Creativity and innovation'
+            'Deep neutral - represents sophistication and modernity',
+            'Vibrant accent - creates energy and focal points',
+            'Tech blue - signals digital innovation',
+            'Clean background - ensures clarity and breathing room'
           ],
-          primary_font_family: 'Inter',
-          secondary_font_family: 'Roboto',
-          font_style: 'Clean sans-serif modern',
-          brand_tone: namingPackage.tone || 'professional and approachable',
-          brand_values: namingPackage.naming_keywords?.slice(0, 3) || ['Innovation', 'Quality', 'Simplicity'],
-          target_emotion: 'trust and confidence',
-          shape_style: 'rounded soft edges',
-          icon_style: 'minimalist with clean lines',
-          branding_concept: `${namingPackage.recommended_name} is a ${appCategory} app designed for ${targetAudience}. The visual identity reflects ${namingPackage.style || 'modern'} design principles with a ${namingPackage.tone || 'professional'} personality. The brand focuses on ${competitiveAngle} to differentiate from competitors.`,
-          visual_direction: `This is ${appSummary}. Target users: ${targetAudience}. Key features to represent: ${keyFeatures}. The logo/icons should feel ${namingPackage.tone || 'professional and approachable'} with ${namingPackage.style || 'modern'} aesthetics. Use ${appIntelligence?.designStyle || 'clean, simple shapes'} and consider visual elements related to the app's core purpose. The design should convey ${competitiveAngle} while maintaining a ${namingPackage.tone || 'professional'} atmosphere. Avoid overly complex imagery - keep it clear and recognizable at small sizes.`
+          primary_font_family: 'Space Grotesk',
+          secondary_font_family: 'Inter',
+          font_style: 'Bold geometric sans-serif with tight letter-spacing for impact',
+          brand_tone: namingPackage.tone || 'confident and contemporary',
+          brand_values: namingPackage.naming_keywords?.slice(0, 3) || ['Innovation', 'Precision', 'Simplicity'],
+          target_emotion: 'trust and forward-thinking confidence',
+          shape_style: 'Sharp geometric with subtle rounded corners (4-8px radius)',
+          icon_style: 'Minimalist line icons with 2px stroke weight and geometric precision',
+          branding_concept: `${namingPackage.recommended_name} is a ${appCategory} app designed for ${targetAudience}. The visual identity uses typography as the hero element, combining ${namingPackage.style || 'modern minimalist'} aesthetics with bold, confident type treatment. The brand differentiates through ${competitiveAngle} while maintaining a ${namingPackage.tone || 'contemporary'} personality that feels both professional and approachable.`,
+          visual_direction: `This is ${appSummary}. Target users: ${targetAudience} who appreciate modern, design-forward digital products. Key features to represent: ${keyFeatures}.
+
+Brand personality: Bold, technical, accessible, forward-thinking.
+
+Visual approach: Strong typographic focus with Space Grotesk as the hero typeface. The logo should be typography-driven, possibly a distinctive wordmark or logotype with custom letter modifications. If using a symbol, keep it minimal and geometric - think Linear's minimalism meets Stripe's sophistication.
+
+Mood: ${namingPackage.tone || 'Confident and contemporary'} - should feel premium and intentional without being pretentious. Clean and purposeful rather than decorative.
+
+Include: Sharp geometric shapes, negative space usage, strong contrast, subtle gradients only if they enhance rather than decorate.
+
+Avoid: Generic rounded bubbles, overly complex illustrations, corporate blue clichés, outdated web 2.0 glossy effects. Keep it scalable and clear from 16px to large format.
+
+Logo treatment: Strongly prefer a sophisticated wordmark/logotype with distinctive typography over generic icon+text combinations.`
         };
 
         addLog('warning', 'Branding data was generated as fallback. For best results, re-run with updated AI model.', module.id);
@@ -787,22 +799,68 @@ NAMING:
 - ${marketContext.namingGuidelines}
 - Avoid cultural sensitivities or problematic meanings in ${marketContext.culture}
 
-BRANDING - CRITICAL FOR LOGO GENERATION:
-- color_palette: Select 3-4 HEX colors that work harmoniously and match the app's purpose
-- design_style: Be specific (e.g., "modern minimalist with rounded edges" not just "modern")
-- primary_font_family: Choose real font names that exist (Inter, Roboto, Playfair, Montserrat, etc.)
-- shape_style: Guide the geometric style of logos/icons (rounded, sharp, geometric, organic)
-- icon_style: Describe the visual style clearly for logo generation
-- branding_concept: Explain the WHY behind the visual choices - connect them to what the app DOES
-- visual_direction: THIS IS CRITICAL - Include CONTEXT about the app:
-  * What the app is for (e.g., "This is a fitness tracking app for busy professionals")
-  * Who uses it (e.g., "Target users are 25-40 year old urban professionals")
-  * Key features to represent (e.g., "Focus on: progress tracking, social challenges, meal planning")
-  * Mood/atmosphere (e.g., "Should feel: energetic, motivating, but not intimidating")
-  * Specific visual elements (e.g., "Consider: upward arrows for progress, human silhouettes, healthy food icons")
-  * What to avoid (e.g., "Avoid: overly aggressive imagery, complex charts")
+BRANDING - CRITICAL FOR MODERN LOGO GENERATION:
 
-The branding information will be used by AI to generate logos, so be SPECIFIC, DETAILED, and CONTEXT-RICH.
+🎨 COLOR PALETTE (3-4 colors):
+- Choose contemporary, sophisticated color combinations
+- Use trending palettes (e.g., Neo-mint + Coral, Deep Purple + Electric Blue, Sage + Terracotta)
+- Consider gradients, duotones, or monochromatic schemes for modern appeal
+- Colors must be HEX codes (e.g., #1A1A1A, #FF6B6B)
+
+✍️ TYPOGRAPHY (CRITICAL - This is key for modern branding):
+- primary_font_family: Select MODERN, DISTINCTIVE typefaces with character:
+  * Geometric sans: Space Grotesk, Syne, Hanken Grotesk, Satoshi, Cabinet Grotesk
+  * Neo-grotesque: Inter Display, Archivo, General Sans, Switzer
+  * Display/Accent: Clash Display, Bespoke Sans, Supreme, Zodiak
+  * Variable fonts with expressive weights
+- secondary_font_family: Complementary font for hierarchy
+  * If primary is geometric → use humanist (e.g., Work Sans, DM Sans)
+  * If primary is display → use neutral (e.g., Inter, Geist)
+- font_style: Describe the typographic approach (e.g., "Bold geometric with tight spacing", "Light display with generous leading", "Mixed weights for dynamic contrast")
+
+🎭 DESIGN STYLE (Be specific with current trends):
+- Choose from MODERN styles:
+  * "Contemporary minimalism with bold typography" (Stripe, Linear style)
+  * "Brutalist with strong geometric shapes" (Balenciaga, Ssense style)
+  * "Soft modernism with gradients and glassmorphism" (Apple, iOS style)
+  * "Retro-futurism with vibrant colors" (Spotify, Discord style)
+  * "Swiss modernism with strict grid systems" (Helvetica approach)
+  * "Tech-forward with sharp edges and neon accents" (Cyberpunk aesthetic)
+- Include specific visual characteristics: rounded vs sharp, gradients vs flat, texture vs clean
+
+📐 SHAPE & ICON STYLE:
+- shape_style: Geometric language (e.g., "Sharp 90° angles with thin strokes", "Rounded 12px radius with soft shadows", "Asymmetric organic forms")
+- icon_style: Visual treatment for icons/symbols:
+  * "Minimalist line icons (1-2px stroke)" (Feather, Lucide style)
+  * "Filled geometric shapes with negative space" (Material, Phosphor style)
+  * "Isometric 3D simplified forms" (Notion style)
+  * "Abstract letterforms with typographic focus" (Wordmark style)
+  * "Duotone illustrations with flat perspective" (Dropbox style)
+
+💡 BRANDING CONCEPT & VISUAL DIRECTION:
+- branding_concept: Explain the WHY - How does the visual identity reflect what the app DOES and its VALUES?
+  * Connect visual choices to functionality (e.g., "Clean lines represent data clarity")
+  * Explain the emotional goal (e.g., "Gradients evoke growth and progress")
+
+- visual_direction: THIS IS CRITICAL - Detailed creative brief for AI:
+  ✓ App purpose: "This is a [category] app for [target users] that [main benefit]"
+  ✓ Target audience: Demographics, psychographics, design sophistication
+  ✓ Key features to visualize: Top 3 features that should inspire visual elements
+  ✓ Brand personality: 3-5 adjectives (e.g., "Bold, technical, accessible, forward-thinking")
+  ✓ Mood/atmosphere: Emotional tone (e.g., "Confident and empowering, not intimidating")
+  ✓ Visual references: Current brands with similar vibe (e.g., "Think Linear's minimalism meets Stripe's sophistication")
+  ✓ Specific elements TO INCLUDE: Shapes, symbols, patterns that make sense
+  ✓ Specific elements TO AVOID: What doesn't fit the brand
+  ✓ Logo treatment preference: Wordmark vs symbol vs combination mark
+
+🎯 MODERN BRANDING PRIORITIES:
+1. TYPOGRAPHY IS HERO: The font choice and text treatment should be the primary brand element
+2. SCALABLE SIMPLICITY: Must work from 16px favicon to billboard
+3. SYSTEM THINKING: Consider how the brand works across UI, marketing, social
+4. CONTEMPORARY RELEVANCE: Use 2024-2025 design trends, not 2020 styles
+5. DISTINCTIVE NOT DERIVATIVE: Avoid generic tech startup aesthetics
+
+The AI will use this to generate logos - be EXTREMELY SPECIFIC about typography, style, and visual direction.
 
 ${language !== 'en' ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
