@@ -50,6 +50,7 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const inputs = (module.inputs || {}) as any;
   const selectedProvider: AIProvider = inputs.aiProvider || space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || AI_MODELS[selectedProvider as keyof typeof AI_MODELS]?.[0]?.id;
+  const selectedLanguage = inputs.language || 'en'; // Default to English
 
   const handleProviderChange = (provider: AIProvider) => {
     const defaultModel = AI_MODELS[provider]?.[0]?.id;
@@ -67,6 +68,15 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       inputs: {
         ...inputs,
         aiModel: modelId,
+      },
+    });
+  };
+
+  const handleLanguageChange = (language: string) => {
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        language: language,
       },
     });
   };
@@ -116,7 +126,7 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       const { repositoryMetadata, fileContents, repoStructure } = projectData;
 
       // Build prompt for AI
-      const prompt = buildPrompt(repositoryMetadata, fileContents, repoStructure);
+      const prompt = buildPrompt(repositoryMetadata, fileContents, repoStructure, selectedLanguage);
 
       // Get API key from space configuration
       const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
@@ -199,17 +209,35 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         </p>
       </div>
 
-      {/* AI Model Selector */}
+      {/* AI Configuration */}
       <div className="space-y-3">
         <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
           <SparklesIcon className="w-4 h-4 text-orange-400" />
-          AI Model
+          AI Configuration
+        </div>
+
+        {/* Language Selector */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">
+            Output Language
+          </label>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+          >
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Español</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            AI will respond in {selectedLanguage === 'es' ? 'Spanish' : 'English'}
+          </p>
         </div>
 
         {/* Model Selector */}
         <div>
           <label className="block text-xs text-gray-400 mb-1.5">
-            Select Model ({selectedProvider})
+            AI Model ({selectedProvider})
           </label>
           <select
             value={selectedModel}
@@ -401,7 +429,7 @@ function summarizeFileStructure(structure: any, maxDepth = 3, currentDepth = 0):
 /**
  * Build optimized prompt for AI (reduced size)
  */
-function buildPrompt(repositoryMetadata: any, fileContents: any, repoStructure: any): string {
+function buildPrompt(repositoryMetadata: any, fileContents: any, repoStructure: any, language: string): string {
   // Extract only essential file info (no full content)
   const essentialFileInfo = {
     packageJson: fileContents.packageJson ? {
@@ -427,7 +455,13 @@ function buildPrompt(repositoryMetadata: any, fileContents: any, repoStructure: 
     hasPages: repoStructure.items?.some((i: any) => i.name === 'pages' || i.name === 'app') || false,
   };
 
+  // Language instruction
+  const languageInstruction = language === 'es'
+    ? '\n\n⚠️ IMPORTANT: Respond in SPANISH. All text fields (summary, features, keywords, descriptions, etc.) MUST be in Spanish.'
+    : '\n\n⚠️ IMPORTANT: Respond in ENGLISH. All text fields must be in English.';
+
   return `You are an expert app intelligence analyzer. Analyze this project and extract app intelligence.
+${languageInstruction}
 
 PROJECT INFO:
 - Name: ${repositoryMetadata.projectName}

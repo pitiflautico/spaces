@@ -52,8 +52,32 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
   const [hoveredPort, setHoveredPort] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const moduleContentRef = useRef<HTMLDivElement>(null);
 
   const isSelected = selectedModuleId === module.id;
+
+  // Track actual DOM height and update store when it changes
+  React.useEffect(() => {
+    if (!moduleContentRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newHeight = entry.contentRect.height;
+        // Only update if height changed significantly (avoid infinite loops)
+        if (Math.abs(newHeight - module.size.height) > 2) {
+          updateModule(module.id, {
+            size: { ...module.size, height: newHeight }
+          });
+        }
+      }
+    });
+
+    resizeObserver.observe(moduleContentRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [module.id, module.size, updateModule]);
 
   // Auto-reset stuck modules (after 5 minutes)
   React.useEffect(() => {
@@ -220,6 +244,7 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
       <div className="relative w-full h-full">
         {/* Módulo interior */}
         <div
+          ref={moduleContentRef}
           className={`w-full h-full bg-dark-sidebar rounded-2xl shadow-2xl transition-all ${getBorderColor()} ${
             isDragging ? 'cursor-grabbing shadow-blue-500/20' : 'cursor-grab'
           }`}
