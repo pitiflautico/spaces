@@ -93,6 +93,12 @@ export default function Canvas() {
   // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept spacebar if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
         setSpacePressed(true);
@@ -100,6 +106,12 @@ export default function Canvas() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Don't intercept spacebar if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       if (e.code === 'Space') {
         setSpacePressed(false);
       }
