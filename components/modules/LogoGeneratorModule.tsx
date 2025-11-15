@@ -38,19 +38,9 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
   // Get module inputs for AI config
   const inputs = (module.inputs || {}) as any;
-  const selectedProvider: AIProvider = inputs.aiProvider || AIProvider.REPLICATE; // Default to Replicate
+  // Use provider from space configuration (Settings > AI Provider)
+  const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.REPLICATE;
   const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
-
-  const handleProviderChange = (provider: AIProvider) => {
-    const defaultModel = IMAGE_AI_MODELS[provider]?.[0]?.id;
-    updateModule(module.id, {
-      inputs: {
-        ...inputs,
-        aiProvider: provider,
-        aiModel: defaultModel,
-      },
-    });
-  };
 
   const handleModelChange = (modelId: string) => {
     updateModule(module.id, {
@@ -317,40 +307,20 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
           Generate logo variants using AI. Each variant will appear as a separate node on the canvas. Connect from Naming Engine to get started.
         </p>
 
-        {/* AI Provider Selector */}
+        {/* AI Model Selector */}
         <div className="space-y-3 mb-3 pb-3 border-b border-[#3A3A3A]/50">
           <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
             <SparklesIcon className="w-4 h-4 text-pink-400" />
             AI Image Generator
           </div>
 
-          {/* Provider Selector */}
-          <div>
-            <label className="block text-xs text-gray-400 mb-1.5">
-              Service Provider
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleProviderChange(AIProvider.REPLICATE)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  selectedProvider === AIProvider.REPLICATE
-                    ? 'bg-pink-500/20 border-2 border-pink-500 text-pink-300'
-                    : 'bg-[#1A1A1A] border border-[#3A3A3A] text-gray-400 hover:border-pink-500/50'
-                }`}
-              >
-                Replicate
-              </button>
-              <button
-                onClick={() => handleProviderChange(AIProvider.TOGETHER)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  selectedProvider === AIProvider.TOGETHER
-                    ? 'bg-pink-500/20 border-2 border-pink-500 text-pink-300'
-                    : 'bg-[#1A1A1A] border border-[#3A3A3A] text-gray-400 hover:border-pink-500/50'
-                }`}
-              >
-                Together AI
-              </button>
+          {/* Current Provider Info */}
+          <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Service Provider:</span>
+              <span className="text-xs text-white font-medium">{selectedProvider}</span>
             </div>
+            <p className="text-xs text-gray-500 mt-1">Configure in Settings → AI Provider</p>
           </div>
 
           {/* Recommended Model */}
