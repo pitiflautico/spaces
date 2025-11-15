@@ -381,38 +381,106 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
 }
 
 /**
- * Build prompt for AI from project data
+ * Summarize file structure (only names and paths, not full content)
+ */
+function summarizeFileStructure(structure: any, maxDepth = 3, currentDepth = 0): any {
+  if (!structure || currentDepth >= maxDepth) return null;
+
+  if (Array.isArray(structure)) {
+    return structure.map(item => ({
+      name: item.name,
+      type: item.type,
+      path: item.path,
+      children: item.children ? summarizeFileStructure(item.children, maxDepth, currentDepth + 1) : undefined
+    }));
+  }
+
+  return structure;
+}
+
+/**
+ * Build optimized prompt for AI (reduced size)
  */
 function buildPrompt(repositoryMetadata: any, fileContents: any, repoStructure: any): string {
-  return `You are an expert app intelligence analyzer. Analyze the following project information and extract comprehensive app intelligence.
+  // Extract only essential file info (no full content)
+  const essentialFileInfo = {
+    packageJson: fileContents.packageJson ? {
+      name: fileContents.packageJson.name,
+      description: fileContents.packageJson.description,
+      dependencies: Object.keys(fileContents.packageJson.dependencies || {}),
+      devDependencies: Object.keys(fileContents.packageJson.devDependencies || {})
+    } : null,
+    readme: fileContents.readme ? fileContents.readme.substring(0, 1000) : null, // Only first 1000 chars
+    hasTypeScript: !!fileContents.tsconfig,
+    hasTailwind: !!fileContents.tailwindConfig,
+    hasAppJson: !!fileContents.appJson,
+    appJsonName: fileContents.appJson?.name,
+    appJsonSlug: fileContents.appJson?.slug
+  };
 
-PROJECT METADATA:
-${JSON.stringify(repositoryMetadata, null, 2)}
+  // Summarize structure (only paths, not content)
+  const structureSummary = {
+    root: repoStructure.root,
+    topLevelDirs: repoStructure.items?.filter((i: any) => i.type === 'directory').map((d: any) => d.name) || [],
+    totalFiles: countFiles(repoStructure.items || []),
+    hasComponents: repoStructure.items?.some((i: any) => i.name === 'components') || false,
+    hasPages: repoStructure.items?.some((i: any) => i.name === 'pages' || i.name === 'app') || false,
+  };
 
-FILE CONTENTS:
-${JSON.stringify(fileContents, null, 2)}
+  return `You are an expert app intelligence analyzer. Analyze this project and extract app intelligence.
 
-REPOSITORY STRUCTURE:
-${JSON.stringify(repoStructure, null, 2)}
+PROJECT INFO:
+- Name: ${repositoryMetadata.projectName}
+- Type: ${repositoryMetadata.projectType}
+- Framework: ${repositoryMetadata.framework || 'Unknown'}
+- Has TypeScript: ${repositoryMetadata.hasTypeScript ? 'Yes' : 'No'}
+- Has Tailwind: ${repositoryMetadata.hasTailwindConfig ? 'Yes' : 'No'}
 
-Based on this information, provide a comprehensive app intelligence analysis in the following JSON format:
+DEPENDENCIES (${essentialFileInfo.packageJson?.dependencies?.length || 0}):
+${essentialFileInfo.packageJson?.dependencies?.slice(0, 15).join(', ') || 'None'}
+
+README EXCERPT:
+${essentialFileInfo.readme || 'No README found'}
+
+PROJECT STRUCTURE:
+- Root: ${structureSummary.root}
+- Main folders: ${structureSummary.topLevelDirs.join(', ')}
+- Total files: ~${structureSummary.totalFiles}
+- Has components: ${structureSummary.hasComponents ? 'Yes' : 'No'}
+- Has pages/routes: ${structureSummary.hasPages ? 'Yes' : 'No'}
+
+Based on this information, provide a comprehensive app intelligence analysis in JSON format:
 
 {
   "summary": "A concise 1-2 sentence summary of the app",
-  "category": "Main category (e.g., Developer Tools, E-commerce, Social Media)",
+  "category": "Main category (e.g., Developer Tools, E-commerce, Social Media, Games)",
   "subcategories": ["Array of subcategories"],
-  "features": ["Array of key features"],
+  "features": ["Array of key features based on dependencies and structure"],
   "targetAudience": "Description of target audience",
   "tone": "Description of tone and voice",
   "designStyle": "Description of design style",
   "keywords": ["Array of relevant keywords"],
   "problemsSolved": ["Array of problems this app solves"],
   "competitiveAngle": "What makes this app unique",
-  "brandColorsSuggested": ["Array of hex colors like #3B82F6"],
+  "brandColorsSuggested": ["Array of 3-5 hex colors like #3B82F6"],
   "iconStyleRecommendation": "Recommendation for icon style"
 }
 
 Respond ONLY with the JSON object, no additional text.`;
+}
+
+/**
+ * Count total files in structure
+ */
+function countFiles(items: any[]): number {
+  if (!items) return 0;
+  return items.reduce((count, item) => {
+    if (item.type === 'file') return count + 1;
+    if (item.type === 'directory' && item.children) {
+      return count + countFiles(item.children);
+    }
+    return count;
+  }, 0);
 }
 
 /**
