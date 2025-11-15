@@ -500,7 +500,7 @@ function buildPrompt(repositoryMetadata: any, fileContents: any, repoStructure: 
       dependencies: Object.keys(fileContents.packageJson.dependencies || {}),
       devDependencies: Object.keys(fileContents.packageJson.devDependencies || {})
     } : null,
-    readme: fileContents.readme ? fileContents.readme.substring(0, 1000) : null, // Only first 1000 chars
+    readme: fileContents.readme || null, // Full README - includes AI_BRANDING_HINT and other metadata
     hasTypeScript: !!fileContents.tsconfig,
     hasTailwind: !!fileContents.tailwindConfig,
     hasAppJson: !!fileContents.appJson,
@@ -529,7 +529,7 @@ PROJECT INFO:
 DEPENDENCIES (${essentialFileInfo.packageJson?.dependencies?.length || 0}):
 ${essentialFileInfo.packageJson?.dependencies?.slice(0, 15).join(', ') || 'None'}
 
-README EXCERPT:
+README CONTENT (FULL):
 ${essentialFileInfo.readme || 'No README found'}
 
 PROJECT STRUCTURE:
@@ -538,6 +538,13 @@ PROJECT STRUCTURE:
 - Total files: ~${structureSummary.totalFiles}
 - Has components: ${structureSummary.hasComponents ? 'Yes' : 'No'}
 - Has pages/routes: ${structureSummary.hasPages ? 'Yes' : 'No'}
+
+IMPORTANT - README METADATA HINTS:
+If the README contains HTML comments with branding hints (e.g., <!-- AI_BRANDING_HINT: ... -->), use them to guide your suggestions:
+- AI_BRANDING_HINT: Use specified colors for brandColorsSuggested
+- AI_TONE: Use specified tone
+- AI_STYLE: Use specified design style
+- AI_TARGET_AUDIENCE: Use specified target audience
 
 Based on this information, provide a comprehensive app intelligence analysis in JSON format:
 

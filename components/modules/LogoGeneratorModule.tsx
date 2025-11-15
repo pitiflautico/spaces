@@ -5,10 +5,6 @@ import { useSpaceStore } from '@/lib/store';
 import type { Module, LogoGeneratorOutputs, LogoBrief, LogoOption, LogoOptionsPackage, ChosenLogo, FlowContext, LogoVariantOutputs } from '@/types';
 import { CheckCircleIcon, PhotoIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
-interface LogoGeneratorModuleProps {
-  module: Module;
-}
-
 export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps) {
   const { updateModule, getCurrentSpace, addLog, addModule, addConnection } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
