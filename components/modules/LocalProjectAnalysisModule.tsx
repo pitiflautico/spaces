@@ -26,7 +26,18 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
   };
 
   const handleFolderIconClick = () => {
-    fileInputRef.current?.click();
+    // Show info message before opening folder selector
+    const proceed = confirm(
+      '📁 Path Detection\n\n' +
+      'This will open a folder selector to detect the project path.\n\n' +
+      '⚠️ IMPORTANT: No files will be uploaded!\n' +
+      'We only read the folder name to auto-complete the path field.\n\n' +
+      'Click OK to continue.'
+    );
+
+    if (proceed) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
