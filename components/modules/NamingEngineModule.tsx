@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import type { Module, NamingEngineOutputs, NamingPackage, ChosenName, AIConfiguration } from '@/types';
+import type { Module, NamingEngineOutputs, NamingPackage, ChosenName, AIConfiguration, FlowContext } from '@/types';
 import { AIProvider } from '@/types';
 import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon, LightBulbIcon, LanguageIcon } from '@heroicons/react/24/outline';
 import aiProvider from '@/lib/ai-provider';
@@ -189,14 +189,21 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
       if (!namingPackage.branding) {
         console.warn('⚠️ AI did not return branding field. Creating fallback branding...');
 
-        // Create intelligent fallback branding based on available data
+        // Extract app context for detailed visual direction
+        const appCategory = appIntelligence?.category || 'application';
+        const appSummary = appIntelligence?.summary || 'the application';
+        const targetAudience = appIntelligence?.targetAudience || 'general users';
+        const keyFeatures = appIntelligence?.features?.slice(0, 3).join(', ') || 'core features';
+        const competitiveAngle = appIntelligence?.competitiveAngle || 'quality and usability';
+
+        // Create intelligent fallback branding with DETAILED context
         namingPackage.branding = {
           design_style: namingPackage.style || 'modern minimalist',
           color_palette: appIntelligence?.brandColorsSuggested || ['#007AFF', '#34C759', '#FF9500', '#AF52DE'],
           color_meanings: [
-            'Primary brand color',
-            'Success and energy',
-            'Attention and warmth',
+            'Primary brand color - represents trust and professionalism',
+            'Success and positive actions',
+            'Attention and important elements',
             'Creativity and innovation'
           ],
           primary_font_family: 'Inter',
@@ -207,8 +214,8 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
           target_emotion: 'trust and confidence',
           shape_style: 'rounded soft edges',
           icon_style: 'minimalist with clean lines',
-          branding_concept: `${namingPackage.recommended_name} represents ${namingPackage.style || 'modern'} design with focus on ${namingPackage.tone || 'professional'} communication.`,
-          visual_direction: `Use clean, modern aesthetics with ${namingPackage.style || 'simple'} visual elements. Focus on clarity and ${namingPackage.tone || 'professional'} presentation.`
+          branding_concept: `${namingPackage.recommended_name} is a ${appCategory} app designed for ${targetAudience}. The visual identity reflects ${namingPackage.style || 'modern'} design principles with a ${namingPackage.tone || 'professional'} personality. The brand focuses on ${competitiveAngle} to differentiate from competitors.`,
+          visual_direction: `This is ${appSummary}. Target users: ${targetAudience}. Key features to represent: ${keyFeatures}. The logo/icons should feel ${namingPackage.tone || 'professional and approachable'} with ${namingPackage.style || 'modern'} aesthetics. Use ${appIntelligence?.designStyle || 'clean, simple shapes'} and consider visual elements related to the app's core purpose. The design should convey ${competitiveAngle} while maintaining a ${namingPackage.tone || 'professional'} atmosphere. Avoid overly complex imagery - keep it clear and recognizable at small sizes.`
         };
 
         addLog('warning', 'Branding data was generated as fallback. For best results, re-run with updated AI model.', module.id);
@@ -627,70 +634,6 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
             </details>
           )}
 
-          {/* Additional Info */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded">
-              <span className="text-xs text-gray-400">Style</span>
-              <p className="text-sm text-white mt-1">{outputs.namingPackage.style}</p>
-            </div>
-            <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded">
-              <span className="text-xs text-gray-400">Tone</span>
-              <p className="text-sm text-white mt-1">{outputs.namingPackage.tone}</p>
-            </div>
-          </div>
-
-          {/* Flow Context Preview - Data ready for Module 4+ */}
-          {outputs.flowContext && (
-            <div className="px-4 py-3 bg-gradient-to-br from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-sm text-green-400 font-semibold">Data Ready for Next Modules</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {outputs.flowContext.appName && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-400">App:</span>
-                    <span className="text-white font-medium">{outputs.flowContext.appName}</span>
-                  </div>
-                )}
-                {outputs.flowContext.brandColors && outputs.flowContext.brandColors.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-400">Colors:</span>
-                    <div className="flex gap-1">
-                      {outputs.flowContext.brandColors.slice(0, 3).map((color, i) => (
-                        <div
-                          key={i}
-                          className="w-4 h-4 rounded border border-white/20"
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {outputs.flowContext.category && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-400">Category:</span>
-                    <span className="text-white">{outputs.flowContext.category}</span>
-                  </div>
-                )}
-                {outputs.flowContext.designStyle && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-400">Style:</span>
-                    <span className="text-white truncate" title={outputs.flowContext.designStyle}>
-                      {outputs.flowContext.designStyle.substring(0, 20)}...
-                    </span>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-2 italic">
-                ℹ️ This data will be available to Icon Generator and future modules
-              </p>
-            </div>
-          )}
-
           {/* Open Naming Panel Button */}
           <button
             onClick={() => setIsPanelOpen(true)}
@@ -828,8 +771,8 @@ Generate a COMPLETE BRANDING PACKAGE with naming AND visual identity:
     "shape_style": "Geometric style (e.g., rounded soft, sharp angular, geometric)",
     "icon_style": "Icon approach (e.g., minimalist line, detailed illustration, abstract)",
 
-    "branding_concept": "Overall concept explanation - what this brand represents visually",
-    "visual_direction": "How the brand should look and feel - concrete visual guidance"
+    "branding_concept": "Overall concept explanation - what this brand represents visually and WHY (explain the app's purpose and how visuals reflect it)",
+    "visual_direction": "DETAILED visual guidance for logo/icon generation - MUST include: what the app does, target users, key features to represent, mood/atmosphere, specific visual elements to include/avoid"
   }
 }
 
@@ -848,10 +791,16 @@ BRANDING - CRITICAL FOR LOGO GENERATION:
 - primary_font_family: Choose real font names that exist (Inter, Roboto, Playfair, Montserrat, etc.)
 - shape_style: Guide the geometric style of logos/icons (rounded, sharp, geometric, organic)
 - icon_style: Describe the visual style clearly for logo generation
-- branding_concept: Explain the WHY behind the visual choices
-- visual_direction: Give concrete guidance on how logos/icons should look
+- branding_concept: Explain the WHY behind the visual choices - connect them to what the app DOES
+- visual_direction: THIS IS CRITICAL - Include CONTEXT about the app:
+  * What the app is for (e.g., "This is a fitness tracking app for busy professionals")
+  * Who uses it (e.g., "Target users are 25-40 year old urban professionals")
+  * Key features to represent (e.g., "Focus on: progress tracking, social challenges, meal planning")
+  * Mood/atmosphere (e.g., "Should feel: energetic, motivating, but not intimidating")
+  * Specific visual elements (e.g., "Consider: upward arrows for progress, human silhouettes, healthy food icons")
+  * What to avoid (e.g., "Avoid: overly aggressive imagery, complex charts")
 
-The branding information will be used by AI to generate logos, so be SPECIFIC and DETAILED.
+The branding information will be used by AI to generate logos, so be SPECIFIC, DETAILED, and CONTEXT-RICH.
 
 ${language !== 'en' ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
