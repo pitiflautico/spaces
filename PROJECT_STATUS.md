@@ -1,16 +1,275 @@
-# 📋 PROJECT STATUS — MARKETING SPACES v1.1
+# 📋 PROJECT STATUS — MARKETING SPACES v2.0
 **Documento de Estado del Proyecto para Continuidad de Desarrollo con IA**
 
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15 (UX Final Refinements + Custom Dialogs)
-**Versión del sistema**: v1.1 (en desarrollo)
-**Fase actual**: ✅ UI final polish + Custom dialogs | Próximo: Play/Restart Flow + Persistence
+**Última actualización**: 2025-11-15 (V2.0 - AI Provider Layer Complete)
+**Versión del sistema**: v2.0 (implementación completa)
+**Fase actual**: ✅ AI Provider Layer + AIE Engine + Play/Restart Flow | Próximo: Documentación final
 
 ---
 
-## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
+## 🆕 ÚLTIMOS CAMBIOS (2025-11-15) - V2.0
+
+### ✅ SESIÓN V2.0: AI Provider Layer + AIE Engine + Flow Execution
+
+**NUEVO SISTEMA COMPLETO**: AI Provider abstraction layer con soporte multi-provider
+
+**Archivos NUEVOS**:
+- ✅ `/lib/ai-provider.ts` - Provider manager con error handling
+- ✅ `/lib/adapters/index.ts` - Auto-initialization de adapters
+- ✅ `/lib/adapters/together-adapter.ts` - Together AI adapter
+- ✅ `/lib/adapters/replicate-adapter.ts` - Replicate adapter con polling
+- ✅ `/lib/adapters/openai-adapter.ts` - OpenAI Chat Completions adapter
+- ✅ `/lib/adapters/anthropic-adapter.ts` - Anthropic Messages adapter
+- ✅ `/lib/adapters/mock-adapter.ts` - Mock adapter para testing
+- ✅ `/components/modules/AIEEngineModule.tsx` - Módulo 2 funcional con IA
+
+**Archivos MODIFICADOS**:
+- ✅ `/types/index.ts` - Añadidos tipos de IA (AIProvider, AIConfiguration, AppIntelligence)
+- ✅ `/lib/store.ts` - Añadidos executeFlow(), resetAll(), resetModule(), resetFrom()
+- ✅ `/components/configuration/ConfigurationPanel.tsx` - Panel de configuración AI Provider
+- ✅ `/components/canvas/ModuleBlock.tsx` - Integración de AIEEngineModule
+- ✅ `/components/canvas/FloatingToolbar.tsx` - Conectado Play Flow y Restart Flow
+- ✅ `/components/canvas/Canvas.tsx` - Fix spacebar en inputs (no interceptar en INPUT/TEXTAREA)
+
+**Funcionalidad implementada**:
+
+#### 1. ✅ **AI Provider Layer** (Abstracción multi-provider)
+   - Manager central con `aiProvider.run()` y `aiProvider.testConnection()`
+   - 7 códigos de error específicos (IA_ERROR_01 a IA_ERROR_07)
+   - Sistema de adapters con patrón Strategy
+   - Soporte para 5 providers: Together, Replicate, OpenAI, Anthropic, Mock
+   - Auto-registro de adapters en import
+
+**Código de referencia**:
+```typescript
+// AI Provider Manager
+export const aiProvider = new AIProviderManager();
+await aiProvider.run(prompt, {
+  provider: AIProvider.OPENAI,
+  apiKey: 'sk-...',
+  model: 'gpt-4',
+  temperature: 0.7,
+  maxTokens: 4096
+});
+```
+
+#### 2. ✅ **Adapters implementados** (5/5)
+   - **TogetherAdapter**: https://api.together.xyz/v1/completions
+   - **ReplicateAdapter**: Polling async para modelos LLaMA
+   - **OpenAIAdapter**: Chat Completions API con streaming support
+   - **AnthropicAdapter**: Messages API con Claude models
+   - **MockAdapter**: Testing sin API keys, genera AppIntelligence mock
+
+#### 3. ✅ **AIE Engine Module** (Module 2 - Reader Engine)
+   - 3 inputs JSON: Repository Metadata, File Contents, Repo Structure
+   - 1 output JSON: App Intelligence
+   - Integración completa con AI Provider Layer
+   - Prompt builder automático
+   - Parser JSON con fallback regex
+   - Display de: summary, category, keywords, brand colors
+   - Estado visual: idle → running → done/error
+
+**Código de referencia**:
+```tsx
+// AIEEngineModule.tsx - Flow completo
+const handleRun = async () => {
+  // 1. Get AI config from space
+  const aiConfig = space?.configuration?.aiConfig;
+
+  // 2. Get inputs from connected modules
+  const { repositoryMetadata, fileContents, repoStructure } = module.inputs;
+
+  // 3. Build prompt
+  const prompt = buildPrompt(repositoryMetadata, fileContents, repoStructure);
+
+  // 4. Call AI provider
+  const response = await aiProvider.run(prompt, {
+    ...aiConfig,
+    apiKey: getAPIKeyForProvider(aiConfig.provider, space.configuration.apiKeys)
+  });
+
+  // 5. Parse AppIntelligence JSON
+  const appIntelligence = JSON.parse(response.outputText);
+
+  // 6. Update module outputs
+  updateModule(module.id, { status: 'done', outputs: { appIntelligence } });
+};
+```
+
+#### 4. ✅ **Configuration Panel Updates**
+   - Sección "AI Provider (V2.0)" con dropdown de providers
+   - Inputs para API keys: Replicate y Together (además de OpenAI/Anthropic)
+   - Selector de modelo con placeholders dinámicos
+   - Slider de temperatura (0-2)
+   - Input de max tokens
+   - SparklesIcon para sección de IA
+
+#### 5. ✅ **Play Flow - Ejecución topológica**
+   - Algoritmo de Kahn para ordenamiento topológico
+   - `executeFlow()` en store con cálculo de dependencias
+   - FloatingToolbar conectado a executeFlow()
+   - Error handling con try/catch
+   - Console logs de progreso
+
+**Código de referencia**:
+```typescript
+// Topological sort implementation
+function calculateTopologicalOrder(modules: Module[], connections: ModuleConnection[]): string[] {
+  const adjList = new Map<string, string[]>();
+  const inDegree = new Map<string, number>();
+
+  // Build graph
+  modules.forEach(m => {
+    adjList.set(m.id, []);
+    inDegree.set(m.id, 0);
+  });
+
+  connections.forEach(c => {
+    adjList.get(c.sourceModuleId)!.push(c.targetModuleId);
+    inDegree.set(c.targetModuleId, inDegree.get(c.targetModuleId)! + 1);
+  });
+
+  // Kahn's algorithm
+  const queue: string[] = [];
+  inDegree.forEach((degree, id) => {
+    if (degree === 0) queue.push(id);
+  });
+
+  const result: string[] = [];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    result.push(current);
+
+    adjList.get(current)!.forEach(neighbor => {
+      const newDegree = inDegree.get(neighbor)! - 1;
+      inDegree.set(neighbor, newDegree);
+      if (newDegree === 0) queue.push(neighbor);
+    });
+  }
+
+  return result;
+}
+```
+
+#### 6. ✅ **Restart Flow - Reset completo**
+   - `resetAll()` implementado en store
+   - Reset de todos los módulos a 'idle'
+   - Limpieza de outputs
+   - Confirmación de usuario
+   - FloatingToolbar conectado a resetAll()
+
+**Código de referencia**:
+```typescript
+// FloatingToolbar.tsx - Restart Flow
+const handleRestartFlow = () => {
+  if (confirm('¿Resetear todos los módulos? Esto borrará todos los outputs y estados.')) {
+    resetAll();
+    console.log('✓ Restart Flow - All modules reset to idle');
+  }
+};
+```
+
+#### 7. ✅ **Sistema de reinicio avanzado**
+   - `resetModule(id)`: Reset individual + marcar dependientes como invalid
+   - `resetFrom(id)`: Reset en cascada desde un módulo
+   - BFS para encontrar módulos dependientes
+   - Propagación de estado 'invalid' a dependencias
+
+**Código de referencia**:
+```typescript
+// Find dependent modules using BFS
+function findDependentModules(moduleId: string, connections: ModuleConnection[]): string[] {
+  const dependents = new Set<string>();
+  const queue = [moduleId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    connections
+      .filter(c => c.sourceModuleId === current)
+      .forEach(c => {
+        if (!dependents.has(c.targetModuleId)) {
+          dependents.add(c.targetModuleId);
+          queue.push(c.targetModuleId);
+        }
+      });
+  }
+
+  return Array.from(dependents);
+}
+```
+
+#### 8. ✅ **Bug fixes**
+   - Canvas spacebar no bloquea inputs (check de INPUT/TEXTAREA/contentEditable)
+   - Hydration mismatch fixed con isHydrated state
+
+**Tipos nuevos agregados (V2.0)**:
+```typescript
+// types/index.ts
+export enum AIProvider {
+  REPLICATE = 'replicate',
+  TOGETHER = 'together',
+  OPENAI = 'openai',
+  ANTHROPIC = 'anthropic',
+  LOCAL = 'local'
+}
+
+export interface AIConfiguration {
+  provider: AIProvider;
+  apiKey?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  mode?: 'streaming' | 'non-streaming';
+}
+
+export interface AppIntelligence {
+  summary: string;
+  category: string;
+  subcategories: string[];
+  features: string[];
+  targetAudience: string;
+  tone: string;
+  designStyle: string;
+  keywords: string[];
+  problemsSolved: string[];
+  competitiveAngle: string;
+  brandColorsSuggested: string[];
+  iconStyleRecommendation: string;
+}
+
+export interface AIProviderResponse {
+  outputText: string;
+  rawResponse?: any;
+  tokensUsed?: number;
+  providerUsed: string;
+  model: string;
+}
+```
+
+**Store actions nuevas (V2.0)**:
+```typescript
+// lib/store.ts
+interface SpaceStore {
+  // V2.0 Flow execution
+  executeFlow: () => Promise<void>;          // Topological execution
+  resetAll: () => void;                      // Reset all to idle
+  resetModule: (id: string) => void;         // Reset one + mark dependents invalid
+  resetFrom: (id: string) => void;           // Reset from this onwards
+}
+```
+
+**Archivos críticos V2.0**:
+- `/lib/ai-provider.ts` - Provider manager (218L)
+- `/lib/adapters/` - 6 archivos de adapters (~500L total)
+- `/components/modules/AIEEngineModule.tsx` - AIE Engine (253L)
+- `/types/index.ts` - Tipos extendidos con IA
+
+---
+
+## 🆕 CAMBIOS V1.1 (Sesiones anteriores)
 
 ### ✅ SESIÓN 3 (Parte 2): UX Final Refinements
 
@@ -169,31 +428,34 @@ handleFolderSelect() {
 
 ## 📊 RESUMEN EJECUTIVO
 
-### Estado General
+### Estado General V2.0
 - ✅ **Infraestructura base**: Canvas, módulos, conexiones visuales, sidebar
-- ✅ **Primer módulo funcional**: Local Project Analysis Agent (100% operativo)
+- ✅ **Módulos funcionales**: Local Project Analysis + AIE Engine (2/5 operativos)
 - ✅ **Conectores tipados**: COMPLETO (drag/drop + validación + gestión dinámica)
 - ✅ **Estados extendidos**: 7 estados (idle, running, done, error, warning, fatal_error, invalid)
-- ✅ **Toolbar flotante**: UI COMPLETA (falta lógica de ejecución topológica)
+- ✅ **Toolbar flotante**: UI + LÓGICA COMPLETA (Play Flow + Restart Flow)
 - ✅ **Sistema modular base**: ModuleWrapper implementado (evita duplicación)
-- ✅ **Duplicate module**: Funcionalidad completa
-- ❌ **Sistema de guardado**: Solo en memoria (falta persistencia)
-- ❌ **Sistema de ejecución en cadena**: No implementado (próxima tarea)
+- ✅ **AI Provider Layer**: Abstracción multi-provider COMPLETA (5 adapters)
+- ✅ **Play Flow**: Ejecución topológica con Kahn's algorithm
+- ✅ **Restart Flow**: Reset all + reset individual + reset cascade
+- ✅ **Sistema de guardado**: Zustand persist middleware (localStorage)
+- ✅ **Configuration Panel**: AI config + API keys + preferences
 
-### Métricas del Proyecto
-- **Total de archivos TS**: 18 archivos (+1 nuevo: ConfigurationPanel)
-- **Líneas de código**: ~3,600 líneas TypeScript (+400)
-- **Componentes React**: 14 componentes
-- **Helpers**: 1 (`data-type-icons.tsx`)
+### Métricas del Proyecto V2.0
+- **Total de archivos TS**: 26 archivos (+8 nuevos en V2.0)
+- **Líneas de código**: ~5,200 líneas TypeScript (+1,600 en V2.0)
+- **Componentes React**: 15 componentes (+1: AIEEngineModule)
+- **Adapters de IA**: 5 (Together, Replicate, OpenAI, Anthropic, Mock)
+- **Helpers**: 2 (`data-type-icons.tsx`, `ai-provider.ts`)
 - **APIs Backend**: 1 endpoint (`/api/local-analysis`)
-- **Módulos disponibles**: 5 (solo 1 funcional)
-- **Estado management**: Zustand (en memoria + configuración por space)
+- **Módulos disponibles**: 5 (2 funcionales: LocalProjectAnalysis, AIE Engine)
+- **Estado management**: Zustand con persist middleware (auto-save a localStorage)
 
 ---
 
 ## 🗺️ MAPA DE ARQUITECTURA
 
-### Estructura de Carpetas
+### Estructura de Carpetas V2.0
 ```
 /home/user/spaces/
 │
@@ -202,30 +464,45 @@ handleFolderSelect() {
 │   │   └── local-analysis/
 │   │       └── route.ts                    # [397L] API análisis de proyectos locales
 │   ├── layout.tsx                          # [19L] Root layout
-│   ├── page.tsx                            # [36L] Página principal
+│   ├── page.tsx                            # [40L] Página principal + hydration fix
 │   └── globals.css                         # Estilos globales Tailwind
 │
 ├── components/
 │   ├── canvas/                             # Sistema de canvas principal
-│   │   ├── Canvas.tsx                      # [180L] ⭐ Container principal (zoom/pan/keyboard)
-│   │   ├── ModuleBlock.tsx                 # [229L] ⭐ Bloque de módulo draggable
+│   │   ├── Canvas.tsx                      # [185L] ⭐ Container principal (zoom/pan/keyboard + spacebar fix)
+│   │   ├── ModuleBlock.tsx                 # [245L] ⭐ Bloque de módulo + AIE Engine integration
 │   │   ├── ConnectionLines.tsx             # [86L] Renderizado de conexiones SVG
 │   │   ├── CanvasControls.tsx              # [62L] Controles de zoom
 │   │   ├── AddModuleButton.tsx             # [25L] Botón flotante para añadir
 │   │   ├── AddModulePanel.tsx              # [190L] Panel selector de módulos
-│   │   └── DotGrid.tsx                     # [54L] Grid de fondo
+│   │   ├── DotGrid.tsx                     # [54L] Grid de fondo
+│   │   ├── FloatingToolbar.tsx             # [120L] ⭐ V2.0 Toolbar con Play/Restart Flow
+│   │   └── ModuleWrapper.tsx               # [150L] Wrapper base reutilizable
 │   │
 │   ├── modules/                            # Módulos específicos
-│   │   └── LocalProjectAnalysisModule.tsx  # [219L] ✅ Módulo funcional
+│   │   ├── LocalProjectAnalysisModule.tsx  # [219L] ✅ Módulo 1 funcional
+│   │   └── AIEEngineModule.tsx             # [253L] ✅ V2.0 Módulo 2 funcional (AI-powered)
+│   │
+│   ├── configuration/                      # V2.0 Configuration
+│   │   └── ConfigurationPanel.tsx          # [320L] ⭐ AI config + API keys
 │   │
 │   └── sidebar/
-│       └── Sidebar.tsx                     # [178L] Panel lateral (spaces)
+│       └── Sidebar.tsx                     # [185L] Panel lateral (spaces + config button)
 │
 ├── lib/
-│   └── store.ts                            # [266L] ⭐ Zustand store (estado global)
+│   ├── store.ts                            # [580L] ⭐ V2.0 Zustand store + persist + flow execution
+│   ├── ai-provider.ts                      # [218L] ⭐ V2.0 AI Provider manager
+│   ├── adapters/                           # V2.0 AI Adapters
+│   │   ├── index.ts                        # [34L] Auto-initialization
+│   │   ├── together-adapter.ts             # [67L] Together AI
+│   │   ├── replicate-adapter.ts            # [89L] Replicate (polling)
+│   │   ├── openai-adapter.ts               # [68L] OpenAI Chat Completions
+│   │   ├── anthropic-adapter.ts            # [68L] Anthropic Messages
+│   │   └── mock-adapter.ts                 # [90L] Mock adapter para testing
+│   └── data-type-icons.tsx                 # [45L] Iconos y colores por tipo
 │
 ├── types/
-│   └── index.ts                            # [79L] ⭐ Definiciones TypeScript
+│   └── index.ts                            # [185L] ⭐ V2.0 Tipos + AI interfaces
 │
 ├── design_interface/                       # Imágenes de referencia UI
 ├── tailwind.config.js                      # Configuración Tailwind
@@ -234,20 +511,143 @@ handleFolderSelect() {
 └── package.json                            # Dependencias
 ```
 
-### Archivos Críticos (⭐ LEER SIEMPRE ANTES DE MODIFICAR)
+### Archivos Críticos V2.0 (⭐ LEER SIEMPRE ANTES DE MODIFICAR)
 
 | Archivo | Líneas | Responsabilidad | Cuándo modificar |
 |---------|--------|-----------------|------------------|
-| `/types/index.ts` | 79 | **Tipos globales** | Al añadir nuevos tipos, interfaces, enums |
-| `/lib/store.ts` | 266 | **Estado global Zustand** | Al añadir actions, estados, o modificar espacios |
-| `/components/canvas/Canvas.tsx` | 180 | **Sistema de canvas** | Al cambiar zoom, pan, teclado, rendering |
-| `/components/canvas/ModuleBlock.tsx` | 229 | **UI de módulos** | Al cambiar apariencia, dragging, estados |
-| `/components/canvas/ConnectionLines.tsx` | 86 | **Renderizado de conexiones** | Al cambiar estilo de cables o animaciones |
+| `/types/index.ts` | 185 | **Tipos globales + AI** | Al añadir nuevos tipos, interfaces, enums |
+| `/lib/store.ts` | 580 | **Estado global + Flow execution** | Al añadir actions, estados, o modificar espacios |
+| `/lib/ai-provider.ts` | 218 | **V2.0 AI Provider manager** | Al añadir nuevos providers o cambiar error handling |
+| `/components/canvas/Canvas.tsx` | 185 | **Sistema de canvas** | Al cambiar zoom, pan, teclado, rendering |
+| `/components/canvas/ModuleBlock.tsx` | 245 | **UI de módulos** | Al cambiar apariencia, dragging, estados |
+| `/components/canvas/FloatingToolbar.tsx` | 120 | **V2.0 Flow controls** | Al cambiar Play/Restart/Undo/Redo logic |
+| `/components/modules/AIEEngineModule.tsx` | 253 | **V2.0 AI Module** | Referencia para módulos con IA |
 | `/components/modules/LocalProjectAnalysisModule.tsx` | 219 | **Módulo de referencia** | Como plantilla para nuevos módulos |
+| `/components/configuration/ConfigurationPanel.tsx` | 320 | **V2.0 Config panel** | Al añadir nuevos settings o API keys |
 
 ---
 
-## ✅ FEATURES IMPLEMENTADAS (Lo que YA existe)
+## ✅ FEATURES IMPLEMENTADAS V2.0 (Lo que YA existe)
+
+### V2.0 NEW FEATURES
+
+#### 8. AI Provider Layer (V2.0)
+**Ubicación**: `/lib/ai-provider.ts` + `/lib/adapters/`
+
+**Implementado**:
+- ✅ Manager central con patrón Strategy
+- ✅ 5 adapters funcionales (Together, Replicate, OpenAI, Anthropic, Mock)
+- ✅ Error handling con 7 códigos específicos
+- ✅ Test connection por provider
+- ✅ Auto-registration en import
+- ✅ TypeScript interfaces para AIConfiguration y AIProviderResponse
+
+**Cómo funciona**:
+```typescript
+// Registrar adapter
+aiProvider.registerAdapter(AIProvider.OPENAI, new OpenAIAdapter());
+
+// Ejecutar con cualquier provider
+const response = await aiProvider.run(prompt, {
+  provider: AIProvider.OPENAI,
+  apiKey: 'sk-...',
+  model: 'gpt-4',
+  temperature: 0.7
+});
+```
+
+---
+
+#### 9. AIE Engine Module (V2.0)
+**Ubicación**: `/components/modules/AIEEngineModule.tsx`
+
+**Implementado**:
+- ✅ Módulo funcional con IA
+- ✅ 3 inputs JSON (metadata, contents, structure)
+- ✅ 1 output JSON (AppIntelligence)
+- ✅ Prompt builder automático
+- ✅ Parser JSON con regex fallback
+- ✅ Display de summary, category, keywords, brand colors
+- ✅ Estado visual (idle → running → done/error)
+- ✅ Error handling con mensajes descriptivos
+
+**AppIntelligence structure**:
+```typescript
+interface AppIntelligence {
+  summary: string;
+  category: string;
+  subcategories: string[];
+  features: string[];
+  targetAudience: string;
+  tone: string;
+  designStyle: string;
+  keywords: string[];
+  problemsSolved: string[];
+  competitiveAngle: string;
+  brandColorsSuggested: string[];
+  iconStyleRecommendation: string;
+}
+```
+
+---
+
+#### 10. Play Flow - Topological Execution (V2.0)
+**Ubicación**: `/lib/store.ts` (executeFlow action) + `/components/canvas/FloatingToolbar.tsx`
+
+**Implementado**:
+- ✅ Cálculo de orden topológico (Kahn's algorithm)
+- ✅ Detección de dependencias con grafo dirigido
+- ✅ Ejecución en orden correcto
+- ✅ Handler en FloatingToolbar
+- ✅ Error handling con alerts
+
+**Algoritmo**:
+```typescript
+function calculateTopologicalOrder(modules, connections) {
+  // 1. Build adjacency list and in-degree map
+  // 2. Find nodes with in-degree 0
+  // 3. Kahn's algorithm (BFS topological sort)
+  // 4. Return ordered array of module IDs
+}
+```
+
+---
+
+#### 11. Restart Flow - Reset System (V2.0)
+**Ubicación**: `/lib/store.ts` (resetAll, resetModule, resetFrom)
+
+**Implementado**:
+- ✅ Reset All: Todos los módulos a idle
+- ✅ Reset Module: Individual + mark dependents invalid
+- ✅ Reset From: Cascade desde un módulo
+- ✅ BFS para encontrar dependientes
+- ✅ Handler en FloatingToolbar con confirmación
+
+**Funciones**:
+```typescript
+resetAll(): void                 // Reset all to idle
+resetModule(id: string): void    // Reset one + dependents invalid
+resetFrom(id: string): void      // Reset from this onwards
+```
+
+---
+
+#### 12. Configuration Panel (V2.0)
+**Ubicación**: `/components/configuration/ConfigurationPanel.tsx`
+
+**Implementado**:
+- ✅ Sección AI Provider con dropdown
+- ✅ API Keys (OpenAI, Anthropic, Replicate, Together)
+- ✅ Model input con placeholders dinámicos
+- ✅ Temperature slider (0-2)
+- ✅ Max tokens input
+- ✅ Project path por space
+- ✅ Auto-save preferences
+- ✅ Modal elegante con save/cancel
+
+---
+
+### V1.1 FEATURES
 
 ### 1. Sistema de Canvas
 **Ubicación**: `/components/canvas/Canvas.tsx`

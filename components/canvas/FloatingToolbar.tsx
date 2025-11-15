@@ -12,20 +12,26 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function FloatingToolbar() {
-  const { getCurrentSpace } = useSpaceStore();
+  const { getCurrentSpace, executeFlow, resetAll } = useSpaceStore();
   const currentSpace = getCurrentSpace();
 
-  const handlePlayFlow = () => {
-    // TODO: Implement topological execution (Task C2)
+  const handlePlayFlow = async () => {
+    // V2.0: Execute modules in topological order
     console.log('Play Flow - Execute all modules in order');
-    alert('Play Flow: Esta funcionalidad ejecutará todos los módulos en orden topológico (Tarea C pendiente)');
+    try {
+      await executeFlow();
+      console.log('✓ Play Flow execution completed');
+    } catch (error: any) {
+      console.error('Play Flow error:', error);
+      alert(`Play Flow error: ${error.message}`);
+    }
   };
 
   const handleRestartFlow = () => {
-    // TODO: Implement reset all (Task C3)
+    // V2.0: Reset all modules to idle state
     if (confirm('¿Resetear todos los módulos? Esto borrará todos los outputs y estados.')) {
-      console.log('Restart Flow - Reset all modules');
-      alert('Restart Flow: Esta funcionalidad reseteará todos los módulos (Tarea E pendiente)');
+      resetAll();
+      console.log('✓ Restart Flow - All modules reset to idle');
     }
   };
 

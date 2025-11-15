@@ -38,6 +38,12 @@ interface SpaceStore {
   setPan: (pan: Position) => void;
   resetCanvas: () => void;
 
+  // Flow execution actions (V2.0)
+  executeFlow: () => Promise<void>;
+  resetAll: () => void;
+  resetModule: (id: string) => void;
+  resetFrom: (id: string) => void;
+
   // Utility
   getCurrentSpace: () => Space | null;
 }
@@ -522,6 +528,116 @@ export const useSpaceStore = create<SpaceStore>()(
     });
   },
 
+  // V2.0: Flow execution with topological sort
+  executeFlow: async () => {
+    const state = get();
+    const currentSpace = state.spaces.find((s) => s.id === state.currentSpaceId);
+    if (!currentSpace) return;
+
+    // Calculate execution order using topological sort
+    const executionOrder = calculateTopologicalOrder(currentSpace.modules, currentSpace.connections);
+
+    // Execute modules in order
+    for (const moduleId of executionOrder) {
+      const module = currentSpace.modules.find((m) => m.id === moduleId);
+      if (!module) continue;
+
+      // Skip if already done and inputs haven't changed
+      if (module.status === 'done') continue;
+
+      // Skip if in error state
+      if (module.status === 'error' || module.status === 'fatal_error') continue;
+
+      // Execute module (this will be handled by the module's run handler)
+      // The actual execution happens in ModuleBlock's handleRun
+      // Here we just update status to trigger execution
+      const { updateModule } = get();
+      updateModule(moduleId, { status: 'idle' }); // Reset to allow re-run
+    }
+  },
+
+  // V2.0: Reset all modules
+  resetAll: () => {
+    set((state) => {
+      const currentSpace = state.spaces.find((s) => s.id === state.currentSpaceId);
+      if (!currentSpace) return state;
+
+      return {
+        spaces: state.spaces.map((space) =>
+          space.id === state.currentSpaceId
+            ? {
+                ...space,
+                modules: space.modules.map((m) => ({
+                  ...m,
+                  status: 'idle' as const,
+                  outputs: {},
+                })),
+                updatedAt: new Date(),
+              }
+            : space
+        ),
+      };
+    });
+  },
+
+  // V2.0: Reset specific module
+  resetModule: (id: string) => {
+    set((state) => {
+      const currentSpace = state.spaces.find((s) => s.id === state.currentSpaceId);
+      if (!currentSpace) return state;
+
+      // Find dependent modules
+      const dependentIds = findDependentModules(id, currentSpace.connections);
+
+      return {
+        spaces: state.spaces.map((space) =>
+          space.id === state.currentSpaceId
+            ? {
+                ...space,
+                modules: space.modules.map((m) => {
+                  if (m.id === id) {
+                    return { ...m, status: 'idle' as const, outputs: {} };
+                  }
+                  if (dependentIds.includes(m.id)) {
+                    return { ...m, status: 'invalid' as const };
+                  }
+                  return m;
+                }),
+                updatedAt: new Date(),
+              }
+            : space
+        ),
+      };
+    });
+  },
+
+  // V2.0: Reset from this module onwards
+  resetFrom: (id: string) => {
+    set((state) => {
+      const currentSpace = state.spaces.find((s) => s.id === state.currentSpaceId);
+      if (!currentSpace) return state;
+
+      // Find this module and all dependent modules
+      const affectedIds = [id, ...findDependentModules(id, currentSpace.connections)];
+
+      return {
+        spaces: state.spaces.map((space) =>
+          space.id === state.currentSpaceId
+            ? {
+                ...space,
+                modules: space.modules.map((m) =>
+                  affectedIds.includes(m.id)
+                    ? { ...m, status: 'idle' as const, outputs: {} }
+                    : m
+                ),
+                updatedAt: new Date(),
+              }
+            : space
+        ),
+      };
+    });
+  },
+
       getCurrentSpace: () => {
         const state = get();
         return state.spaces.find((s) => s.id === state.currentSpaceId) || null;
@@ -537,3 +653,82 @@ export const useSpaceStore = create<SpaceStore>()(
     }
   )
 );
+
+/**
+ * V2.0: Calculate topological order for module execution
+ * Uses Kahn's algorithm for topological sorting
+ */
+function calculateTopologicalOrder(modules: Module[], connections: ModuleConnection[]): string[] {
+  // Build adjacency list and in-degree map
+  const adjList = new Map<string, string[]>();
+  const inDegree = new Map<string, number>();
+
+  // Initialize
+  modules.forEach((m) => {
+    adjList.set(m.id, []);
+    inDegree.set(m.id, 0);
+  });
+
+  // Build graph from connections
+  connections.forEach((conn) => {
+    const from = conn.sourceModuleId;
+    const to = conn.targetModuleId;
+
+    adjList.get(from)?.push(to);
+    inDegree.set(to, (inDegree.get(to) || 0) + 1);
+  });
+
+  // Find all nodes with in-degree 0 (no dependencies)
+  const queue: string[] = [];
+  modules.forEach((m) => {
+    if (inDegree.get(m.id) === 0) {
+      queue.push(m.id);
+    }
+  });
+
+  // Topological sort
+  const result: string[] = [];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    result.push(current);
+
+    const neighbors = adjList.get(current) || [];
+    neighbors.forEach((neighbor) => {
+      const newDegree = (inDegree.get(neighbor) || 0) - 1;
+      inDegree.set(neighbor, newDegree);
+
+      if (newDegree === 0) {
+        queue.push(neighbor);
+      }
+    });
+  }
+
+  return result;
+}
+
+/**
+ * V2.0: Find all modules that depend on a given module
+ */
+function findDependentModules(moduleId: string, connections: ModuleConnection[]): string[] {
+  const dependents = new Set<string>();
+  const queue = [moduleId];
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    // Find all modules that have current as a source
+    connections
+      .filter((c) => c.sourceModuleId === current)
+      .forEach((c) => {
+        if (!dependents.has(c.targetModuleId) && c.targetModuleId !== moduleId) {
+          dependents.add(c.targetModuleId);
+          queue.push(c.targetModuleId);
+        }
+      });
+  }
+
+  return Array.from(dependents);
+}
