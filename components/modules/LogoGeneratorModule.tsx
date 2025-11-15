@@ -12,6 +12,75 @@ interface LogoGeneratorModuleProps {
   module: Module;
 }
 
+// Logo Style Presets - Guide AI generation with specific aesthetics
+const LOGO_STYLES = {
+  minimalist: {
+    name: 'Minimalist',
+    description: 'Simple, clean, geometric basics, smooth lines, neutral colors',
+    prompt: 'minimalist logo with simple geometric shapes, clean lines, neutral colors, modern and professional style, negative space usage',
+  },
+  bold: {
+    name: 'Bold & Loud',
+    description: 'High visual impact, thick shapes, strong contrasts, vibrant colors',
+    prompt: 'bold and impactful logo with thick shapes, strong geometric forms, vibrant contrasting colors, high energy, modern and eye-catching',
+  },
+  elegant: {
+    name: 'Elegant',
+    description: 'Refined with elegant typography, organic icons, soft tones, premium',
+    prompt: 'elegant and refined logo with sophisticated serif or semi-serif typography, natural organic icons, soft muted tones, premium luxurious style',
+  },
+  playful: {
+    name: 'Playful',
+    description: 'Fun and friendly, rounded typography, cheerful icons, bright colors',
+    prompt: 'playful and friendly logo with rounded typography, cute approachable icons, bright cheerful colors, youthful and welcoming style',
+  },
+  tech: {
+    name: 'Tech & Modern',
+    description: 'Futuristic, gradients, modern sans-serif, abstract digital icons',
+    prompt: 'tech-forward modern logo with sleek gradients, futuristic sans-serif typography, abstract digital icons, contemporary technological style',
+  },
+  classic: {
+    name: 'Classic',
+    description: 'Traditional serif, symmetric icon, sober colors, institutional',
+    prompt: 'classic traditional logo with balanced serif typography, symmetric icon, sober elegant colors like black or gold, timeless institutional style',
+  },
+  handdrawn: {
+    name: 'Hand-Drawn',
+    description: 'Hand-illustrated, irregular lines, sketch typography, warm colors',
+    prompt: 'hand-drawn artisanal logo with irregular sketch lines, vintage hand-lettered typography, warm organic colors, natural crafted style',
+  },
+  abstract: {
+    name: 'Abstract',
+    description: 'Fluid shapes, modern gradients, clean typography, dynamic',
+    prompt: 'abstract modern logo with fluid dynamic shapes, contemporary gradients, clean minimalist typography, sophisticated and innovative style',
+  },
+} as const;
+
+type LogoStyleKey = keyof typeof LOGO_STYLES;
+
+/**
+ * Detect logo style from branding design_style string
+ * Maps AI-generated design_style to one of our 8 predefined styles
+ */
+function detectStyleFromBranding(designStyle?: string): LogoStyleKey | null {
+  if (!designStyle) return null;
+
+  const styleLower = designStyle.toLowerCase();
+
+  // Map design style to predefined styles
+  if (styleLower.includes('minimalist') || styleLower.includes('minimal')) return 'minimalist';
+  if (styleLower.includes('bold') || styleLower.includes('loud') || styleLower.includes('impact')) return 'bold';
+  if (styleLower.includes('elegant') || styleLower.includes('refined') || styleLower.includes('sophisticated')) return 'elegant';
+  if (styleLower.includes('playful') || styleLower.includes('fun') || styleLower.includes('friendly')) return 'playful';
+  if (styleLower.includes('tech') || styleLower.includes('modern') || styleLower.includes('futuristic')) return 'tech';
+  if (styleLower.includes('classic') || styleLower.includes('traditional') || styleLower.includes('timeless')) return 'classic';
+  if (styleLower.includes('hand') || styleLower.includes('drawn') || styleLower.includes('artisan') || styleLower.includes('craft')) return 'handdrawn';
+  if (styleLower.includes('abstract') || styleLower.includes('fluid') || styleLower.includes('dynamic')) return 'abstract';
+
+  // Default to minimalist if can't detect
+  return 'minimalist';
+}
+
 // Image generation models - Replicate & Together (3 best options each)
 const IMAGE_AI_MODELS = {
   [AIProvider.REPLICATE]: [
@@ -37,6 +106,17 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
   const outputs = module.outputs as LogoGeneratorOutputs;
   const space = getCurrentSpace();
+
+  // Detect style from branding if available
+  const connections = space?.connections || [];
+  const incomingConnection = connections.find(
+    (conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1'
+  );
+  const sourceModule = space?.modules.find((m) => m.id === incomingConnection?.sourceModuleId);
+  const branding = sourceModule?.outputs.namingPackage?.branding;
+  const detectedStyle = detectStyleFromBranding(branding?.design_style);
+
+  const [selectedStyle, setSelectedStyle] = useState<LogoStyleKey>(detectedStyle || 'minimalist');
 
   // Get module inputs for AI config
   const inputs = (module.inputs || {}) as any;
@@ -137,8 +217,8 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
       }
 
-      // Build prompt using the complete branding information
-      const logoPrompt = buildLogoPrompt(logoBrief, 1, flowContext.language || 'en', branding);
+      // Build prompt using the complete branding information and selected style
+      const logoPrompt = buildLogoPrompt(logoBrief, 1, selectedStyle, branding);
 
       // Call image generation API with num_outputs parameter
       const imageResult = await imageProvider.generate({
@@ -158,11 +238,11 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       const mockLogos: LogoOption[] = imageResult.images.map((imageUrl, i) => ({
         id: i + 1,
         image_url: imageUrl,
-        style_summary: `${logoBrief.style} logo variant ${i + 1}`,
+        style_summary: `${LOGO_STYLES[selectedStyle].name} - ${logoBrief.style} logo variant ${i + 1}`,
         colors_used: logoBrief.color_palette,
-        strengths: `AI-generated using ${imageResult.model}`,
+        strengths: `AI-generated using ${imageResult.model} with ${LOGO_STYLES[selectedStyle].name} style`,
         weaknesses: i === 0 ? 'Primary variant' : `Alternative ${i}`,
-        ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en', branding),
+        ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, selectedStyle, branding),
       }));
 
       // Delete any existing variant nodes from previous runs
@@ -379,6 +459,38 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
           )}
         </div>
 
+        {/* Logo Style Selector */}
+        <div className="mt-3 pt-3 border-t border-[#3A3A3A]/50">
+          <label className="block mb-2">
+            <span className="text-xs text-gray-300 font-medium">Logo Style:</span>
+            {detectedStyle && (
+              <span className="ml-2 text-xs text-green-400">✓ Auto-detected from branding</span>
+            )}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(LOGO_STYLES) as LogoStyleKey[]).map((styleKey) => (
+              <button
+                key={styleKey}
+                onClick={() => setSelectedStyle(styleKey)}
+                disabled={isProcessing}
+                className={`px-3 py-2 rounded-lg text-left transition-all ${
+                  selectedStyle === styleKey
+                    ? 'bg-pink-500/20 border-2 border-pink-500 text-white'
+                    : 'bg-[#1A1A1A] border border-[#3A3A3A] text-gray-300 hover:border-pink-500/50'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <div className="text-xs font-semibold mb-0.5">{LOGO_STYLES[styleKey].name}</div>
+                <div className="text-xs text-gray-400 leading-tight">{LOGO_STYLES[styleKey].description}</div>
+              </button>
+            ))}
+          </div>
+          {module.status === 'done' && outputs?.logoOptions && (
+            <p className="text-xs text-gray-500 mt-2">
+              Last style used: <span className="text-pink-400">{LOGO_STYLES[selectedStyle].name}</span>
+            </p>
+          )}
+        </div>
+
         {/* Variants selector - always visible */}
         <div className="mt-3 pt-3 border-t border-[#3A3A3A]/50">
           <label className="flex items-center justify-between">
@@ -443,16 +555,19 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 }
 
 /**
- * Build logo generation prompt with complete branding context (V3.0)
+ * Build logo generation prompt with complete branding context (V4.0)
+ * ALWAYS generates prompts in ENGLISH for better AI results
  */
-function buildLogoPrompt(brief: LogoBrief, variantNumber: number, language: string = 'en', branding?: any): string {
+function buildLogoPrompt(brief: LogoBrief, variantNumber: number, selectedStyle: LogoStyleKey, branding?: any): string {
   const colors = brief.color_palette.join(', ');
   const keywords = brief.brand_keywords.join(', ');
+  const stylePreset = LOGO_STYLES[selectedStyle];
 
   // Build comprehensive branding section if available
   let brandingSection = '';
   if (branding) {
     brandingSection = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 COMPLETE BRANDING IDENTITY:
 
 Visual Style:
@@ -480,10 +595,19 @@ ${branding.branding_concept}
 
 Visual Direction:
 ${branding.visual_direction}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
   }
 
   return `Create a professional, AI-generated logo for the brand "${brief.brand_name}".
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎨 SELECTED LOGO STYLE: ${stylePreset.name.toUpperCase()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${stylePreset.prompt}
+
+CRITICAL: This is a ${stylePreset.name} style logo. Follow these aesthetic guidelines STRICTLY:
 
 BRAND NAME: ${brief.brand_name}
 ${brief.tagline ? `TAGLINE: "${brief.tagline}"` : ''}

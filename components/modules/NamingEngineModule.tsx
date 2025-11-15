@@ -197,8 +197,9 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         const competitiveAngle = appIntelligence?.competitiveAngle || 'quality and usability';
 
         // Create intelligent fallback branding with MODERN typography and style
+        // Use one of the 8 predefined styles
         namingPackage.branding = {
-          design_style: namingPackage.style || 'Contemporary minimalism with bold typography',
+          design_style: 'Tech & Modern with bold typography and sharp geometric forms',
           color_palette: appIntelligence?.brandColorsSuggested || ['#1A1A1A', '#FF6B6B', '#4A9EFF', '#F5F5F5'],
           color_meanings: [
             'Deep neutral - represents sophistication and modernity',
@@ -818,15 +819,25 @@ BRANDING - CRITICAL FOR MODERN LOGO GENERATION:
   * If primary is display → use neutral (e.g., Inter, Geist)
 - font_style: Describe the typographic approach (e.g., "Bold geometric with tight spacing", "Light display with generous leading", "Mixed weights for dynamic contrast")
 
-🎭 DESIGN STYLE (Be specific with current trends):
-- Choose from MODERN styles:
-  * "Contemporary minimalism with bold typography" (Stripe, Linear style)
-  * "Brutalist with strong geometric shapes" (Balenciaga, Ssense style)
-  * "Soft modernism with gradients and glassmorphism" (Apple, iOS style)
-  * "Retro-futurism with vibrant colors" (Spotify, Discord style)
-  * "Swiss modernism with strict grid systems" (Helvetica approach)
-  * "Tech-forward with sharp edges and neon accents" (Cyberpunk aesthetic)
-- Include specific visual characteristics: rounded vs sharp, gradients vs flat, texture vs clean
+🎭 DESIGN STYLE (Choose from these 8 predefined styles):
+
+You MUST select ONE of these styles that best fits the project:
+
+1. **Minimalist**: Simple, clean, geometric basics, smooth lines, neutral colors - modern and professional
+2. **Bold & Loud**: High visual impact, thick shapes, strong contrasts, vibrant colors - energetic and modern
+3. **Elegant**: Refined with elegant typography (serif/semi-serif), organic icons, soft tones - premium and sophisticated
+4. **Playful**: Fun and friendly, rounded typography, cheerful icons, bright colors - youthful and approachable
+5. **Tech & Modern**: Futuristic, gradients, modern sans-serif, abstract digital icons - contemporary tech style
+6. **Classic**: Traditional serif, symmetric icon, sober colors (black/gold) - institutional and timeless
+7. **Hand-Drawn**: Hand-illustrated, irregular lines, sketch typography, warm colors - artisanal and natural
+8. **Abstract**: Fluid shapes, modern gradients, clean typography - dynamic and sophisticated
+
+CRITICAL: Your design_style field MUST start with one of these EXACT style names: "Minimalist", "Bold & Loud", "Elegant", "Playful", "Tech & Modern", "Classic", "Hand-Drawn", or "Abstract"
+
+Example: "Minimalist with sharp geometric forms and subtle gradients" ✓
+Example: "Modern minimalist design" ✗ (doesn't start with exact style name)
+
+You can add specific characteristics after the style name (rounded vs sharp, gradients vs flat, texture vs clean).
 
 📐 SHAPE & ICON STYLE:
 - shape_style: Geometric language (e.g., "Sharp 90° angles with thin strokes", "Rounded 12px radius with soft shadows", "Asymmetric organic forms")
