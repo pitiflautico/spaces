@@ -31,7 +31,7 @@ interface ModuleBlockProps {
  * 4. Definir icon en getModuleIcon()
  */
 export default function ModuleBlock({ module }: ModuleBlockProps) {
-  const { updateModule } = useSpaceStore();
+  const { updateModule, addLog } = useSpaceStore();
 
   // Icono según tipo de módulo
   const getModuleIcon = () => {
@@ -212,8 +212,8 @@ Respond ONLY with the JSON object, no additional text.`;
       }
     } catch (error: any) {
       console.error('Module execution error:', error);
-      updateModule(module.id, { status: 'error' });
-      alert(`Error: ${error.message}`);
+      updateModule(module.id, { status: 'error', errorMessage: error.message });
+      addLog('error', error.message, module.id);
     }
   };
 

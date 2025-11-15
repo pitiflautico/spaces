@@ -13,7 +13,7 @@ interface AIEEngineModuleProps {
 }
 
 export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
-  const { updateModule, getCurrentSpace } = useSpaceStore();
+  const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,8 +45,18 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
 
       // Get the source module
       const sourceModule = space?.modules.find((m) => m.id === incomingConnection.sourceModuleId);
-      if (!sourceModule || !sourceModule.outputs.projectAnalysis) {
-        throw new Error('Source module has no output data. Run Local Project Analysis first.');
+      if (!sourceModule) {
+        throw new Error('Source module not found. Please check the connection.');
+      }
+
+      if (!sourceModule.outputs.projectAnalysis) {
+        throw new Error(
+          `El módulo "${sourceModule.name}" no tiene datos de salida.\n\n` +
+          `Por favor, ejecuta primero el módulo de análisis:\n` +
+          `1. Haz clic en el botón Play ▶ del módulo "${sourceModule.name}"\n` +
+          `2. Espera a que termine (se pondrá verde)\n` +
+          `3. Luego ejecuta este módulo AIE Engine`
+        );
       }
 
       // Get the data from source module output
@@ -98,8 +108,10 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       });
 
     } catch (err: any) {
-      setError(err.message || 'Unknown error occurred');
-      updateModule(module.id, { status: 'error' });
+      const errorMsg = err.message || 'Unknown error occurred';
+      setError(errorMsg);
+      updateModule(module.id, { status: 'error', errorMessage: errorMsg });
+      addLog('error', errorMsg, module.id);
     } finally {
       setIsProcessing(false);
     }

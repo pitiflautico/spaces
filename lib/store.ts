@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError, SpaceConfiguration } from '@/types';
+import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError, SpaceConfiguration, LogEntry, LogType } from '@/types';
 import { DataType, ConnectionErrorType } from '@/types';
 
 interface SpaceStore {
@@ -43,6 +43,10 @@ interface SpaceStore {
   resetAll: () => void;
   resetModule: (id: string) => void;
   resetFrom: (id: string) => void;
+
+  // Log actions
+  addLog: (type: LogType, message: string, moduleId?: string) => void;
+  clearLogs: () => void;
 
   // Utility
   getCurrentSpace: () => Space | null;
@@ -622,6 +626,45 @@ export const useSpaceStore = create<SpaceStore>()(
       };
     });
   },
+
+      // Log actions
+      addLog: (type: LogType, message: string, moduleId?: string) => {
+        set((state) => {
+          const currentSpace = state.spaces.find((s) => s.id === state.currentSpaceId);
+          if (!currentSpace) return state;
+
+          const module = moduleId ? currentSpace.modules.find((m) => m.id === moduleId) : null;
+
+          const newLog: LogEntry = {
+            id: `log-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            timestamp: Date.now(),
+            type,
+            moduleId,
+            moduleName: module?.name,
+            message,
+          };
+
+          return {
+            ...state,
+            spaces: state.spaces.map((s) =>
+              s.id === state.currentSpaceId
+                ? { ...s, logs: [...(s.logs || []), newLog] }
+                : s
+            ),
+          };
+        });
+      },
+
+      clearLogs: () => {
+        set((state) => ({
+          ...state,
+          spaces: state.spaces.map((s) =>
+            s.id === state.currentSpaceId
+              ? { ...s, logs: [] }
+              : s
+          ),
+        }));
+      },
 
       getCurrentSpace: () => {
         const state = get();

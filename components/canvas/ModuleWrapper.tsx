@@ -256,13 +256,17 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
               <div /> /* Spacer para mantener el play button a la derecha */
             )}
 
-            {/* Play button - ocultar cuando ya está done */}
-            {onRun && module.status !== 'done' && (
+            {/* Play button - SIEMPRE visible para poder re-ejecutar */}
+            {onRun && (
               <button
                 onClick={onRun}
                 disabled={module.status === 'running'}
-                className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
-                title="Run module"
+                className={`pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full transition-all shadow-lg hover:shadow-xl ${
+                  module.status === 'done'
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                } disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50`}
+                title={module.status === 'done' ? 'Re-run module' : 'Run module'}
               >
                 <PlayIcon className="w-6 h-6" />
               </button>

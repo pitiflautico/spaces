@@ -3,19 +3,26 @@
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import ConfigurationPanel from '@/components/configuration/ConfigurationPanel';
+import LogPanel from './LogPanel';
 import {
   SquaresPlusIcon,
   Cog6ToothIcon,
   PlusIcon,
   ChevronDownIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
-  const { spaces, currentSpaceId, createSpace, setCurrentSpace } = useSpaceStore();
+  const { spaces, currentSpaceId, createSpace, setCurrentSpace, getCurrentSpace } = useSpaceStore();
   const [isSpacesOpen, setIsSpacesOpen] = useState(true);
   const [showCreateSpace, setShowCreateSpace] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
   const [showConfiguration, setShowConfiguration] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+
+  const currentSpace = getCurrentSpace();
+  const logCount = currentSpace?.logs?.length || 0;
+  const hasErrors = currentSpace?.logs?.some(log => log.type === 'error') || false;
 
   const handleCreateSpace = () => {
     if (newSpaceName.trim()) {
@@ -98,7 +105,28 @@ export default function Sidebar() {
       <div className="flex-1"></div>
 
       {/* Bottom Section */}
-      <div className="px-3 py-4 border-t border-[#2A2A2A]">
+      <div className="px-3 py-4 border-t border-[#2A2A2A] space-y-1">
+        {/* Logs Button */}
+        <button
+          onClick={() => setShowLogs(true)}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            hasErrors
+              ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+              : 'text-gray-400 hover:bg-[#2A2A2A] hover:text-white'
+          }`}
+        >
+          <ExclamationCircleIcon className="w-5 h-5" />
+          <span className="text-sm">Logs</span>
+          {logCount > 0 && (
+            <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded-full ${
+              hasErrors ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'
+            }`}>
+              {logCount}
+            </span>
+          )}
+        </button>
+
+        {/* Configuration Button */}
         <button
           onClick={() => setShowConfiguration(true)}
           data-open-config
@@ -108,6 +136,12 @@ export default function Sidebar() {
           <span className="text-sm">Configuration</span>
         </button>
       </div>
+
+      {/* Log Panel */}
+      <LogPanel
+        isOpen={showLogs}
+        onClose={() => setShowLogs(false)}
+      />
 
       {/* Configuration Panel */}
       <ConfigurationPanel

@@ -12,18 +12,20 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function FloatingToolbar() {
-  const { getCurrentSpace, executeFlow, resetAll } = useSpaceStore();
+  const { getCurrentSpace, executeFlow, resetAll, addLog } = useSpaceStore();
   const currentSpace = getCurrentSpace();
 
   const handlePlayFlow = async () => {
     // V2.0: Execute modules in topological order
     console.log('Play Flow - Execute all modules in order');
+    addLog('info', 'Iniciando ejecución del flow...');
     try {
       await executeFlow();
       console.log('✓ Play Flow execution completed');
+      addLog('success', 'Flow ejecutado correctamente');
     } catch (error: any) {
       console.error('Play Flow error:', error);
-      alert(`Play Flow error: ${error.message}`);
+      addLog('error', `Play Flow error: ${error.message}`);
     }
   };
 

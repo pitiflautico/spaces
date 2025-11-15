@@ -62,6 +62,19 @@ export interface Module {
     input: ModulePort[];
     output: ModulePort[];
   };
+  errorMessage?: string; // Error message to display when status is 'error'
+}
+
+// Log system types
+export type LogType = 'info' | 'success' | 'warning' | 'error';
+
+export interface LogEntry {
+  id: string;
+  timestamp: number;
+  type: LogType;
+  moduleId?: string;
+  moduleName?: string;
+  message: string;
 }
 
 // AI Provider types (V2.0)
@@ -106,6 +119,7 @@ export interface Space {
   modules: Module[];
   connections: ModuleConnection[];
   configuration?: SpaceConfiguration;
+  logs?: LogEntry[]; // Execution logs and errors
   createdAt: Date;
   updatedAt: Date;
 }
