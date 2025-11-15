@@ -192,148 +192,158 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
   return (
     <div
       ref={wrapperRef}
-      className={`absolute bg-dark-sidebar rounded-2xl shadow-2xl transition-all ${getBorderColor()} ${
-        isDragging ? 'cursor-grabbing shadow-blue-500/20' : 'cursor-grab'
-      }`}
+      className="absolute"
       style={{
         left: module.position.x,
         top: module.position.y,
         width: module.size.width,
         minHeight: module.size.height,
-        border: isSelected ? '2px solid #3B82F6' : '2px solid #3A3A3A',
-        overflow: 'visible',
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Header con título e iconos de inputs aceptados */}
-      <div className="relative px-5 py-3 flex items-center gap-3">
-        {/* Icon del módulo */}
-        {icon && <div className="flex-shrink-0">{icon}</div>}
+      {/* Wrapper con posición relativa para los puertos */}
+      <div className="relative w-full h-full">
+        {/* Módulo interior */}
+        <div
+          className={`w-full h-full bg-dark-sidebar rounded-2xl shadow-2xl transition-all ${getBorderColor()} ${
+            isDragging ? 'cursor-grabbing shadow-blue-500/20' : 'cursor-grab'
+          }`}
+          style={{
+            border: isSelected ? '2px solid #3B82F6' : '2px solid #3A3A3A',
+            minHeight: module.size.height,
+          }}
+        >
+          {/* Header con título e iconos de inputs aceptados */}
+          <div className="relative px-5 py-3 flex items-center gap-3">
+            {/* Icon del módulo */}
+            {icon && <div className="flex-shrink-0">{icon}</div>}
 
-        {/* Título */}
-        <h3 className="text-white font-medium text-sm flex-1">{module.name}</h3>
+            {/* Título */}
+            <h3 className="text-white font-medium text-sm flex-1">{module.name}</h3>
 
-        {/* Input types badges (si tiene inputs) */}
-        {module.ports.input.length > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-dark-card/50 rounded-full border border-dark-border">
-            {module.ports.input.map((port, index) => {
-              const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
-              return (
-                <div key={port.id} className="flex items-center" title={`Accepts: ${port.label}`}>
-                  <Icon className="w-3.5 h-3.5 text-gray-400" />
-                  {index < module.ports.input.length - 1 && (
-                    <span className="mx-0.5 text-gray-600">·</span>
-                  )}
-                </div>
-              );
-            })}
+            {/* Input types badges (si tiene inputs) */}
+            {module.ports.input.length > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-dark-card/50 rounded-full border border-dark-border">
+                {module.ports.input.map((port, index) => {
+                  const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
+                  return (
+                    <div key={port.id} className="flex items-center" title={`Accepts: ${port.label}`}>
+                      <Icon className="w-3.5 h-3.5 text-gray-400" />
+                      {index < module.ports.input.length - 1 && (
+                        <span className="mx-0.5 text-gray-600">·</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Puertos de ENTRADA (Izquierda) */}
-      {module.ports.input.map((port, index) => {
-        const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
-        const colorClass = getDataTypeColor(port.acceptedTypes?.[0]);
-        const portTop =
-          module.ports.input.length === 1
-            ? '50%'
-            : `${((index + 1) / (module.ports.input.length + 1)) * 100}%`;
+          {/* Contenido del módulo */}
+          <div className="module-content px-5 pb-16">{children}</div>
 
-        const isCompatible = connectionDragState.isDragging &&
-                           port.acceptedTypes?.includes(connectionDragState.sourceDataType!);
-        const isIncompatible = connectionDragState.isDragging && !isCompatible;
-        const isHovered = hoveredPort === port.id;
+          {/* Footer con botones Play y Settings (condicionales) */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between pointer-events-none">
+            {/* Settings button - solo si el módulo tiene configuración */}
+            {hasSettings ? (
+              <button
+                className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-dark-card/80 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
+                title="Module settings"
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+              </button>
+            ) : (
+              <div /> /* Spacer para mantener el play button a la derecha */
+            )}
 
-        return (
-          <div
-            key={port.id}
-            className="port absolute z-50"
-            style={{
-              top: portTop,
-              left: '-24px', // 24px fuera del borde izquierdo
-              transform: 'translateY(-50%)'
-            }}
-            onMouseUp={(e) => handleInputPortMouseUp(e, port)}
-            onMouseEnter={() => handleInputPortMouseEnter(port)}
-            onMouseLeave={handleInputPortMouseLeave}
-            title={`Input: ${port.label}\nAccepts: ${port.acceptedTypes?.join(', ') || 'unknown'}`}
-          >
+            {/* Play button - ocultar cuando ya está done */}
+            {onRun && module.status !== 'done' && (
+              <button
+                onClick={onRun}
+                disabled={module.status === 'running'}
+                className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+                title="Run module"
+              >
+                <PlayIcon className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Puertos de ENTRADA (Izquierda) - FUERA del módulo interior */}
+        {module.ports.input.map((port, index) => {
+          const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
+          const colorClass = getDataTypeColor(port.acceptedTypes?.[0]);
+          const portTop =
+            module.ports.input.length === 1
+              ? '50%'
+              : `${((index + 1) / (module.ports.input.length + 1)) * 100}%`;
+
+          const isCompatible = connectionDragState.isDragging &&
+                             port.acceptedTypes?.includes(connectionDragState.sourceDataType!);
+          const isIncompatible = connectionDragState.isDragging && !isCompatible;
+          const isHovered = hoveredPort === port.id;
+
+          return (
             <div
-              className={`w-12 h-12 ${colorClass} rounded-full border-3 transition-all flex items-center justify-center shadow-2xl ${
-                isCompatible
-                  ? 'ring-4 ring-green-400 scale-125 border-green-400 animate-pulse cursor-pointer'
-                  : isIncompatible
-                  ? 'opacity-30 grayscale cursor-not-allowed'
-                  : 'border-dark-bg cursor-pointer hover:scale-110'
-              } ${isHovered && isCompatible ? 'scale-150' : ''}`}
-              style={{ borderWidth: '3px' }}
+              key={port.id}
+              className="port absolute z-50 pointer-events-auto"
+              style={{
+                top: portTop,
+                left: '-40px', // 40px FUERA del borde izquierdo
+                transform: 'translateY(-50%)'
+              }}
+              onMouseUp={(e) => handleInputPortMouseUp(e, port)}
+              onMouseEnter={() => handleInputPortMouseEnter(port)}
+              onMouseLeave={handleInputPortMouseLeave}
+              title={`Input: ${port.label}\nAccepts: ${port.acceptedTypes?.join(', ') || 'unknown'}`}
             >
-              <Icon className="w-6 h-6 text-white" />
+              <div
+                className={`w-14 h-14 ${colorClass} rounded-full border-3 transition-all flex items-center justify-center shadow-2xl ${
+                  isCompatible
+                    ? 'ring-4 ring-green-400 scale-125 border-green-400 animate-pulse cursor-pointer'
+                    : isIncompatible
+                    ? 'opacity-30 grayscale cursor-not-allowed'
+                    : 'border-dark-bg cursor-pointer hover:scale-110'
+                } ${isHovered && isCompatible ? 'scale-150' : ''}`}
+                style={{ borderWidth: '3px' }}
+              >
+                <Icon className="w-7 h-7 text-white" />
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
-      {/* Puertos de SALIDA (Derecha) */}
-      {module.ports.output.map((port, index) => {
-        const Icon = getDataTypeIcon(port.dataType);
-        const colorClass = getDataTypeColor(port.dataType);
-        const portTop =
-          module.ports.output.length === 1
-            ? '50%'
-            : `${((index + 1) / (module.ports.output.length + 1)) * 100}%`;
+        {/* Puertos de SALIDA (Derecha) - FUERA del módulo interior */}
+        {module.ports.output.map((port, index) => {
+          const Icon = getDataTypeIcon(port.dataType);
+          const colorClass = getDataTypeColor(port.dataType);
+          const portTop =
+            module.ports.output.length === 1
+              ? '50%'
+              : `${((index + 1) / (module.ports.output.length + 1)) * 100}%`;
 
-        return (
-          <div
-            key={port.id}
-            className="port absolute z-50"
-            style={{
-              top: portTop,
-              right: '-24px', // 24px fuera del borde derecho
-              transform: 'translateY(-50%)'
-            }}
-            onMouseDown={(e) => handleOutputPortMouseDown(e, port)}
-            title={`Output: ${port.label}\nType: ${port.dataType || 'unknown'}`}
-          >
+          return (
             <div
-              className={`w-12 h-12 ${colorClass} rounded-full border-dark-bg hover:scale-125 active:scale-110 transition-all cursor-grab flex items-center justify-center shadow-2xl hover:shadow-2xl`}
-              style={{ borderWidth: '3px' }}
+              key={port.id}
+              className="port absolute z-50 pointer-events-auto"
+              style={{
+                top: portTop,
+                right: '-40px', // 40px FUERA del borde derecho
+                transform: 'translateY(-50%)'
+              }}
+              onMouseDown={(e) => handleOutputPortMouseDown(e, port)}
+              title={`Output: ${port.label}\nType: ${port.dataType || 'unknown'}`}
             >
-              <Icon className="w-6 h-6 text-white" />
+              <div
+                className={`w-14 h-14 ${colorClass} rounded-full border-dark-bg hover:scale-125 active:scale-110 transition-all cursor-grab flex items-center justify-center shadow-2xl hover:shadow-2xl`}
+                style={{ borderWidth: '3px' }}
+              >
+                <Icon className="w-7 h-7 text-white" />
+              </div>
             </div>
-          </div>
-        );
-      })}
-
-      {/* Contenido del módulo */}
-      <div className="module-content px-5 pb-16">{children}</div>
-
-      {/* Footer con botones Play y Settings (condicionales) */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between pointer-events-none">
-        {/* Settings button - solo si el módulo tiene configuración */}
-        {hasSettings ? (
-          <button
-            className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-dark-card/80 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
-            title="Module settings"
-          >
-            <Cog6ToothIcon className="w-5 h-5" />
-          </button>
-        ) : (
-          <div /> /* Spacer para mantener el play button a la derecha */
-        )}
-
-        {/* Play button - ocultar cuando ya está done */}
-        {onRun && module.status !== 'done' && (
-          <button
-            onClick={onRun}
-            disabled={module.status === 'running'}
-            className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
-            title="Run module"
-          >
-            <PlayIcon className="w-6 h-6" />
-          </button>
-        )}
+          );
+        })}
       </div>
     </div>
   );

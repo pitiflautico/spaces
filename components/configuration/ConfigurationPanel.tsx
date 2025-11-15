@@ -302,23 +302,55 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                 </p>
               </div>
 
-              {/* API Key Link */}
+              {/* API Key - Shown dynamically based on selected provider */}
               {config.aiConfig?.provider && config.aiConfig.provider !== AIProvider.LOCAL && (
-                <div className="px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                  <p className="text-sm text-yellow-300">
-                    Don't forget to add your{' '}
-                    <button
-                      onClick={() => setActiveTab('apikeys')}
-                      className="underline font-medium hover:text-yellow-200"
-                    >
+                <div className="space-y-3">
+                  <div className="px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <p className="text-sm text-yellow-300 font-medium">
+                      🔑 API Key Required for {' '}
                       {config.aiConfig.provider === AIProvider.OPENAI && 'OpenAI'}
                       {config.aiConfig.provider === AIProvider.ANTHROPIC && 'Anthropic'}
                       {config.aiConfig.provider === AIProvider.REPLICATE && 'Replicate'}
                       {config.aiConfig.provider === AIProvider.TOGETHER && 'Together AI'}
-                      {' '}API key
-                    </button>
-                    {' '}in the API Keys tab
-                  </p>
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      {config.aiConfig.provider === AIProvider.OPENAI && 'OpenAI API Key'}
+                      {config.aiConfig.provider === AIProvider.ANTHROPIC && 'Anthropic API Key'}
+                      {config.aiConfig.provider === AIProvider.REPLICATE && 'Replicate API Key'}
+                      {config.aiConfig.provider === AIProvider.TOGETHER && 'Together AI API Key'}
+                    </label>
+                    <input
+                      type="password"
+                      value={
+                        config.aiConfig.provider === AIProvider.OPENAI ? (config.apiKeys?.openai || '') :
+                        config.aiConfig.provider === AIProvider.ANTHROPIC ? (config.apiKeys?.anthropic || '') :
+                        config.aiConfig.provider === AIProvider.REPLICATE ? (config.apiKeys?.replicate || '') :
+                        config.aiConfig.provider === AIProvider.TOGETHER ? (config.apiKeys?.together || '') :
+                        ''
+                      }
+                      onChange={(e) => {
+                        const provider = config.aiConfig?.provider;
+                        if (provider === AIProvider.OPENAI) handleApiKeyChange('openai', e.target.value);
+                        else if (provider === AIProvider.ANTHROPIC) handleApiKeyChange('anthropic', e.target.value);
+                        else if (provider === AIProvider.REPLICATE) handleApiKeyChange('replicate', e.target.value);
+                        else if (provider === AIProvider.TOGETHER) handleApiKeyChange('together', e.target.value);
+                      }}
+                      placeholder={
+                        config.aiConfig.provider === AIProvider.OPENAI ? 'sk-...' :
+                        config.aiConfig.provider === AIProvider.ANTHROPIC ? 'sk-ant-...' :
+                        config.aiConfig.provider === AIProvider.REPLICATE ? 'r8_...' :
+                        config.aiConfig.provider === AIProvider.TOGETHER ? 'Enter your Together AI key...' :
+                        ''
+                      }
+                      className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors font-mono"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Your API key is stored locally in your browser and never shared
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

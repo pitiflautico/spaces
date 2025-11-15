@@ -62,12 +62,6 @@ export default function FloatingToolbar() {
     }
   };
 
-  const handleClearStorage = () => {
-    if (confirm('¿Borrar TODOS los spaces del localStorage? Esta acción no se puede deshacer.')) {
-      localStorage.removeItem('marketing-spaces-storage');
-      window.location.reload();
-    }
-  };
 
   const handleChangePath = () => {
     // This opens the configuration panel to change project path
@@ -166,12 +160,6 @@ export default function FloatingToolbar() {
               className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#2A2A2A] hover:text-red-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Delete Space
-            </button>
-            <button
-              onClick={handleClearStorage}
-              className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#2A2A2A] hover:text-red-300 transition-colors"
-            >
-              Clear All Storage
             </button>
           </div>
         )}
