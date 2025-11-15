@@ -214,6 +214,39 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         )}
       </div>
 
+      {/* Puertos de ENTRADA (Izquierda) */}
+      {module.ports.input.map((port, index) => {
+        const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
+        const colorClass = getDataTypeColor(port.acceptedTypes?.[0]);
+        const portTop =
+          module.ports.input.length === 1
+            ? '50%'
+            : `${((index + 1) / (module.ports.input.length + 1)) * 100}%`;
+
+        const isCompatible = connectionDragState.isDragging &&
+                           port.acceptedTypes?.includes(connectionDragState.sourceDataType!);
+        const isHovered = hoveredPort === port.id;
+
+        return (
+          <div
+            key={port.id}
+            className="port absolute left-0 -translate-x-1/2"
+            style={{ top: portTop, transform: 'translate(-50%, -50%)' }}
+            onMouseUp={(e) => handleInputPortMouseUp(e, port)}
+            onMouseEnter={() => handleInputPortMouseEnter(port)}
+            onMouseLeave={handleInputPortMouseLeave}
+            title={`Input: ${port.label}\nAccepts: ${port.acceptedTypes?.join(', ') || 'unknown'}`}
+          >
+            <div
+              className={`w-6 h-6 ${colorClass} rounded-full border-2 border-dark-sidebar transition-all cursor-pointer flex items-center justify-center ${
+                isCompatible ? 'ring-4 ring-green-400/50 scale-125' : ''
+              } ${isHovered ? 'scale-110' : ''}`}
+            >
+              <Icon className="w-3.5 h-3.5 text-white" />
+            </div>
+          </div>
+        );
+      })}
 
       {/* Puertos de SALIDA (Derecha) */}
       {module.ports.output.map((port, index) => {
