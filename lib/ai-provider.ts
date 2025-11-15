@@ -5,7 +5,8 @@
  * All modules call aiProvider.run() which handles provider selection and response normalization
  */
 
-import type { AIConfiguration, AIProvider, AIProviderResponse } from '@/types';
+import type { AIConfiguration, AIProviderResponse } from '@/types';
+import { AIProvider } from '@/types';
 
 // Adapter interfaces
 export interface AIAdapter {

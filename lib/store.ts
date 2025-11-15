@@ -405,17 +405,6 @@ export const useSpaceStore = create<SpaceStore>()(
       };
     }
 
-    // A3.5: Check source module is not in error
-    if (sourceModule.status === 'error' || sourceModule.status === 'fatal_error') {
-      return {
-        valid: false,
-        error: {
-          type: ConnectionErrorType.MODULE_IN_ERROR,
-          message: 'Resuelve el error del módulo anterior antes de conectarlo.',
-        },
-      };
-    }
-
     // A3.2: Check output exists
     const sourcePort = sourceModule.ports.output.find((p) => p.id === sourcePortId);
     if (!sourcePort || !sourcePort.dataType) {
