@@ -491,6 +491,104 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
             </div>
           )}
 
+          {/* Branding Preview - Collapsible */}
+          {outputs.namingPackage.branding && (
+            <details className="group/branding">
+              <summary className="px-4 py-3 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg cursor-pointer hover:border-pink-500/50 transition-colors list-none">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-pink-400 font-semibold">🎨 Branding Preview</span>
+                    <span className="text-xs text-gray-500">(click to see full branding)</span>
+                  </div>
+                  <svg className="w-4 h-4 text-pink-400 transition-transform group-open/branding:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </summary>
+
+              <div className="mt-3 space-y-3 px-2">
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                    <p className="text-xs text-gray-400 mb-1">Design Style</p>
+                    <p className="text-xs text-white font-medium">{outputs.namingPackage.branding.design_style}</p>
+                  </div>
+                  <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                    <p className="text-xs text-gray-400 mb-1">Brand Tone</p>
+                    <p className="text-xs text-white font-medium">{outputs.namingPackage.branding.brand_tone}</p>
+                  </div>
+                </div>
+
+                {/* Color Palette Preview */}
+                <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-2">Color Palette</p>
+                  <div className="flex gap-2">
+                    {outputs.namingPackage.branding.color_palette.map((color, i) => (
+                      <div key={i} className="flex-1">
+                        <div
+                          className="w-full h-10 rounded border border-white/20"
+                          style={{ backgroundColor: color }}
+                          title={`${color}${outputs.namingPackage.branding.color_meanings?.[i] ? ` - ${outputs.namingPackage.branding.color_meanings[i]}` : ''}`}
+                        />
+                        <p className="text-xs text-gray-400 mt-1 text-center font-mono">{color}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Typography */}
+                <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-2">Typography</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-white"><span className="text-gray-500">Primary:</span> {outputs.namingPackage.branding.primary_font_family}</p>
+                    <p className="text-xs text-white"><span className="text-gray-500">Secondary:</span> {outputs.namingPackage.branding.secondary_font_family}</p>
+                  </div>
+                </div>
+
+                {/* Visual Style */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                    <p className="text-xs text-gray-400 mb-1">Shape Style</p>
+                    <p className="text-xs text-white">{outputs.namingPackage.branding.shape_style}</p>
+                  </div>
+                  <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                    <p className="text-xs text-gray-400 mb-1">Icon Style</p>
+                    <p className="text-xs text-white">{outputs.namingPackage.branding.icon_style}</p>
+                  </div>
+                </div>
+
+                {/* Brand Values */}
+                <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-2">Brand Values</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {outputs.namingPackage.branding.brand_values.map((value, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/30"
+                      >
+                        {value}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Visual Direction */}
+                <div className="px-3 py-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-1">Visual Direction</p>
+                  <p className="text-xs text-gray-200 leading-relaxed">{outputs.namingPackage.branding.visual_direction}</p>
+                </div>
+
+                {/* View Full Details Button */}
+                <button
+                  onClick={handleOpenPanel}
+                  className="w-full px-3 py-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-lg text-xs text-pink-400 font-medium transition-colors"
+                >
+                  📋 View Complete Branding Details
+                </button>
+              </div>
+            </details>
+          )}
+
           {/* Additional Info */}
           <div className="grid grid-cols-2 gap-3">
             <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded">
