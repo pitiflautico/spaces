@@ -12,7 +12,7 @@ interface ConnectionLinesProps {
 }
 
 export default function ConnectionLines({ connections, modules, zoom }: ConnectionLinesProps) {
-  const { connectionDragState, canvasState } = useSpaceStore();
+  const { connectionDragState, canvasState, deleteConnection } = useSpaceStore();
 
   const getPortPosition = (moduleId: string, portId: string, side: 'left' | 'right') => {
     const module = modules.find((m) => m.id === moduleId);
@@ -62,10 +62,14 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
     return `M ${x1},${y1} C ${x1 + curvature},${y1} ${x2 - curvature},${y2} ${x2},${y2}`;
   };
 
+  const handleConnectionDoubleClick = (connectionId: string) => {
+    deleteConnection(connectionId);
+  };
+
   return (
     <svg
-      className="absolute inset-0 pointer-events-none"
-      style={{ width: '100%', height: '100%', overflow: 'visible' }}
+      className="absolute inset-0"
+      style={{ width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}
     >
       {connections.map((connection) => {
         const start = getPortPosition(connection.sourceModuleId, connection.sourcePortId, 'right');
@@ -91,13 +95,30 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
               stroke={`${strokeColor.replace('rgb', 'rgba').replace(')', ', 0.3)')}`}
               strokeWidth="8"
               filter="blur(4px)"
+              style={{ pointerEvents: 'none' }}
             />
+            {/* Invisible thick line for easier clicking */}
+            <path
+              d={path}
+              fill="none"
+              stroke="transparent"
+              strokeWidth="20"
+              style={{
+                pointerEvents: 'stroke',
+                cursor: 'pointer'
+              }}
+              onDoubleClick={() => handleConnectionDoubleClick(connection.id)}
+            >
+              <title>Double-click to disconnect</title>
+            </path>
             {/* Main line */}
             <path
               d={path}
               fill="none"
               stroke={strokeColor}
               strokeWidth="2"
+              style={{ pointerEvents: 'none' }}
+              className="transition-opacity group-hover:opacity-80"
             />
             {/* Animated dashes */}
             <path
@@ -107,6 +128,7 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
               strokeWidth="2"
               strokeDasharray="5 5"
               opacity="0.5"
+              style={{ pointerEvents: 'none' }}
             >
               <animate
                 attributeName="stroke-dashoffset"
