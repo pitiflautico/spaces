@@ -15,6 +15,9 @@ export type ModuleType =
   | 'reader-engine'
   | 'naming-engine'
   | 'icon-generator'
+  | 'logo-variant'
+  | 'app-icon-generator'
+  | 'app-icon-variant'
   | 'marketing-pack';
 
 // Data types for connections (v1.1)
@@ -196,6 +199,7 @@ export interface AppIntelligence {
 export interface AIEEngineOutputs {
   appIntelligence?: AppIntelligence;
   aieLog?: string;
+  flowContext?: FlowContext; // Propagate language and preferences to downstream modules
 }
 
 // AI Provider response (V2.0)
@@ -205,4 +209,247 @@ export interface AIProviderResponse {
   tokensUsed?: number;
   providerUsed: string;
   model: string;
+}
+
+// Flow Context (V2.0 - Global Pipeline Configuration)
+// This context is propagated through all modules in the pipeline
+// Each module can read from it and enrich it with new data
+export interface FlowContext {
+  // Language & Market (Set by Module 2 - AIE Engine)
+  language?: string; // 'en', 'es', 'fr', 'de', 'pt', 'it', 'ja', 'zh', etc.
+  targetMarket?: string; // 'US', 'EU', 'LATAM', 'ASIA', 'Global', etc.
+
+  // Brand & Design (Set by Module 2 - AIE Engine)
+  brandTone?: string; // Brand tone and voice
+  brandColors?: string[]; // Array of hex colors like ['#3B82F6', '#10B981']
+  designStyle?: string; // Design style description
+  iconStyle?: string; // Recommended icon style
+
+  // App Info (Set by Module 2 - AIE Engine)
+  category?: string; // Main app category
+  keywords?: string[]; // Key keywords for the app
+
+  // Naming (Set by Module 3 - Naming Engine)
+  appName?: string; // Final selected app name
+  slogan?: string; // App slogan/tagline
+
+  // Extensible for future modules
+  customPreferences?: Record<string, any>;
+}
+
+// Naming Engine types (V3.0 - Module 3 with Complete Branding)
+export interface BrandingIdentity {
+  // Visual Style
+  design_style: string; // e.g., "modern minimalist", "vintage elegant", "bold futuristic"
+  color_palette: string[]; // Array of hex colors (3-5 colors)
+  color_meanings: string[]; // What each color represents
+
+  // Typography
+  primary_font_family: string; // Main font recommendation
+  secondary_font_family: string; // Complementary font
+  font_style: string; // e.g., "sans-serif modern", "serif classic"
+
+  // Brand Personality
+  brand_tone: string; // e.g., "professional", "playful", "elegant", "bold"
+  brand_values: string[]; // Core values (3-5)
+  target_emotion: string; // Emotion to evoke
+
+  // Visual Elements
+  shape_style: string; // e.g., "rounded soft", "sharp angular", "geometric"
+  icon_style: string; // e.g., "minimalist line", "detailed illustration", "abstract"
+
+  // Concept
+  branding_concept: string; // Overall concept explanation
+  visual_direction: string; // How the brand should look/feel
+}
+
+export interface NamingPackage {
+  // Naming
+  recommended_name: string;
+  alternatives: string[];
+  slogan: string;
+  naming_keywords: string[];
+  short_descriptions: string[];
+  domain_suggestions: string[];
+
+  // Complete Branding Identity
+  branding: BrandingIdentity;
+
+  // Metadata
+  creative_rationale: string;
+  style: string; // Deprecated - use branding.design_style
+  tone: string; // Deprecated - use branding.brand_tone
+}
+
+export interface ChosenName {
+  final_name: string;
+  chosen_at: string;
+  source_module: string;
+  engine_version: string;
+}
+
+export interface NamingEngineOutputs {
+  namingPackage?: NamingPackage;
+  chosenName?: ChosenName;
+  namingLog?: string;
+  flowContext?: FlowContext; // Propagate language and preferences to downstream modules
+}
+
+// Logo Generator types (V2.0 - Module 4A)
+export interface LogoBrief {
+  brand_name: string;
+  final_name: string;
+  tagline?: string;
+  category: string;
+  color_palette: string[];
+  style: string;
+  brand_keywords: string[];
+  shape_preferences?: string;
+  avoid_elements?: string[];
+  num_variants?: number;
+
+  // Complete Branding Information (V3.0)
+  visual_direction?: string; // CRITICAL - detailed context about app purpose, users, features, mood
+  branding_concept?: string; // WHY behind the visual choices
+  icon_style?: string; // Icon approach (minimalist, detailed, abstract, etc.)
+  brand_tone?: string; // Overall personality (professional, playful, etc.)
+  target_emotion?: string; // Main emotion to evoke
+  color_meanings?: string[]; // What each color represents
+  primary_font_family?: string; // Main font recommendation
+  secondary_font_family?: string; // Complementary font
+}
+
+export interface LogoOption {
+  id: number;
+  image_url: string;
+  style_summary: string;
+  colors_used: string[];
+  strengths?: string;
+  weaknesses?: string;
+  ai_prompt_used: string;
+}
+
+export interface LogoOptionsPackage {
+  brand_name: string;
+  num_variants: number;
+  options: LogoOption[];
+}
+
+export interface ChosenLogo {
+  brand_name: string;
+  final_logo_option_id: number;
+  final_logo_url: string;
+  chosen_at: string;
+  source_module: string;
+}
+
+export interface LogoGeneratorOutputs {
+  logoOptions?: LogoOptionsPackage;
+  chosenLogo?: ChosenLogo;
+  logoLog?: string;
+  flowContext?: FlowContext; // Propagate language and preferences to downstream modules
+}
+
+// Logo Variant types (V2.0 - Module 4A individual variants)
+export interface LogoVariantInputs {
+  variantId: number;
+  generatorModuleId: string; // ID of parent Logo Generator module
+}
+
+export interface LogoVariantOutputs {
+  logoData: {
+    image_url: string;
+    brand_name: string;
+    style_summary: string;
+    colors_used: string[];
+    ai_prompt_used: string;
+  };
+  flowContext?: FlowContext; // Propagate language, colors, naming data
+}
+
+// App Icon Generator types (V1.0 - Module 4B)
+export interface IconBrief {
+  brand_name: string;
+  style: string;
+  color_palette: string[];
+  background_preference?: string; // 'solid', 'gradient', 'transparent'
+  shape?: string; // 'square', 'rounded-square', 'circle'
+  icon_variants: number;
+  include_symbol?: boolean;
+  tagline_in_icon?: boolean;
+  source_logo_url?: string;
+  category?: string;
+
+  // Complete Branding Information (V3.0)
+  visual_direction?: string; // CRITICAL - detailed context about app purpose, users, features, mood
+  branding_concept?: string; // WHY behind the visual choices
+  icon_style?: string; // Icon approach (minimalist, detailed, abstract, etc.)
+  brand_tone?: string; // Overall personality (professional, playful, etc.)
+  target_emotion?: string; // Main emotion to evoke
+  color_meanings?: string[]; // What each color represents
+}
+
+export interface IconSizeSet {
+  // iOS
+  ios_1024: string; // App Store submission
+
+  // Android
+  android_512: string; // Google Play Store
+  android_xxxhdpi: string; // 192×192
+  android_xxhdpi: string; // 144×144
+  android_xhdpi: string; // 96×96
+  android_hdpi: string; // 72×72
+  android_mdpi: string; // 48×48
+
+  // Optional
+  favicon_32?: string;
+}
+
+export interface AppIconVariant {
+  id: number;
+  preview_image: string; // Main preview (512x512 or 1024x1024)
+  sizes: IconSizeSet;
+  style_summary: string;
+  background_type: string;
+  prompt_used: string;
+}
+
+export interface AppIconOptionsPackage {
+  brand_name: string;
+  num_variants: number;
+  variants: AppIconVariant[];
+}
+
+export interface ChosenAppIcon {
+  brand_name: string;
+  final_icon_id: number;
+  final_ios_icon: string; // 1024×1024
+  final_android_icon: string; // 512×512
+  chosen_at: string;
+  source_module: string;
+}
+
+export interface AppIconGeneratorOutputs {
+  iconOptions?: AppIconOptionsPackage;
+  chosenIcon?: ChosenAppIcon;
+  iconLog?: string;
+  flowContext?: FlowContext;
+}
+
+// App Icon Variant types (V1.0 - Module 4B individual variants)
+export interface AppIconVariantInputs {
+  variantId: number;
+  generatorModuleId: string; // ID of parent App Icon Generator module
+}
+
+export interface AppIconVariantOutputs {
+  iconData: {
+    preview_image: string;
+    brand_name: string;
+    style_summary: string;
+    background_type: string;
+    sizes: IconSizeSet;
+    ai_prompt_used: string;
+  };
+  flowContext?: FlowContext;
 }

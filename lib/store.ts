@@ -142,16 +142,54 @@ export const useSpaceStore = create<SpaceStore>()(
         name: 'Naming Engine',
         size: { width: 400, height: 350 },
         ports: {
-          input: [{ id: 'in-1', type: 'input', label: 'Project Data', connected: false, acceptedTypes: [DataType.JSON] }],
-          output: [{ id: 'out-1', type: 'output', label: 'Name Suggestions', connected: false, dataType: DataType.TEXT }],
+          input: [{ id: 'in-1', type: 'input', label: 'App Intelligence', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Naming Package', connected: false, dataType: DataType.JSON },
+            { id: 'out-2', type: 'output', label: 'Chosen Name', connected: false, dataType: DataType.JSON }
+          ],
         },
       },
       'icon-generator': {
-        name: 'Icon Generator',
+        name: 'Logo Generator (Module 4A)',
         size: { width: 400, height: 350 },
         ports: {
-          input: [{ id: 'in-1', type: 'input', label: 'Project Data', connected: false, acceptedTypes: [DataType.JSON, DataType.TEXT] }],
-          output: [{ id: 'out-1', type: 'output', label: 'Generated Icons', connected: false, dataType: DataType.IMAGE }],
+          input: [{ id: 'in-1', type: 'input', label: 'Naming Package', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Generation Trigger', connected: false, dataType: DataType.JSON },
+          ],
+        },
+      },
+      'logo-variant': {
+        name: 'Logo Variant',
+        size: { width: 320, height: 450 },
+        ports: {
+          input: [{ id: 'in-1', type: 'input', label: 'From Generator', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Logo + Context', connected: false, dataType: DataType.IMAGE }
+          ],
+        },
+      },
+      'app-icon-generator': {
+        name: 'App Icon Generator (Module 4B)',
+        size: { width: 400, height: 450 },
+        ports: {
+          input: [
+            { id: 'in-1', type: 'input', label: 'Logo Input (optional)', connected: false, acceptedTypes: [DataType.IMAGE, DataType.JSON] },
+            { id: 'in-2', type: 'input', label: 'Branding Input (optional)', connected: false, acceptedTypes: [DataType.JSON] }
+          ],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Icon Variants', connected: false, dataType: DataType.JSON }
+          ],
+        },
+      },
+      'app-icon-variant': {
+        name: 'App Icon Variant',
+        size: { width: 320, height: 500 },
+        ports: {
+          input: [{ id: 'in-1', type: 'input', label: 'From Generator', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Icon Set + Context', connected: false, dataType: DataType.IMAGE }
+          ],
         },
       },
       'marketing-pack': {

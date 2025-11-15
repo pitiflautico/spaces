@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import type { Module, AIEEngineOutputs, AppIntelligence, AIConfiguration } from '@/types';
+import type { Module, AIEEngineOutputs, AppIntelligence, AIConfiguration, FlowContext } from '@/types';
 import { AIProvider } from '@/types';
-import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, SparklesIcon, ExclamationTriangleIcon, LanguageIcon } from '@heroicons/react/24/outline';
 import aiProvider from '@/lib/ai-provider';
 import '@/lib/adapters'; // Initialize adapters
 
@@ -38,6 +38,18 @@ const AI_MODELS = {
   ],
 };
 
+// Supported languages for the pipeline
+const LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'ja', name: '日本語', flag: '🇯🇵' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
+];
+
 export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -46,7 +58,7 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const outputs = module.outputs as AIEEngineOutputs;
   const space = getCurrentSpace();
 
-  // Get module inputs (will store AI config here)
+  // Get module inputs (will store AI config and language here)
   const inputs = (module.inputs || {}) as any;
   const selectedProvider: AIProvider = inputs.aiProvider || space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || AI_MODELS[selectedProvider as keyof typeof AI_MODELS]?.[0]?.id;
@@ -72,11 +84,11 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
     });
   };
 
-  const handleLanguageChange = (language: string) => {
+  const handleLanguageChange = (languageCode: string) => {
     updateModule(module.id, {
       inputs: {
         ...inputs,
-        language: language,
+        language: languageCode,
       },
     });
   };
@@ -161,13 +173,50 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         }
       }
 
+      // Create flow context to propagate to downstream modules
+      // This includes all the data that future modules will need
+      const flowContext: FlowContext = {
+        // Language & Market
+        language: selectedLanguage,
+        targetMarket: appIntelligence.targetAudience,
+
+        // Brand & Design
+        brandTone: appIntelligence.tone,
+        brandColors: appIntelligence.brandColorsSuggested,
+        designStyle: appIntelligence.designStyle,
+        iconStyle: appIntelligence.iconStyleRecommendation,
+
+        // App Info
+        category: appIntelligence.category,
+        keywords: appIntelligence.keywords.slice(0, 10), // Top 10 keywords
+
+        // Note: appName and slogan will be added by Module 3 (Naming Engine)
+      };
+
+      // Debug: Log language propagation
+      console.log('=== AIE ENGINE - Flow Context Created ===');
+      console.log('Selected Language:', selectedLanguage);
+      console.log('Brand Colors:', flowContext.brandColors);
+      console.log('Design Style:', flowContext.designStyle);
+      console.log('Icon Style:', flowContext.iconStyle);
+      console.log('Category:', flowContext.category);
+      console.log('Full FlowContext:', flowContext);
+      console.log('=========================================');
+
       // Create outputs
       const newOutputs: AIEEngineOutputs = {
         appIntelligence,
         aieLog: `Analysis completed using ${response.providerUsed} (${response.model})\n` +
                 `Tokens used: ${response.tokensUsed || 'N/A'}\n` +
-                `Timestamp: ${new Date().toISOString()}`
+                `Language: ${selectedLanguage}\n` +
+                `Timestamp: ${new Date().toISOString()}`,
+        flowContext, // Propagate to downstream modules
       };
+
+      // Debug: Log final outputs
+      console.log('=== AIE ENGINE - Final Outputs ===');
+      console.log('outputs.flowContext:', newOutputs.flowContext);
+      console.log('==================================');
 
       // Update module
       updateModule(module.id, {
@@ -250,6 +299,37 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Language Selector */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5 flex items-center gap-2">
+            <LanguageIcon className="w-4 h-4" />
+            Output Language
+          </label>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.flag} {lang.name}
+              </option>
+            ))}
+          </select>
+          <div className="mt-2 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-blue-300 font-medium">Selected:</span>
+              <span className="text-lg">{LANGUAGES.find(l => l.code === selectedLanguage)?.flag || '🌐'}</span>
+              <span className="text-xs text-blue-200 font-semibold">
+                {LANGUAGES.find(l => l.code === selectedLanguage)?.name || 'English'}
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-1.5">
+            This language will be used for all outputs in the pipeline
+          </p>
         </div>
 
         {/* API Key Status - Only show if missing or error */}
@@ -438,7 +518,7 @@ function buildPrompt(repositoryMetadata: any, fileContents: any, repoStructure: 
       dependencies: Object.keys(fileContents.packageJson.dependencies || {}),
       devDependencies: Object.keys(fileContents.packageJson.devDependencies || {})
     } : null,
-    readme: fileContents.readme ? fileContents.readme.substring(0, 1000) : null, // Only first 1000 chars
+    readme: fileContents.readme || null, // Full README - includes AI_BRANDING_HINT and other metadata
     hasTypeScript: !!fileContents.tsconfig,
     hasTailwind: !!fileContents.tailwindConfig,
     hasAppJson: !!fileContents.appJson,
@@ -473,7 +553,7 @@ PROJECT INFO:
 DEPENDENCIES (${essentialFileInfo.packageJson?.dependencies?.length || 0}):
 ${essentialFileInfo.packageJson?.dependencies?.slice(0, 15).join(', ') || 'None'}
 
-README EXCERPT:
+README CONTENT (FULL):
 ${essentialFileInfo.readme || 'No README found'}
 
 PROJECT STRUCTURE:
@@ -482,6 +562,13 @@ PROJECT STRUCTURE:
 - Total files: ~${structureSummary.totalFiles}
 - Has components: ${structureSummary.hasComponents ? 'Yes' : 'No'}
 - Has pages/routes: ${structureSummary.hasPages ? 'Yes' : 'No'}
+
+IMPORTANT - README METADATA HINTS:
+If the README contains HTML comments with branding hints (e.g., <!-- AI_BRANDING_HINT: ... -->), use them to guide your suggestions:
+- AI_BRANDING_HINT: Use specified colors for brandColorsSuggested
+- AI_TONE: Use specified tone
+- AI_STYLE: Use specified design style
+- AI_TARGET_AUDIENCE: Use specified target audience
 
 Based on this information, provide a comprehensive app intelligence analysis in JSON format:
 

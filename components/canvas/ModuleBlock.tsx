@@ -9,10 +9,16 @@ import {
   SparklesIcon,
   PhotoIcon,
   MegaphoneIcon,
+  DevicePhoneMobileIcon,
 } from '@heroicons/react/24/outline';
 import ModuleWrapper from './ModuleWrapper';
 import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
 import AIEEngineModule from '@/components/modules/AIEEngineModule';
+import NamingEngineModule from '@/components/modules/NamingEngineModule';
+import LogoGeneratorModule from '@/components/modules/LogoGeneratorModule';
+import LogoVariantModule from '@/components/modules/LogoVariantModule';
+import AppIconGeneratorModule from '@/components/modules/AppIconGeneratorModule';
+import AppIconVariantModule from '@/components/modules/AppIconVariantModule';
 
 interface ModuleBlockProps {
   module: Module;
@@ -44,6 +50,12 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <SparklesIcon className="w-5 h-5 text-yellow-400" />;
       case 'icon-generator':
         return <PhotoIcon className="w-5 h-5 text-pink-400" />;
+      case 'logo-variant':
+        return <PhotoIcon className="w-5 h-5 text-purple-400" />;
+      case 'app-icon-generator':
+        return <DevicePhoneMobileIcon className="w-5 h-5 text-blue-400" />;
+      case 'app-icon-variant':
+        return <DevicePhoneMobileIcon className="w-5 h-5 text-cyan-400" />;
       case 'marketing-pack':
         return <MegaphoneIcon className="w-5 h-5 text-green-400" />;
       default:
@@ -137,6 +149,21 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         const event = new CustomEvent('aie-engine-run', { detail: { moduleId: module.id } });
         window.dispatchEvent(event);
         return;
+      } else if (module.type === 'naming-engine') {
+        // Naming Engine Module - trigger the component's internal handleRun via event
+        const event = new CustomEvent('naming-engine-run', { detail: { moduleId: module.id } });
+        window.dispatchEvent(event);
+        return;
+      } else if (module.type === 'icon-generator') {
+        // Logo Generator Module - trigger the component's internal handleRun via event
+        const event = new CustomEvent('logo-generator-run', { detail: { moduleId: module.id } });
+        window.dispatchEvent(event);
+        return;
+      } else if (module.type === 'app-icon-generator') {
+        // App Icon Generator Module - trigger the component's internal handleRun via event
+        const event = new CustomEvent('app-icon-generator-run', { detail: { moduleId: module.id } });
+        window.dispatchEvent(event);
+        return;
       } else {
         // Otros módulos: simulación
         setTimeout(() => {
@@ -165,30 +192,19 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <AIEEngineModule module={module} />;
 
       case 'naming-engine':
-        return (
-          <div className="py-4">
-            <p className="text-gray-400 text-sm mb-3">Naming Engine</p>
-            <p className="text-gray-500 text-xs">
-              Genera sugerencias de nombres basadas en el análisis del proyecto.
-            </p>
-            <div className="mt-3 p-3 bg-dark-card rounded-lg">
-              <p className="text-gray-600 text-xs">Módulo pendiente de implementación</p>
-            </div>
-          </div>
-        );
+        return <NamingEngineModule module={module} />;
 
       case 'icon-generator':
-        return (
-          <div className="py-4">
-            <p className="text-gray-400 text-sm mb-3">Icon Generator</p>
-            <p className="text-gray-500 text-xs">
-              Genera iconos y logos basados en datos del proyecto.
-            </p>
-            <div className="mt-3 p-3 bg-dark-card rounded-lg">
-              <p className="text-gray-600 text-xs">Módulo pendiente de implementación</p>
-            </div>
-          </div>
-        );
+        return <LogoGeneratorModule module={module} />;
+
+      case 'logo-variant':
+        return <LogoVariantModule module={module} />;
+
+      case 'app-icon-generator':
+        return <AppIconGeneratorModule module={module} />;
+
+      case 'app-icon-variant':
+        return <AppIconVariantModule module={module} />;
 
       case 'marketing-pack':
         return (

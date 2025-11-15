@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import type { Module, ModuleConnection } from '@/types';
 import { getDataTypeColor } from '@/lib/data-type-icons';
@@ -12,32 +12,42 @@ interface ConnectionLinesProps {
 }
 
 export default function ConnectionLines({ connections, modules, zoom }: ConnectionLinesProps) {
-  const { connectionDragState } = useSpaceStore();
+  const { connectionDragState, canvasState, deleteConnection } = useSpaceStore();
 
   const getPortPosition = (moduleId: string, portId: string, side: 'left' | 'right') => {
     const module = modules.find((m) => m.id === moduleId);
     if (!module) return { x: 0, y: 0 };
 
-    // Find the port to get its position
     const ports = side === 'left' ? module.ports.input : module.ports.output;
     const portIndex = ports.findIndex((p) => p.id === portId);
+    if (portIndex === -1) return { x: 0, y: 0 };
 
-    // Calculate port vertical position
-    let portY;
-    if (ports.length === 1) {
-      portY = module.position.y + module.size.height / 2;
-    } else {
-      const percentage = ((portIndex + 1) / (ports.length + 1));
-      portY = module.position.y + (module.size.height * percentage);
-    }
+    // Calculate portTop percentage (same logic as ModuleWrapper.tsx lines 383-386 and 428-431)
+    const portTopPercentage = ports.length === 1
+      ? 0.5
+      : (portIndex + 1) / (ports.length + 1);
 
-    // Calculate port horizontal position (accounting for left: -40px and right: -40px)
-    // The port center is at -40px + 7px (half of 14px port size) = -33px from module edge
-    const portX = side === 'left'
-      ? module.position.x - 33  // left: -40px + 7px (port center)
-      : module.position.x + module.size.width + 33;  // right: -40px + 7px (port center)
+    // The port container has: top: portTop%, transform: translateY(-50%)
+    // IMPORTANT: Use module.size.height which is the base height
+    // The ports are positioned relative to this height percentage
+    const portContainerTop = module.position.y + (module.size.height * portTopPercentage);
 
-    return { x: portX, y: portY };
+    // The ball is w-14 h-14 (56px x 56px) and centered in the port container
+    // Port container position with transform: translateY(-50%) means we're already at the vertical center
+    const ballCenterY = portContainerTop; // Already centered due to translateY(-50%)
+
+    // Calculate X position
+    // The ball is w-14 h-14 (56px x 56px)
+    const BALL_SIZE = 56; // 14 * 4px = 56px (Tailwind w-14 h-14)
+    const BALL_RADIUS = BALL_SIZE / 2; // 28px
+
+    // Input ports: left: -40px → left edge at (module.x - 40), center at (module.x - 40 + radius)
+    // Output ports: right: -40px → right edge at (module.x + width + 40), center at (module.x + width + 40 - radius)
+    const ballCenterX = side === 'left'
+      ? module.position.x - 40 + BALL_RADIUS  // = module.x - 12
+      : module.position.x + module.size.width + 40 - BALL_RADIUS; // = module.x + width + 12
+
+    return { x: ballCenterX, y: ballCenterY };
   };
 
   const createBezierPath = (
@@ -52,10 +62,14 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
     return `M ${x1},${y1} C ${x1 + curvature},${y1} ${x2 - curvature},${y2} ${x2},${y2}`;
   };
 
+  const handleConnectionDoubleClick = (connectionId: string) => {
+    deleteConnection(connectionId);
+  };
+
   return (
     <svg
-      className="absolute inset-0 pointer-events-none"
-      style={{ width: '100%', height: '100%', overflow: 'visible' }}
+      className="absolute inset-0"
+      style={{ width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}
     >
       {connections.map((connection) => {
         const start = getPortPosition(connection.sourceModuleId, connection.sourcePortId, 'right');
@@ -81,13 +95,30 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
               stroke={`${strokeColor.replace('rgb', 'rgba').replace(')', ', 0.3)')}`}
               strokeWidth="8"
               filter="blur(4px)"
+              style={{ pointerEvents: 'none' }}
             />
+            {/* Invisible thick line for easier clicking */}
+            <path
+              d={path}
+              fill="none"
+              stroke="transparent"
+              strokeWidth="20"
+              style={{
+                pointerEvents: 'stroke',
+                cursor: 'pointer'
+              }}
+              onDoubleClick={() => handleConnectionDoubleClick(connection.id)}
+            >
+              <title>Double-click to disconnect</title>
+            </path>
             {/* Main line */}
             <path
               d={path}
               fill="none"
               stroke={strokeColor}
               strokeWidth="2"
+              style={{ pointerEvents: 'none' }}
+              className="transition-opacity group-hover:opacity-80"
             />
             {/* Animated dashes */}
             <path
@@ -97,6 +128,7 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
               strokeWidth="2"
               strokeDasharray="5 5"
               opacity="0.5"
+              style={{ pointerEvents: 'none' }}
             >
               <animate
                 attributeName="stroke-dashoffset"
@@ -121,9 +153,13 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
             connectionDragState.sourcePortId!,
             'right'
           );
+
+          // Convert cursor position from screen space to canvas space
+          // The cursor is in screen coordinates, we need to convert to canvas coordinates
+          // taking into account the pan and zoom transforms
           const end = {
-            x: (connectionDragState.cursorPosition.x - window.scrollX) / zoom,
-            y: (connectionDragState.cursorPosition.y - window.scrollY) / zoom,
+            x: (connectionDragState.cursorPosition.x - canvasState.pan.x) / canvasState.zoom,
+            y: (connectionDragState.cursorPosition.y - canvasState.pan.y) / canvasState.zoom,
           };
 
           const path = createBezierPath(start.x, start.y, end.x, end.y);
