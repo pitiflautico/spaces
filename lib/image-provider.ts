@@ -4,7 +4,7 @@
  * Unified interface for AI image generation (Replicate, Together AI, etc.)
  */
 
-import type { AIProvider } from '@/types';
+import { AIProvider } from '@/types';
 
 export interface ImageGenerationConfig {
   provider: AIProvider;
