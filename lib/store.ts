@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError, SpaceConfiguration } from '@/types';
 import { DataType, ConnectionErrorType } from '@/types';
 
@@ -41,21 +42,23 @@ interface SpaceStore {
   getCurrentSpace: () => Space | null;
 }
 
-export const useSpaceStore = create<SpaceStore>((set, get) => ({
-  spaces: [],
-  currentSpaceId: null,
-  canvasState: {
-    zoom: 1,
-    pan: { x: 0, y: 0 },
-  },
-  selectedModuleId: null,
-  connectionDragState: {
-    isDragging: false,
-    sourceModuleId: null,
-    sourcePortId: null,
-    sourceDataType: null,
-    cursorPosition: null,
-  },
+export const useSpaceStore = create<SpaceStore>()(
+  persist(
+    (set, get) => ({
+      spaces: [],
+      currentSpaceId: null,
+      canvasState: {
+        zoom: 1,
+        pan: { x: 0, y: 0 },
+      },
+      selectedModuleId: null,
+      connectionDragState: {
+        isDragging: false,
+        sourceModuleId: null,
+        sourcePortId: null,
+        sourceDataType: null,
+        cursorPosition: null,
+      },
 
   createSpace: (name: string) => {
     const newSpace: Space = {
@@ -513,8 +516,18 @@ export const useSpaceStore = create<SpaceStore>((set, get) => ({
     });
   },
 
-  getCurrentSpace: () => {
-    const state = get();
-    return state.spaces.find((s) => s.id === state.currentSpaceId) || null;
-  },
-}));
+      getCurrentSpace: () => {
+        const state = get();
+        return state.spaces.find((s) => s.id === state.currentSpaceId) || null;
+      },
+    }),
+    {
+      name: 'marketing-spaces-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        spaces: state.spaces,
+        currentSpaceId: state.currentSpaceId,
+      }),
+    }
+  )
+);
