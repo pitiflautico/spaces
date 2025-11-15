@@ -176,6 +176,44 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         }
       }
 
+      // Debug: Log what we received
+      console.log('=== NAMING ENGINE - Parsed Response ===');
+      console.log('Has branding field:', !!namingPackage.branding);
+      if (namingPackage.branding) {
+        console.log('Branding keys:', Object.keys(namingPackage.branding));
+      }
+      console.log('Full naming package:', JSON.stringify(namingPackage, null, 2));
+      console.log('========================================');
+
+      // VALIDATION: Ensure branding exists - create fallback if missing
+      if (!namingPackage.branding) {
+        console.warn('⚠️ AI did not return branding field. Creating fallback branding...');
+
+        // Create intelligent fallback branding based on available data
+        namingPackage.branding = {
+          design_style: namingPackage.style || 'modern minimalist',
+          color_palette: appIntelligence?.brandColorsSuggested || ['#007AFF', '#34C759', '#FF9500', '#AF52DE'],
+          color_meanings: [
+            'Primary brand color',
+            'Success and energy',
+            'Attention and warmth',
+            'Creativity and innovation'
+          ],
+          primary_font_family: 'Inter',
+          secondary_font_family: 'Roboto',
+          font_style: 'Clean sans-serif modern',
+          brand_tone: namingPackage.tone || 'professional and approachable',
+          brand_values: namingPackage.naming_keywords?.slice(0, 3) || ['Innovation', 'Quality', 'Simplicity'],
+          target_emotion: 'trust and confidence',
+          shape_style: 'rounded soft edges',
+          icon_style: 'minimalist with clean lines',
+          branding_concept: `${namingPackage.recommended_name} represents ${namingPackage.style || 'modern'} design with focus on ${namingPackage.tone || 'professional'} communication.`,
+          visual_direction: `Use clean, modern aesthetics with ${namingPackage.style || 'simple'} visual elements. Focus on clarity and ${namingPackage.tone || 'professional'} presentation.`
+        };
+
+        addLog('warning', 'Branding data was generated as fallback. For best results, re-run with updated AI model.', module.id);
+      }
+
       // Auto-select recommended name as default chosen name
       const defaultChosenName: ChosenName = {
         final_name: namingPackage.recommended_name,
@@ -580,7 +618,7 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
 
                 {/* View Full Details Button */}
                 <button
-                  onClick={handleOpenPanel}
+                  onClick={() => setIsPanelOpen(true)}
                   className="w-full px-3 py-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-lg text-xs text-pink-400 font-medium transition-colors"
                 >
                   📋 View Complete Branding Details
