@@ -4,13 +4,93 @@
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15 (V2.0 - AI Provider Layer Complete)
-**Versión del sistema**: v2.0 (implementación completa)
-**Fase actual**: ✅ AI Provider Layer + AIE Engine + Play/Restart Flow | Próximo: Documentación final
+**Última actualización**: 2025-11-15 (Session 3 - UX Improvements)
+**Versión del sistema**: v2.0 (implementación completa + mejoras UX)
+**Fase actual**: ✅ Session 3: UX refinements (port visibility + config panel restructuring)
 
 ---
 
-## 🆕 ÚLTIMOS CAMBIOS (2025-11-15) - V2.0
+## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
+
+### ✅ SESIÓN 3: UX Improvements - Port Visibility & Configuration Panel
+
+**Archivos MODIFICADOS**:
+- ✅ `/components/canvas/ModuleWrapper.tsx` - Improved port visualization
+- ✅ `/components/configuration/ConfigurationPanel.tsx` - Tab-based layout restructuring
+
+**Mejoras implementadas**:
+
+#### 1. ✅ **Port Visibility Improvements**
+   - Input ports now render on LEFT side (output ports on right)
+   - Ports positioned OUTSIDE module boundaries (-left-3, -right-3) for better visibility
+   - Increased port size from 6x6 to 8x8 pixels
+   - Icon size increased to 4x4 pixels
+   - Added shadow-lg for depth and z-50 for layering
+   - Bright blue border (#3B82F6) on selected modules
+   - overflow: visible on module container
+   - Visual feedback: hover effects, compatibility highlighting, green ring when dragging
+
+**Código de referencia**:
+```tsx
+// Input ports (LEFT side)
+<div
+  className="port absolute -left-3 z-50"
+  style={{ top: portTop, transform: 'translateY(-50%)' }}
+>
+  <div className={`w-8 h-8 ${colorClass} rounded-full border-2 border-dark-bg
+    transition-all cursor-pointer flex items-center justify-center shadow-lg
+    ${isCompatible ? 'ring-4 ring-green-400/50 scale-125' : ''}
+    ${isHovered ? 'scale-110' : 'hover:scale-105'}`}
+  >
+    <Icon className="w-4 h-4 text-white" />
+  </div>
+</div>
+```
+
+#### 2. ✅ **Configuration Panel Restructuring**
+   - Tab-based navigation: General, AI Provider, API Keys
+   - Larger panel size (max-w-3xl, 85vh)
+   - "AI Provider" tab: Provider selection → Model → Temperature → Max Tokens
+   - Link from AI tab to API Keys tab when non-local provider selected
+   - "API Keys" tab: Shows all providers with "(Currently selected)" indicator
+   - Info banners explaining each section
+   - Better visual hierarchy and organization
+
+**Código de referencia**:
+```tsx
+// Tab-based layout
+const [activeTab, setActiveTab] = useState<Tab>('general');
+
+{/* Tabs */}
+<div className="flex gap-1 px-6 pt-4 border-b border-[#2A2A2A]">
+  <button onClick={() => setActiveTab('general')}>General</button>
+  <button onClick={() => setActiveTab('ai')}>AI Provider</button>
+  <button onClick={() => setActiveTab('apikeys')}>API Keys</button>
+</div>
+
+{/* Conditional content */}
+{activeTab === 'ai' && (
+  <div className="space-y-6">
+    {/* Provider selection first */}
+    <select value={config.aiConfig?.provider}>...</select>
+
+    {/* Link to API Keys tab if needed */}
+    {config.aiConfig?.provider !== AIProvider.LOCAL && (
+      <div className="bg-yellow-500/10">
+        <button onClick={() => setActiveTab('apikeys')}>
+          Add your {provider} API key
+        </button>
+      </div>
+    )}
+  </div>
+)}
+```
+
+**User feedback addressed**:
+- "el modulo 2 no tiene conectro" → Input ports now visible
+- "estructuralo mejor o hacelo mas grande o por tabs para que se vea bien ahora en un chorizo" → Tab-based layout with better organization
+
+---
 
 ### ✅ SESIÓN V2.0: AI Provider Layer + AIE Engine + Flow Execution
 
