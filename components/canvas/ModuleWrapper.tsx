@@ -177,7 +177,7 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
   return (
     <div
       ref={wrapperRef}
-      className={`absolute bg-dark-sidebar border-2 rounded-2xl shadow-2xl overflow-visible transition-all ${getBorderColor()} ${
+      className={`absolute bg-dark-sidebar rounded-2xl shadow-2xl transition-all ${getBorderColor()} ${
         isDragging ? 'cursor-grabbing shadow-blue-500/20' : 'cursor-grab'
       }`}
       style={{
@@ -185,6 +185,8 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         top: module.position.y,
         width: module.size.width,
         minHeight: module.size.height,
+        border: isSelected ? '2px solid #3B82F6' : '2px solid #3A3A3A',
+        overflow: 'visible',
       }}
       onMouseDown={handleMouseDown}
     >
@@ -230,19 +232,19 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         return (
           <div
             key={port.id}
-            className="port absolute left-0 -translate-x-1/2"
-            style={{ top: portTop, transform: 'translate(-50%, -50%)' }}
+            className="port absolute -left-3 z-50"
+            style={{ top: portTop, transform: 'translateY(-50%)' }}
             onMouseUp={(e) => handleInputPortMouseUp(e, port)}
             onMouseEnter={() => handleInputPortMouseEnter(port)}
             onMouseLeave={handleInputPortMouseLeave}
             title={`Input: ${port.label}\nAccepts: ${port.acceptedTypes?.join(', ') || 'unknown'}`}
           >
             <div
-              className={`w-6 h-6 ${colorClass} rounded-full border-2 border-dark-sidebar transition-all cursor-pointer flex items-center justify-center ${
+              className={`w-8 h-8 ${colorClass} rounded-full border-2 border-dark-bg transition-all cursor-pointer flex items-center justify-center shadow-lg ${
                 isCompatible ? 'ring-4 ring-green-400/50 scale-125' : ''
-              } ${isHovered ? 'scale-110' : ''}`}
+              } ${isHovered ? 'scale-110' : 'hover:scale-105'}`}
             >
-              <Icon className="w-3.5 h-3.5 text-white" />
+              <Icon className="w-4 h-4 text-white" />
             </div>
           </div>
         );
@@ -260,15 +262,15 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         return (
           <div
             key={port.id}
-            className="port absolute right-0 translate-x-1/2"
-            style={{ top: portTop, transform: 'translate(50%, -50%)' }}
+            className="port absolute -right-3 z-50"
+            style={{ top: portTop, transform: 'translateY(-50%)' }}
             onMouseDown={(e) => handleOutputPortMouseDown(e, port)}
             title={`Output: ${port.label}\nTipo: ${port.dataType || 'unknown'}`}
           >
             <div
-              className={`w-6 h-6 ${colorClass} rounded-full border-2 border-dark-sidebar hover:scale-110 transition-transform cursor-pointer flex items-center justify-center`}
+              className={`w-8 h-8 ${colorClass} rounded-full border-2 border-dark-bg hover:scale-110 transition-transform cursor-pointer flex items-center justify-center shadow-lg`}
             >
-              <Icon className="w-3.5 h-3.5 text-white" />
+              <Icon className="w-4 h-4 text-white" />
             </div>
           </div>
         );
