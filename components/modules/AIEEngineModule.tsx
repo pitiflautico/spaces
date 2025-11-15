@@ -142,37 +142,41 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         </div>
       )}
 
-      {/* Outputs Section */}
+      {/* Outputs Section - ENHANCED VISIBILITY */}
       {module.status === 'done' && outputs?.appIntelligence && (
-        <div className="space-y-3 pt-3 border-t border-[#2A2A2A]">
-          <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
-            <CheckCircleIcon className="w-4 h-4 text-green-400" />
-            App Intelligence Extracted
+        <div className="space-y-4 pt-4 border-t-2 border-green-500/30 bg-green-500/5 -mx-3 px-3 py-4 rounded-b-xl">
+          <div className="text-sm text-green-400 uppercase tracking-wider font-bold flex items-center gap-2">
+            <CheckCircleIcon className="w-5 h-5 text-green-400 animate-pulse" />
+            ✓ App Intelligence Extracted
           </div>
 
-          <div className="px-3 py-2 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg space-y-2">
-            <div>
-              <span className="text-xs text-gray-500">Summary:</span>
-              <p className="text-xs text-gray-300 mt-1">{outputs.appIntelligence.summary}</p>
+          <div className="space-y-3">
+            {/* Summary - Most prominent */}
+            <div className="px-4 py-3 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg">
+              <span className="text-sm text-blue-400 font-semibold">📝 Summary</span>
+              <p className="text-sm text-white mt-2 leading-relaxed">{outputs.appIntelligence.summary}</p>
             </div>
 
-            <div>
-              <span className="text-xs text-gray-500">Category:</span>
-              <p className="text-xs text-white font-medium">{outputs.appIntelligence.category}</p>
+            {/* Category */}
+            <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+              <span className="text-sm text-gray-400 font-semibold">🏷️ Category</span>
+              <p className="text-sm text-white font-bold mt-1">{outputs.appIntelligence.category}</p>
             </div>
 
-            <div>
-              <span className="text-xs text-gray-500">Target Audience:</span>
-              <p className="text-xs text-gray-300">{outputs.appIntelligence.targetAudience}</p>
+            {/* Target Audience */}
+            <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+              <span className="text-sm text-gray-400 font-semibold">👥 Target Audience</span>
+              <p className="text-sm text-gray-200 mt-1">{outputs.appIntelligence.targetAudience}</p>
             </div>
 
-            <div>
-              <span className="text-xs text-gray-500">Keywords:</span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {outputs.appIntelligence.keywords.slice(0, 6).map((keyword, i) => (
+            {/* Keywords */}
+            <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+              <span className="text-sm text-gray-400 font-semibold">🔑 Keywords</span>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {outputs.appIntelligence.keywords.slice(0, 8).map((keyword, i) => (
                   <span
                     key={i}
-                    className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded"
+                    className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full border border-blue-500/30 font-medium"
                   >
                     {keyword}
                   </span>
@@ -180,20 +184,53 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
               </div>
             </div>
 
-            <div>
-              <span className="text-xs text-gray-500">Brand Colors:</span>
-              <div className="flex gap-2 mt-1">
+            {/* Brand Colors */}
+            <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+              <span className="text-sm text-gray-400 font-semibold">🎨 Brand Colors</span>
+              <div className="flex gap-3 mt-2">
                 {outputs.appIntelligence.brandColorsSuggested.map((color, i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded border border-[#3A3A3A]"
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-12 h-12 rounded-lg border-2 border-white/20 shadow-lg"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                    <span className="text-xs text-gray-400 font-mono">{color}</span>
+                  </div>
                 ))}
               </div>
             </div>
+
+            {/* Features Preview */}
+            {outputs.appIntelligence.features && outputs.appIntelligence.features.length > 0 && (
+              <div className="px-4 py-3 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+                <span className="text-sm text-gray-400 font-semibold">✨ Key Features</span>
+                <ul className="mt-2 space-y-1">
+                  {outputs.appIntelligence.features.slice(0, 4).map((feature, i) => (
+                    <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                      <span className="text-green-400 mt-0.5">•</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Competitive Angle */}
+            {outputs.appIntelligence.competitiveAngle && (
+              <div className="px-4 py-3 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+                <span className="text-sm text-purple-400 font-semibold">🎯 Competitive Angle</span>
+                <p className="text-sm text-gray-200 mt-2 leading-relaxed">{outputs.appIntelligence.competitiveAngle}</p>
+              </div>
+            )}
           </div>
+
+          {/* Log Info */}
+          {outputs.aieLog && (
+            <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#2A2A2A] rounded text-xs text-gray-500 font-mono whitespace-pre-wrap">
+              {outputs.aieLog}
+            </div>
+          )}
         </div>
       )}
 
