@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import {
   PlusIcon,
@@ -45,9 +45,35 @@ export default function FloatingToolbar() {
     alert('Redo: Funcionalidad de historial pendiente');
   };
 
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+
   const handleSettings = () => {
-    console.log('Settings - Global settings');
-    alert('Settings: Configuración global pendiente');
+    setShowSettingsMenu(!showSettingsMenu);
+  };
+
+  const handleDeleteSpace = () => {
+    if (!currentSpace) return;
+
+    if (confirm(`¿Seguro que quieres borrar el space "${currentSpace.name}"? Esta acción no se puede deshacer.`)) {
+      const { deleteSpace } = useSpaceStore.getState();
+      deleteSpace(currentSpace.id);
+      setShowSettingsMenu(false);
+      console.log(`✓ Space "${currentSpace.name}" deleted`);
+    }
+  };
+
+  const handleClearStorage = () => {
+    if (confirm('¿Borrar TODOS los spaces del localStorage? Esta acción no se puede deshacer.')) {
+      localStorage.removeItem('marketing-spaces-storage');
+      window.location.reload();
+    }
+  };
+
+  const handleChangePath = () => {
+    // This opens the configuration panel to change project path
+    const settingsBtn = document.querySelector('[data-open-config]') as HTMLButtonElement;
+    settingsBtn?.click();
+    setShowSettingsMenu(false);
   };
 
   return (
@@ -113,13 +139,43 @@ export default function FloatingToolbar() {
       <div className="h-px bg-[#2A2A2A] my-0.5" />
 
       {/* Settings */}
-      <button
-        onClick={handleSettings}
-        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#0A0A0A] hover:bg-[#2A2A2A] text-gray-400 transition-all hover:scale-105"
-        title="Settings"
-      >
-        <Cog6ToothIcon className="w-5 h-5" />
-      </button>
+      <div className="relative">
+        <button
+          onClick={handleSettings}
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:scale-105 ${
+            showSettingsMenu ? 'bg-[#2A2A2A] text-white' : 'bg-[#0A0A0A] hover:bg-[#2A2A2A] text-gray-400'
+          }`}
+          title="Settings"
+        >
+          <Cog6ToothIcon className="w-5 h-5" />
+        </button>
+
+        {/* Settings Menu Dropdown */}
+        {showSettingsMenu && (
+          <div className="absolute left-12 bottom-0 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg shadow-2xl py-1 min-w-[200px] z-50">
+            <button
+              onClick={handleChangePath}
+              className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-[#2A2A2A] hover:text-white transition-colors"
+            >
+              Change Save Path
+            </button>
+            <div className="h-px bg-[#2A2A2A] my-1" />
+            <button
+              onClick={handleDeleteSpace}
+              disabled={!currentSpace}
+              className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#2A2A2A] hover:text-red-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Delete Space
+            </button>
+            <button
+              onClick={handleClearStorage}
+              className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-[#2A2A2A] hover:text-red-300 transition-colors"
+            >
+              Clear All Storage
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

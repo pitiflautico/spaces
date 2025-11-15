@@ -79,17 +79,31 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
   React.useEffect(() => {
     if (!isDragging) return;
 
+    let rafId: number;
+    let lastX = module.position.x;
+    let lastY = module.position.y;
+
     const handleMouseMove = (e: MouseEvent) => {
-      updateModule(module.id, {
-        position: {
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y,
-        },
-      });
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+
+      // Only update if position changed significantly (throttle)
+      if (Math.abs(newX - lastX) > 1 || Math.abs(newY - lastY) > 1) {
+        if (rafId) cancelAnimationFrame(rafId);
+
+        rafId = requestAnimationFrame(() => {
+          updateModule(module.id, {
+            position: { x: newX, y: newY },
+          });
+          lastX = newX;
+          lastY = newY;
+        });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      if (rafId) cancelAnimationFrame(rafId);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -98,8 +112,9 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isDragging, dragOffset, module.id, updateModule]);
+  }, [isDragging, dragOffset, module.id, updateModule, module.position.x, module.position.y]);
 
   // Port handlers
   const handleOutputPortMouseDown = (e: React.MouseEvent, port: ModulePort) => {

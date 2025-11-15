@@ -101,6 +101,7 @@ export default function Sidebar() {
       <div className="px-3 py-4 border-t border-[#2A2A2A]">
         <button
           onClick={() => setShowConfiguration(true)}
+          data-open-config
           className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-[#2A2A2A] hover:text-white rounded-lg transition-colors"
         >
           <Cog6ToothIcon className="w-5 h-5" />
