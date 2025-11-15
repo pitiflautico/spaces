@@ -3,11 +3,67 @@
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import type { Module, AppIconGeneratorOutputs, IconBrief, AppIconVariant, AppIconOptionsPackage, IconSizeSet, FlowContext, AppIconVariantOutputs } from '@/types';
-import { CheckCircleIcon, DevicePhoneMobileIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { AIProvider } from '@/types';
+import { CheckCircleIcon, DevicePhoneMobileIcon, ExclamationTriangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import imageProvider from '@/lib/image-provider';
+import '@/lib/image-adapters'; // Initialize image adapters
 
 interface AppIconGeneratorModuleProps {
   module: Module;
 }
+
+// Icon Style Presets - Guide AI generation for app icons
+const ICON_STYLES = {
+  flat: {
+    name: 'Flat Design',
+    description: 'Clean, 2D shapes, solid colors, minimal shadows',
+    prompt: 'flat design app icon with clean 2D shapes, solid colors, no gradients, minimal shadows, modern iOS/Android style',
+  },
+  gradient: {
+    name: 'Gradient Modern',
+    description: 'Smooth gradients, vibrant colors, depth',
+    prompt: 'modern gradient app icon with smooth color transitions, vibrant colors, subtle depth, contemporary mobile style',
+  },
+  material: {
+    name: 'Material Design',
+    description: 'Google Material, shadows, bold colors',
+    prompt: 'material design app icon with bold colors, subtle shadows, clean geometric shapes, Android-inspired aesthetic',
+  },
+  glass: {
+    name: 'Glassmorphism',
+    description: 'Frosted glass effect, transparency, blur',
+    prompt: 'glassmorphism app icon with frosted glass effect, subtle transparency, background blur, modern premium feel',
+  },
+  minimalist: {
+    name: 'Minimalist',
+    description: 'Ultra simple, monochrome or dual-tone',
+    prompt: 'minimalist app icon with ultra-simple design, clean lines, monochrome or dual-tone colors, maximum simplicity',
+  },
+  '3d': {
+    name: '3D/Realistic',
+    description: 'Three-dimensional, realistic lighting',
+    prompt: '3D realistic app icon with three-dimensional shapes, realistic lighting and shadows, depth and volume, premium quality',
+  },
+} as const;
+
+type IconStyleKey = keyof typeof ICON_STYLES;
+
+// Image generation models - Same as Logo Generator
+const IMAGE_AI_MODELS = {
+  [AIProvider.REPLICATE]: [
+    { id: 'recraft-ai/recraft-v3-svg', name: 'Recraft V3 SVG', description: '⭐ BEST - Generates SVG icons' },
+    { id: 'black-forest-labs/flux-kontext-pro', name: 'Flux Kontext Pro', description: 'Perfect for icon design' },
+    { id: 'black-forest-labs/flux-1.1-pro', name: 'Flux 1.1 Pro', description: 'High quality raster' },
+  ],
+  [AIProvider.TOGETHER]: [
+    { id: 'black-forest-labs/FLUX.1-pro', name: 'Flux Pro', description: '⭐ Premium quality' },
+    { id: 'black-forest-labs/FLUX.1-schnell-Free', name: 'Flux Schnell (Free)', description: 'Fast & Free' },
+    { id: 'black-forest-labs/FLUX.1-Kontext-dev', name: 'Flux Kontext Dev', description: 'Good for icons' },
+  ],
+  [AIProvider.LOCAL]: [
+    { id: 'mock-flux', name: 'Mock Flux', description: 'Testing (placeholders)' },
+  ],
+};
 
 /**
  * Module 4B - App Icon Generator
@@ -27,10 +83,25 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [numVariants, setNumVariants] = useState<number>(3);
-  const [backgroundType, setBackgroundType] = useState<string>('solid');
+  const [selectedStyle, setSelectedStyle] = useState<IconStyleKey>('flat');
 
   const outputs = module.outputs as AppIconGeneratorOutputs;
   const space = getCurrentSpace();
+
+  // Get module inputs for AI config
+  const inputs = (module.inputs || {}) as any;
+  // Use provider from space configuration (Settings > AI Provider)
+  const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.REPLICATE;
+  const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
+
+  const handleModelChange = (modelId: string) => {
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        aiModel: modelId,
+      },
+    });
+  };
 
   const handleRun = async () => {
     try {
@@ -108,20 +179,31 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
         brandingData,
         flowContext,
         numVariants,
-        backgroundType
+        selectedStyle
       );
 
-      addLog('info', `Generating ${iconBrief.icon_variants} app icon variants for "${iconBrief.brand_name}"...`, module.id);
+      addLog('info', `Generating ${iconBrief.icon_variants} app icon variants for "${iconBrief.brand_name}" with ${selectedProvider}...`, module.id);
 
-      // Simulate icon generation (replace with actual AI call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get API key from space configuration
+      const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
 
-      // Generate mock icons with all required sizes
+      if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
+      }
+
+      // Generate icon variants using AI
       const mockIcons: AppIconVariant[] = await generateIconVariants(
         iconBrief,
         logoUrl,
-        flowContext
+        flowContext,
+        selectedProvider,
+        selectedModel,
+        apiKey || '',
+        selectedStyle,
+        brandingData?.namingPackage?.branding
       );
+
+      addLog('success', `Generated ${mockIcons.length} app icon variants using ${selectedProvider}`, module.id);
 
       // Delete existing variant nodes from previous runs
       const existingVariants = space?.modules.filter(
@@ -208,7 +290,7 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
         iconLog: `App icon generation completed\n` +
                  `Brand: ${iconBrief.brand_name}\n` +
                  `Variants: ${mockIcons.length}\n` +
-                 `Background: ${backgroundType}\n` +
+                 `Style: ${ICON_STYLES[selectedStyle].name}\n` +
                  `Timestamp: ${new Date().toISOString()}`,
         flowContext,
       };
@@ -293,6 +375,67 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
         </p>
       </div>
 
+      {/* AI Model Selector */}
+      <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#3A3A3A]/50 rounded-lg">
+        <div className="space-y-3">
+          <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
+            <SparklesIcon className="w-4 h-4 text-blue-400" />
+            AI Image Generator
+          </div>
+
+          {/* Current Provider Info */}
+          <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Service Provider:</span>
+              <span className="text-xs text-white font-medium">{selectedProvider}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Configure in Settings → AI Provider</p>
+          </div>
+
+          {/* Recommended Model */}
+          <div className="px-3 py-2.5 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-blue-400 font-semibold">⭐ Recommended Model</span>
+              <span className="text-xs text-gray-500">({selectedProvider})</span>
+            </div>
+            <p className="text-sm text-white font-medium">
+              {IMAGE_AI_MODELS[selectedProvider as keyof typeof IMAGE_AI_MODELS]?.[0]?.name}
+            </p>
+            <p className="text-xs text-gray-300 mt-0.5">
+              {IMAGE_AI_MODELS[selectedProvider as keyof typeof IMAGE_AI_MODELS]?.[0]?.description}
+            </p>
+          </div>
+
+          {/* Model Selector */}
+          <div>
+            <label className="block text-xs text-gray-400 mb-1.5">
+              Choose AI Model (3 options)
+            </label>
+            <select
+              value={selectedModel}
+              onChange={(e) => handleModelChange(e.target.value)}
+              className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            >
+              {IMAGE_AI_MODELS[selectedProvider as keyof typeof IMAGE_AI_MODELS]?.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name} - {model.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* API Key Status */}
+          {selectedProvider !== AIProvider.LOCAL && !space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] && (
+            <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-red-400">⚠️ API Key Missing</span>
+                <span className="text-gray-400">Add {selectedProvider} key in Settings</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Settings */}
       <div className="space-y-3">
         {/* Variants selector */}
@@ -313,18 +456,29 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
               </select>
             </label>
 
-            <label className="flex items-center justify-between">
-              <span className="text-xs text-gray-300 font-medium">Background type:</span>
-              <select
-                value={backgroundType}
-                onChange={(e) => setBackgroundType(e.target.value)}
-                className="ml-3 px-3 py-1.5 bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                <option value="solid">Solid color</option>
-                <option value="gradient">Gradient</option>
-                <option value="flat">Flat (iOS style)</option>
-              </select>
-            </label>
+            {/* Icon Style Selector */}
+            <div className="mt-3">
+              <label className="block mb-2">
+                <span className="text-xs text-gray-300 font-medium">Icon Style:</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(ICON_STYLES) as IconStyleKey[]).map((styleKey) => (
+                  <button
+                    key={styleKey}
+                    onClick={() => setSelectedStyle(styleKey)}
+                    disabled={isProcessing}
+                    className={`px-3 py-2 rounded-lg text-left transition-all ${
+                      selectedStyle === styleKey
+                        ? 'bg-blue-500/20 border-2 border-blue-500 text-white'
+                        : 'bg-[#1A1A1A] border border-[#3A3A3A] text-gray-300 hover:border-blue-500/50'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="text-xs font-semibold mb-0.5">{ICON_STYLES[styleKey].name}</div>
+                    <div className="text-xs text-gray-400 leading-tight">{ICON_STYLES[styleKey].description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -386,7 +540,7 @@ function buildIconBrief(
   brandingData: any,
   flowContext: FlowContext,
   numVariants: number,
-  backgroundType: string
+  selectedStyle: IconStyleKey
 ): IconBrief {
   const brandName = brandingData?.chosenName?.final_name ||
                     flowContext.appName ||
@@ -396,9 +550,9 @@ function buildIconBrief(
 
   return {
     brand_name: brandName,
-    style: branding?.design_style || flowContext.designStyle || 'modern flat',
+    style: ICON_STYLES[selectedStyle].name,
     color_palette: branding?.color_palette || flowContext.brandColors || ['#007AFF', '#34C759'],
-    background_preference: backgroundType,
+    background_preference: selectedStyle,
     shape: 'rounded-square',
     icon_variants: numVariants,
     include_symbol: !!logoUrl,
@@ -406,51 +560,75 @@ function buildIconBrief(
     category: flowContext.category || 'App',
 
     // Complete Branding Information (V3.0) - CRITICAL for context-rich icon generation
-    visual_direction: branding?.visual_direction, // What the app does, users, features, mood, visual elements
-    branding_concept: branding?.branding_concept, // WHY behind the visual choices
-    icon_style: branding?.icon_style, // Icon approach (minimalist, detailed, abstract)
-    brand_tone: branding?.brand_tone, // Overall personality
-    target_emotion: branding?.target_emotion, // Main emotion to evoke
-    color_meanings: branding?.color_meanings, // What each color represents
+    visual_direction: branding?.visual_direction,
+    branding_concept: branding?.branding_concept,
+    icon_style: branding?.icon_style,
+    brand_tone: branding?.brand_tone,
+    target_emotion: branding?.target_emotion,
+    color_meanings: branding?.color_meanings,
   };
 }
 
 /**
- * Generate icon variants with all required sizes
+ * Generate icon variants with all required sizes using AI
  */
 async function generateIconVariants(
   brief: IconBrief,
   logoUrl: string | undefined,
-  flowContext: FlowContext
+  flowContext: FlowContext,
+  provider: AIProvider,
+  model: string,
+  apiKey: string,
+  selectedStyle: IconStyleKey,
+  branding?: any
 ): Promise<AppIconVariant[]> {
   const variants: AppIconVariant[] = [];
 
-  for (let i = 0; i < brief.icon_variants; i++) {
+  // Build prompt for the base icon generation (1024x1024 for iOS)
+  // Include logo description if available
+  const iconPrompt = buildIconPrompt(brief, 1, selectedStyle, branding, logoUrl);
+
+  console.log('🎨 App Icon Generation Prompt:', iconPrompt);
+  console.log('📸 Logo Reference URL:', logoUrl || 'None');
+  console.log('🎯 Branding Available:', !!branding);
+
+  // Call image generation API to generate all variants in one call
+  const imageResult = await imageProvider.generate({
+    provider,
+    model,
+    apiKey,
+    prompt: iconPrompt,
+    num_outputs: brief.icon_variants,
+    aspect_ratio: '1:1',
+    width: 1024,
+    height: 1024,
+  });
+
+  // Create variants from generated images
+  for (let i = 0; i < imageResult.images.length; i++) {
     const variantId = i + 1;
+    const mainImageUrl = imageResult.images[i];
 
-    // Generate colors for this variant
-    const primaryColor = brief.color_palette[i % brief.color_palette.length] || '#007AFF';
-    const bgColor = primaryColor.replace('#', '');
-
-    // Create all required sizes
+    // For now, we'll use the main image for all sizes
+    // In a real implementation, you'd resize the image to different sizes
     const sizes: IconSizeSet = {
-      ios_1024: `https://placehold.co/1024x1024/${bgColor}/FFFFFF/png?text=${encodeURIComponent(brief.brand_name)}`,
-      android_512: `https://placehold.co/512x512/${bgColor}/FFFFFF/png?text=${encodeURIComponent(brief.brand_name)}`,
-      android_xxxhdpi: `https://placehold.co/192x192/${bgColor}/FFFFFF/png?text=${brief.brand_name[0]}`,
-      android_xxhdpi: `https://placehold.co/144x144/${bgColor}/FFFFFF/png?text=${brief.brand_name[0]}`,
-      android_xhdpi: `https://placehold.co/96x96/${bgColor}/FFFFFF/png?text=${brief.brand_name[0]}`,
-      android_hdpi: `https://placehold.co/72x72/${bgColor}/FFFFFF/png?text=${brief.brand_name[0]}`,
-      android_mdpi: `https://placehold.co/48x48/${bgColor}/FFFFFF/png?text=${brief.brand_name[0]}`,
-      favicon_32: `https://placehold.co/32x32/${bgColor}/FFFFFF/png?text=${brief.brand_name[0]}`,
+      ios_1024: mainImageUrl,
+      android_512: mainImageUrl,
+      android_xxxhdpi: mainImageUrl,
+      android_xxhdpi: mainImageUrl,
+      android_xhdpi: mainImageUrl,
+      android_hdpi: mainImageUrl,
+      android_mdpi: mainImageUrl,
+      favicon_32: mainImageUrl,
     };
 
     variants.push({
       id: variantId,
-      preview_image: sizes.android_512,
+      preview_image: mainImageUrl,
       sizes,
-      style_summary: `${brief.style} - ${brief.background_preference} background - variant ${variantId}`,
-      background_type: brief.background_preference || 'solid',
-      prompt_used: buildIconPrompt(brief, variantId, flowContext),
+      style_summary: `${ICON_STYLES[selectedStyle].name} - AI-generated variant ${variantId}`,
+      background_type: selectedStyle,
+      prompt_used: buildIconPrompt(brief, variantId, selectedStyle, branding, logoUrl),
     });
   }
 
@@ -458,30 +636,155 @@ async function generateIconVariants(
 }
 
 /**
- * Build icon generation prompt
+ * Build icon generation prompt with branding context and logo reference
  */
-function buildIconPrompt(brief: IconBrief, variantNumber: number, flowContext: FlowContext): string {
-  return `Create an official app icon for "${brief.brand_name}".
+function buildIconPrompt(brief: IconBrief, variantNumber: number, selectedStyle: IconStyleKey, branding?: any, logoUrl?: string): string {
+  const colors = brief.color_palette.join(', ');
+  const stylePreset = ICON_STYLES[selectedStyle];
 
-REQUIREMENTS:
-- Style: ${brief.style}
-- Background: ${brief.background_preference}
-- Colors: ${brief.color_palette.join(', ')}
-- Platform: iOS & Android compatible
-- Shape: Rounded square (iOS) / Adaptive (Android)
+  // Build logo reference section if available
+  let logoSection = '';
+  if (logoUrl) {
+    logoSection = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📸 LOGO REFERENCE AVAILABLE:
 
-SPECIFICATIONS:
-- iOS App Store: 1024×1024px, no transparency, flat PNG
-- Android Play Store: 512×512px
-- Clean, recognizable design
-- Works at small sizes (48px+)
-- Professional quality
+IMPORTANT: A logo image exists for this brand at: ${logoUrl}
 
-VARIANT #${variantNumber}:
-${variantNumber === 1 ? 'Primary brand interpretation, bold and clear' : ''}
-${variantNumber === 2 ? 'Alternative composition, different color emphasis' : ''}
-${variantNumber === 3 ? 'Simplified version, maximum clarity' : ''}
-${variantNumber >= 4 ? 'Creative variation while maintaining brand identity' : ''}
+Please create an app icon that:
+1. MAINTAINS the visual identity and key elements from the logo
+2. ADAPTS the logo design to work as a mobile app icon (square format, simplified)
+3. PRESERVES recognizable brand elements (colors, shapes, symbols)
+4. SIMPLIFIES details to work at small sizes (48px minimum)
+5. ENSURES the icon is clearly related to the logo but optimized for app stores
 
-${brief.source_logo_url ? `Base logo available: ${brief.source_logo_url}` : 'Create icon from brand name and style'}`;
+If the logo contains:
+- Text/typography: Extract the first letter or key symbol for the icon
+- Symbols/icons: Simplify and center them in the square format
+- Colors: Use the same color palette consistently
+- Shapes: Maintain the geometric style and proportions
+
+The app icon should feel like a "simplified, square version" of the logo.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+  }
+
+  // Build comprehensive branding section if available
+  let brandingSection = '';
+  if (branding) {
+    brandingSection = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETE BRANDING IDENTITY:
+
+Visual Style:
+- Design Style: ${branding.design_style}
+- Icon Style: ${branding.icon_style}
+- Brand Tone: ${branding.brand_tone}
+
+Typography Context:
+- Primary Font: ${branding.primary_font_family}
+- Font Style: ${branding.font_style}
+
+Color Palette with Meanings:
+${branding.color_palette?.map((color: string, i: number) =>
+  `- ${color}: ${branding.color_meanings?.[i] || 'Brand color'}`
+).join('\n')}
+
+Target Emotion: ${branding.target_emotion}
+Brand Values: ${branding.brand_values?.join(', ')}
+
+Visual Direction:
+${branding.visual_direction}
+
+Branding Concept (WHY behind visual choices):
+${branding.branding_concept}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+  }
+
+  return `Create a professional mobile app icon for "${brief.brand_name}".
+${logoSection}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎨 SELECTED ICON STYLE: ${stylePreset.name.toUpperCase()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${stylePreset.prompt}
+
+CRITICAL: This is a ${stylePreset.name} style icon. Follow these aesthetic guidelines STRICTLY.
+
+BRAND NAME: ${brief.brand_name}
+CATEGORY: ${brief.category}
+COLORS: ${colors}
+${brandingSection}
+
+PLATFORM REQUIREMENTS:
+- iOS App Store: 1024×1024px, no transparency, rounded square
+- Android Play Store: 512×512px, adaptive icon support
+- Works at all sizes from 48px to 1024px
+- Clean, recognizable at small sizes
+- Professional quality, production-ready
+
+TECHNICAL REQUIREMENTS:
+- Square format (1:1 aspect ratio)
+- Centered design
+- No text in the icon (brand name is separate)
+- High contrast and legibility
+- Flat PNG with solid background (no transparency for iOS)
+- Simple enough to be memorable
+- Unique enough to stand out in app stores
+
+VARIANT NUMBER: #${variantNumber}
+${variantNumber === 1 ? 'Focus on primary brand interpretation, bold and clear.' : ''}
+${variantNumber === 2 ? 'Explore alternative composition with different color emphasis.' : ''}
+${variantNumber === 3 ? 'Try simplified version for maximum clarity.' : ''}
+${variantNumber >= 4 ? 'Experiment with creative variation while maintaining brand identity.' : ''}
+
+${logoUrl ? `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ CRITICAL: LOGO-BASED ICON GENERATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This brand HAS an existing logo. The app icon MUST be derived from it.
+
+DO NOT create a completely new icon from scratch.
+DO extract, simplify, and adapt key visual elements from the logo.
+DO maintain brand consistency and recognizability.
+DO ensure the icon works at small sizes while preserving logo identity.
+
+Think of this as "logo → app icon adaptation" NOT "new icon creation".
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : ''}
+
+${branding ? `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STYLE GUIDANCE (from complete branding):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Follow the ${branding.design_style} aesthetic
+- Icon should evoke ${branding.target_emotion}
+- Communicate ${branding.brand_values?.[0]}
+- Shape style: ${branding.shape_style}
+- Overall brand tone: ${branding.brand_tone}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : ''}`;
+}
+
+/**
+ * Get API key for the selected provider
+ */
+function getAPIKeyForProvider(provider: AIProvider, apiKeys: Record<string, string | undefined>): string | undefined {
+  switch (provider) {
+    case AIProvider.OPENAI:
+      return apiKeys.openai;
+    case AIProvider.ANTHROPIC:
+      return apiKeys.anthropic;
+    case AIProvider.REPLICATE:
+      return apiKeys.replicate;
+    case AIProvider.TOGETHER:
+      return apiKeys.together;
+    case AIProvider.LOCAL:
+      return undefined; // Mock doesn't need API key
+    default:
+      return undefined;
+  }
 }

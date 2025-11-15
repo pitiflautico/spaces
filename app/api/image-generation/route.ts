@@ -107,8 +107,18 @@ async function handleReplicate(params: {
       input.size = '1024x1024';
       // Recraft V3 uses size parameter instead of aspect_ratio
     } else if (model.includes('flux')) {
-      input.num_outputs = num_outputs;
+      // Flux models use 'aspect_ratio' instead of width/height
       input.aspect_ratio = aspect_ratio || '1:1';
+
+      // Check which Flux models support batch generation (num_outputs)
+      const supportsNumOutputs = model.includes('schnell') || model.includes('dev');
+
+      if (supportsNumOutputs) {
+        // Flux Schnell and Dev support num_outputs
+        input.num_outputs = num_outputs;
+      }
+      // All "pro" and "kontext" variants need separate API calls for multiple images
+
       if (seed) {
         input.seed = seed;
       }
@@ -121,12 +131,18 @@ async function handleReplicate(params: {
     console.log(`🔄 Calling Replicate API: ${model}`);
     console.log(`📝 Input (num_outputs=${num_outputs}):`, JSON.stringify(input, null, 2));
 
-    // Special handling for Recraft V3 - doesn't support batch generation
+    // Special handling for models that don't support batch generation
     const isRecraftV3 = model.includes('recraft-ai/recraft-v3');
-    const needsMultipleCalls = isRecraftV3 && num_outputs > 1;
+    const isFluxNoBatch = model.includes('flux') && !model.includes('schnell') && !model.includes('dev');
+    const needsMultipleCalls = (isRecraftV3 || isFluxNoBatch) && num_outputs > 1;
 
     if (needsMultipleCalls) {
-      console.log(`🔁 Recraft V3 detected: Making ${num_outputs} separate API calls...`);
+      let modelName = 'Model';
+      if (isRecraftV3) modelName = 'Recraft V3';
+      else if (model.includes('kontext')) modelName = 'Flux Kontext';
+      else if (model.includes('pro')) modelName = 'Flux Pro';
+
+      console.log(`🔁 ${modelName} detected: Making ${num_outputs} separate API calls...`);
     }
 
     const allImages: string[] = [];
