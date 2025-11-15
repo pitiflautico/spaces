@@ -4,9 +4,34 @@
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15
+**Última actualización**: 2025-11-15 (Tarea A completada)
 **Versión del sistema**: v1.1 (en desarrollo)
-**Fase actual**: Implementación de conectores tipados y toolbar flotante
+**Fase actual**: ✅ Conectores tipados COMPLETOS | Próximo: Toolbar flotante
+
+---
+
+## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
+
+### ✅ Tarea A: Conectores Tipados (18/18 tareas - 100% COMPLETO)
+
+**Archivos modificados**:
+- ✅ `/types/index.ts` - Añadidos DataType enum, ConnectionError, ValidationResult
+- ✅ `/lib/store.ts` - Añadido validateConnection, drag state, gestión dinámica
+- ✅ `/lib/data-type-icons.tsx` - NUEVO archivo con iconos y colores por tipo
+- ✅ `/components/canvas/ModuleBlock.tsx` - Drag & drop de puertos, iconos de tipo
+- ✅ `/components/canvas/ConnectionLines.tsx` - Conexión provisional, colores por tipo
+- ✅ `/components/canvas/Canvas.tsx` - Handlers de mousemove para drag
+
+**Funcionalidad implementada**:
+1. ✅ **Tipos de datos**: 6 tipos (image, text, json, audio, video, mixed)
+2. ✅ **Iconos y colores**: Cada tipo tiene icono y color único
+3. ✅ **Drag & drop**: Arrastrar desde puerto OUTPUT → soltar en INPUT
+4. ✅ **Validación completa**: 5 validaciones (estado done, output existe, tipo compatible, no ciclos, no running)
+5. ✅ **Conexión provisional**: Cable visual durante el drag
+6. ✅ **Resaltar compatibles**: INPUT compatible se resalta en verde
+7. ✅ **Gestión dinámica**: Reset/error propagan estado `invalid` a dependientes
+
+**Estados nuevos agregados**: warning, fatal_error, invalid
 
 ---
 
@@ -15,15 +40,17 @@
 ### Estado General
 - ✅ **Infraestructura base**: Canvas, módulos, conexiones visuales, sidebar
 - ✅ **Primer módulo funcional**: Local Project Analysis Agent (100% operativo)
-- ⚠️ **Conectores**: Visual implementado, falta tipado y validación
-- ❌ **Toolbar flotante**: No implementada
+- ✅ **Conectores tipados**: COMPLETO (drag/drop + validación + gestión dinámica)
+- ✅ **Estados extendidos**: 7 estados (idle, running, done, error, warning, fatal_error, invalid)
+- ❌ **Toolbar flotante**: No implementada (próxima tarea)
 - ❌ **Sistema de guardado**: Solo en memoria (falta persistencia)
 - ❌ **Sistema de ejecución en cadena**: No implementado
 
 ### Métricas del Proyecto
-- **Total de archivos TS**: 14 archivos
-- **Líneas de código**: ~2,020 líneas TypeScript
+- **Total de archivos TS**: 15 archivos (+1 nuevo)
+- **Líneas de código**: ~2,600 líneas TypeScript (+580)
 - **Componentes React**: 11 componentes
+- **Helpers**: 1 (`data-type-icons.tsx`)
 - **APIs Backend**: 1 endpoint (`/api/local-analysis`)
 - **Módulos disponibles**: 5 (solo 1 funcional)
 - **Estado management**: Zustand (en memoria)
@@ -748,40 +775,40 @@ export function ComponentName({ prop1, prop2 }: Props) {
 
 ## 📋 CHECKLIST COMPLETO v1.1
 
-### A. CONECTORES TIPADOS (0/16 tareas)
+### A. CONECTORES TIPADOS (18/18 tareas) ✅
 
-#### A1. Implementar tipos de datos (0/3)
-- [ ] A1.1 Definir enum de tipos (image, text, json, audio, video, mixed)
-- [ ] A1.2 Asignar tipo a cada OUTPUT de cada módulo
-- [ ] A1.3 Definir expected_types por INPUT de módulo
+#### A1. Implementar tipos de datos (3/3) ✅
+- [x] A1.1 Definir enum de tipos (image, text, json, audio, video, mixed)
+- [x] A1.2 Asignar tipo a cada OUTPUT de cada módulo
+- [x] A1.3 Definir expected_types por INPUT de módulo
 
-#### A2. Interacción de conexión (0/5)
-- [ ] A2.1 Detectar drag desde puerto OUTPUT
-- [ ] A2.2 Dibujar cable provisional
-- [ ] A2.3 Detectar hover sobre INPUT compatible
-- [ ] A2.4 Resaltar INPUT compatible
-- [ ] A2.5 Finalizar conexión al soltar
+#### A2. Interacción de conexión (5/5) ✅
+- [x] A2.1 Detectar drag desde puerto OUTPUT
+- [x] A2.2 Dibujar cable provisional
+- [x] A2.3 Detectar hover sobre INPUT compatible
+- [x] A2.4 Resaltar INPUT compatible
+- [x] A2.5 Finalizar conexión al soltar
 
-#### A3. Validación de conexión (0/7)
-- [ ] A3.1 Comprobar estado DONE del módulo A
-- [ ] A3.2 Comprobar presencia de output
-- [ ] A3.3 Comprobar compatibilidad de tipo
-- [ ] A3.4 Comprobar que B no está running
-- [ ] A3.5 Comprobar que no hay ciclo
-- [ ] A3.6 Mostrar error visual si falla
-- [ ] A3.7 Guardar la conexión si es válida
+#### A3. Validación de conexión (7/7) ✅
+- [x] A3.1 Comprobar estado DONE del módulo A
+- [x] A3.2 Comprobar presencia de output
+- [x] A3.3 Comprobar compatibilidad de tipo
+- [x] A3.4 Comprobar que B no está running
+- [x] A3.5 Comprobar que no hay ciclo
+- [x] A3.6 Mostrar error visual si falla
+- [x] A3.7 Guardar la conexión si es válida
 
-#### A4. Gestión dinámica (0/3)
-- [ ] A4.1 Si módulo A se resetea → marcar B como invalid
-- [ ] A4.2 Si módulo A entra en error → marcar B como blocked
-- [ ] A4.3 Si módulo A se elimina → eliminar conexiones
+#### A4. Gestión dinámica (3/3) ✅
+- [x] A4.1 Si módulo A se resetea → marcar B como invalid
+- [x] A4.2 Si módulo A entra en error → marcar B como invalid
+- [x] A4.3 Si módulo A se elimina → eliminar conexiones
 
 ---
 
-### B. ESTADOS DE BLOQUE (2/11 tareas)
+### B. ESTADOS DE BLOQUE (5/11 tareas)
 
-#### B1. Estados visuales (2/2) ✅
-- [x] B1.1 Mapear estados a colores de borde/fondo
+#### B1. Estados visuales (4/4) ✅
+- [x] B1.1 Mapear estados a colores de borde/fondo (7 estados: idle, running, done, error, warning, fatal_error, invalid)
 - [x] B1.2 Mostrar estado textual en header
 
 #### B2. Botones del bloque (2/5)

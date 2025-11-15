@@ -9,16 +9,17 @@ Un canvas interactivo donde puedes conectar módulos de procesamiento para anali
 ## 📊 Estado del Proyecto
 
 **Versión actual**: v1.1 (en desarrollo)
-**Progreso global**: ~20% completado
-**Última actualización**: 2025-11-15
+**Progreso global**: ~35% completado
+**Última actualización**: 2025-11-15 ✅ Tarea A completada
 
 ### 🎯 Progreso por Área
 
 ```
 Infraestructura Base        ████████████████████ 100%
 Módulo Local Analysis       ████████████████████ 100%
-Conectores Visuales         ████████████░░░░░░░░  60%
-Conectores Tipados          ░░░░░░░░░░░░░░░░░░░░   0%
+Conectores Visuales         ████████████████████ 100%
+Conectores Tipados          ████████████████████ 100%  ✅ NUEVO
+Estados Extendidos          ███████░░░░░░░░░░░░░  45%  ✅ NUEVO
 Toolbar Flotante            ░░░░░░░░░░░░░░░░░░░░   0%
 Sistema de Guardado         ░░░░░░░░░░░░░░░░░░░░   0%
 Ejecución en Cadena         ░░░░░░░░░░░░░░░░░░░░   0%
@@ -27,18 +28,27 @@ Panel INFO de Módulos       ░░░░░░░░░░░░░░░░░
 
 ### ✅ Funcionalidades Implementadas
 
+**Base (ya existente)**:
 - ✅ Canvas interactivo con zoom (20%-300%) y pan
 - ✅ Sistema de módulos draggables
 - ✅ Conexiones visuales con Bezier curves animadas
 - ✅ Gestión de espacios (spaces) independientes
 - ✅ Módulo funcional: Local Project Analysis
-- ✅ Estados visuales (idle, running, done, error)
 - ✅ API backend para análisis de filesystem
 - ✅ UI dark theme moderna
 
+**Nuevas (Tarea A - 2025-11-15)**:
+- ✅ **Conectores tipados**: 6 tipos de datos (image, text, json, audio, video, mixed)
+- ✅ **Drag & drop de puertos**: Arrastrar desde OUTPUT, soltar en INPUT
+- ✅ **Validación de conexiones**: 5 validaciones automáticas
+- ✅ **Iconos por tipo**: Cada tipo de dato tiene icono y color único
+- ✅ **Conexión provisional**: Cable visual durante el drag
+- ✅ **Resaltar compatibles**: INPUT compatible brilla en verde
+- ✅ **Gestión dinámica**: Reset/error propagan estado `invalid`
+- ✅ **7 estados visuales**: idle, running, done, error, warning, fatal_error, invalid
+
 ### 🚧 En Desarrollo
 
-- 🚧 Conectores tipados con validación
 - 🚧 Toolbar flotante (Play, Pause, Restart)
 - 🚧 Sistema de guardado persistente
 - 🚧 Ejecución en cadena topológica

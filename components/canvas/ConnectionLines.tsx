@@ -1,14 +1,18 @@
 'use client';
 
 import React from 'react';
+import { useSpaceStore } from '@/lib/store';
 import type { Module, ModuleConnection } from '@/types';
+import { getDataTypeColor } from '@/lib/data-type-icons';
 
 interface ConnectionLinesProps {
   connections: ModuleConnection[];
   modules: Module[];
+  zoom: number;
 }
 
-export default function ConnectionLines({ connections, modules }: ConnectionLinesProps) {
+export default function ConnectionLines({ connections, modules, zoom }: ConnectionLinesProps) {
+  const { connectionDragState } = useSpaceStore();
   const getModuleCenter = (moduleId: string, side: 'left' | 'right') => {
     const module = modules.find((m) => m.id === moduleId);
     if (!module) return { x: 0, y: 0 };
@@ -44,13 +48,22 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
 
         const path = createBezierPath(start.x, start.y, end.x, end.y);
 
+        // Color based on data type
+        const colorClass = connection.dataType ? getDataTypeColor(connection.dataType) : '';
+        const strokeColor = colorClass.includes('pink') ? 'rgb(236, 72, 153)' :
+                          colorClass.includes('blue') ? 'rgb(59, 130, 246)' :
+                          colorClass.includes('purple') ? 'rgb(139, 92, 246)' :
+                          colorClass.includes('orange') ? 'rgb(249, 115, 22)' :
+                          colorClass.includes('red') ? 'rgb(239, 68, 68)' :
+                          'rgb(139, 92, 246)'; // default purple
+
         return (
           <g key={connection.id}>
             {/* Shadow/glow effect */}
             <path
               d={path}
               fill="none"
-              stroke="rgba(139, 92, 246, 0.3)"
+              stroke={`${strokeColor.replace('rgb', 'rgba').replace(')', ', 0.3)')}`}
               strokeWidth="8"
               filter="blur(4px)"
             />
@@ -58,14 +71,14 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
             <path
               d={path}
               fill="none"
-              stroke="rgb(139, 92, 246)"
+              stroke={strokeColor}
               strokeWidth="2"
             />
             {/* Animated dashes */}
             <path
               d={path}
               fill="none"
-              stroke="rgb(199, 162, 255)"
+              stroke={strokeColor}
               strokeWidth="2"
               strokeDasharray="5 5"
               opacity="0.5"
@@ -81,6 +94,53 @@ export default function ConnectionLines({ connections, modules }: ConnectionLine
           </g>
         );
       })}
+
+      {/* Provisional connection line during drag (A2.2) */}
+      {connectionDragState.isDragging && connectionDragState.cursorPosition && (
+        (() => {
+          const sourceModule = modules.find((m) => m.id === connectionDragState.sourceModuleId);
+          if (!sourceModule) return null;
+
+          const start = getModuleCenter(connectionDragState.sourceModuleId!, 'right');
+          const end = {
+            x: (connectionDragState.cursorPosition.x - window.scrollX) / zoom,
+            y: (connectionDragState.cursorPosition.y - window.scrollY) / zoom,
+          };
+
+          const path = createBezierPath(start.x, start.y, end.x, end.y);
+
+          // Color based on source data type
+          const colorClass = connectionDragState.sourceDataType ? getDataTypeColor(connectionDragState.sourceDataType) : '';
+          const strokeColor = colorClass.includes('pink') ? 'rgb(236, 72, 153)' :
+                            colorClass.includes('blue') ? 'rgb(59, 130, 246)' :
+                            colorClass.includes('purple') ? 'rgb(139, 92, 246)' :
+                            colorClass.includes('orange') ? 'rgb(249, 115, 22)' :
+                            colorClass.includes('red') ? 'rgb(239, 68, 68)' :
+                            'rgb(139, 92, 246)'; // default
+
+          return (
+            <g key="provisional">
+              {/* Provisional line - dashed */}
+              <path
+                d={path}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth="2"
+                strokeDasharray="10 5"
+                opacity="0.7"
+              />
+              {/* End circle */}
+              <circle
+                cx={end.x}
+                cy={end.y}
+                r="4"
+                fill={strokeColor}
+                opacity="0.7"
+              />
+            </g>
+          );
+        })()
+      )}
     </svg>
   );
 }

@@ -14,7 +14,7 @@ export default function Canvas() {
   const [dragStart, setDragStart] = useState<Position>({ x: 0, y: 0 });
   const [spacePressed, setSpacePressed] = useState(false);
 
-  const { canvasState, setPan, setZoom, getCurrentSpace } = useSpaceStore();
+  const { canvasState, setPan, setZoom, getCurrentSpace, connectionDragState, updateConnectionDrag, endConnectionDrag } = useSpaceStore();
   const currentSpace = getCurrentSpace();
 
   // Handle mouse wheel zoom
@@ -60,7 +60,7 @@ export default function Canvas() {
     }
   };
 
-  // Handle mouse move for panning
+  // Handle mouse move for panning and connection dragging
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (isDragging) {
@@ -70,14 +70,24 @@ export default function Canvas() {
         };
         setPan(newPan);
       }
+
+      // Update connection drag position
+      if (connectionDragState.isDragging) {
+        updateConnectionDrag({ x: e.clientX, y: e.clientY });
+      }
     },
-    [isDragging, dragStart, setPan]
+    [isDragging, dragStart, setPan, connectionDragState.isDragging, updateConnectionDrag]
   );
 
   // Handle mouse up
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  }, []);
+
+    // End connection drag if active
+    if (connectionDragState.isDragging) {
+      endConnectionDrag();
+    }
+  }, [connectionDragState.isDragging, endConnectionDrag]);
 
   // Handle keyboard events
   useEffect(() => {
@@ -148,6 +158,7 @@ export default function Canvas() {
           <ConnectionLines
             connections={currentSpace.connections}
             modules={currentSpace.modules}
+            zoom={canvasState.zoom}
           />
         )}
 

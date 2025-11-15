@@ -2,7 +2,8 @@
 
 import React, { useState, useRef } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import type { Module, Position } from '@/types';
+import type { Module, Position, ModulePort } from '@/types';
+import { DataType } from '@/types';
 import {
   PlayIcon,
   DocumentTextIcon,
@@ -10,15 +11,27 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
+import { getDataTypeIcon, getDataTypeColor } from '@/lib/data-type-icons';
 
 interface ModuleBlockProps {
   module: Module;
 }
 
 export default function ModuleBlock({ module }: ModuleBlockProps) {
-  const { updateModule, deleteModule, setSelectedModule, selectedModuleId } = useSpaceStore();
+  const {
+    updateModule,
+    deleteModule,
+    setSelectedModule,
+    selectedModuleId,
+    startConnectionDrag,
+    endConnectionDrag,
+    connectionDragState,
+    validateConnection,
+    addConnection,
+  } = useSpaceStore();
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
+  const [hoveredPort, setHoveredPort] = useState<string | null>(null);
   const blockRef = useRef<HTMLDivElement>(null);
 
   const isSelected = selectedModuleId === module.id;
@@ -128,6 +141,12 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return 'text-green-500 bg-green-500/10';
       case 'error':
         return 'text-red-500 bg-red-500/10';
+      case 'warning':
+        return 'text-yellow-500 bg-yellow-500/10';
+      case 'fatal_error':
+        return 'text-red-700 bg-red-700/20';
+      case 'invalid':
+        return 'text-gray-400 bg-gray-400/10';
       default:
         return 'text-gray-500 bg-gray-500/10';
     }
@@ -141,9 +160,77 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return 'Completed';
       case 'error':
         return 'Error';
+      case 'warning':
+        return 'Warning';
+      case 'fatal_error':
+        return 'Fatal Error';
+      case 'invalid':
+        return 'Invalid';
       default:
         return 'Idle';
     }
+  };
+
+  // Port drag handlers (A2)
+  const handleOutputPortMouseDown = (e: React.MouseEvent, port: ModulePort) => {
+    e.stopPropagation();
+    if (!port.dataType) return;
+
+    const rect = blockRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    startConnectionDrag(
+      module.id,
+      port.id,
+      port.dataType,
+      { x: e.clientX, y: e.clientY }
+    );
+  };
+
+  const handleInputPortMouseUp = (e: React.MouseEvent, port: ModulePort) => {
+    e.stopPropagation();
+
+    if (!connectionDragState.isDragging) return;
+
+    // Validate connection
+    const validation = validateConnection(
+      connectionDragState.sourceModuleId!,
+      connectionDragState.sourcePortId!,
+      module.id,
+      port.id
+    );
+
+    if (validation.valid) {
+      // Create connection
+      addConnection({
+        sourceModuleId: connectionDragState.sourceModuleId!,
+        sourcePortId: connectionDragState.sourcePortId!,
+        targetModuleId: module.id,
+        targetPortId: port.id,
+        dataType: connectionDragState.sourceDataType!,
+      });
+    } else {
+      // Show error
+      if (validation.error) {
+        alert(validation.error.message);
+      }
+    }
+
+    endConnectionDrag();
+  };
+
+  const handleInputPortMouseEnter = (port: ModulePort) => {
+    if (!connectionDragState.isDragging) return;
+
+    // Check if this port is compatible
+    const sourceDataType = connectionDragState.sourceDataType;
+    if (sourceDataType && port.acceptedTypes?.includes(sourceDataType)) {
+      setHoveredPort(port.id);
+    }
+  };
+
+  const handleInputPortMouseLeave = () => {
+    setHoveredPort(null);
   };
 
   return (
@@ -160,17 +247,59 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Connection Ports */}
-      {module.ports.input.length > 0 && (
-        <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-[#1A1A1A] hover:scale-125 transition-transform cursor-pointer" />
-        </div>
-      )}
-      {module.ports.output.length > 0 && (
-        <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2">
-          <div className="w-4 h-4 bg-purple-500 rounded-full border-2 border-[#1A1A1A] hover:scale-125 transition-transform cursor-pointer" />
-        </div>
-      )}
+      {/* Connection Ports - Input (Left) */}
+      {module.ports.input.map((port, index) => {
+        const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
+        const isCompatible = hoveredPort === port.id;
+        const portTop = module.ports.input.length === 1
+          ? '50%'
+          : `${((index + 1) / (module.ports.input.length + 1)) * 100}%`;
+
+        return (
+          <div
+            key={port.id}
+            className="absolute left-0 -translate-x-1/2 group"
+            style={{ top: portTop, transform: 'translate(-50%, -50%)' }}
+            onMouseUp={(e) => handleInputPortMouseUp(e, port)}
+            onMouseEnter={() => handleInputPortMouseEnter(port)}
+            onMouseLeave={handleInputPortMouseLeave}
+            title={`Acepta: ${port.acceptedTypes?.join(', ') || 'any'}`}
+          >
+            <div
+              className={`w-5 h-5 bg-blue-500 rounded-full border-2 border-[#1A1A1A] hover:scale-125 transition-all cursor-pointer flex items-center justify-center ${
+                isCompatible ? 'scale-125 ring-2 ring-green-400' : ''
+              }`}
+            >
+              <Icon className="w-3 h-3 text-white" />
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Connection Ports - Output (Right) */}
+      {module.ports.output.map((port, index) => {
+        const Icon = getDataTypeIcon(port.dataType);
+        const colorClass = getDataTypeColor(port.dataType);
+        const portTop = module.ports.output.length === 1
+          ? '50%'
+          : `${((index + 1) / (module.ports.output.length + 1)) * 100}%`;
+
+        return (
+          <div
+            key={port.id}
+            className="absolute right-0 translate-x-1/2 group"
+            style={{ top: portTop, transform: 'translate(50%, -50%)' }}
+            onMouseDown={(e) => handleOutputPortMouseDown(e, port)}
+            title={`Tipo: ${port.dataType || 'unknown'}`}
+          >
+            <div
+              className={`w-5 h-5 ${colorClass} rounded-full border-2 border-[#1A1A1A] hover:scale-125 transition-transform cursor-pointer flex items-center justify-center`}
+            >
+              <Icon className="w-3 h-3 text-white" />
+            </div>
+          </div>
+        );
+      })}
 
       {/* Header */}
       <div className="px-5 py-4 border-b border-[#2A2A2A] bg-gradient-to-r from-[#1A1A1A] to-[#222222]">
