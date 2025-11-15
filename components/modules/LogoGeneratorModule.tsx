@@ -3,7 +3,29 @@
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
 import type { Module, LogoGeneratorOutputs, LogoBrief, LogoOption, LogoOptionsPackage, ChosenLogo, FlowContext, LogoVariantOutputs } from '@/types';
-import { CheckCircleIcon, PhotoIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { AIProvider } from '@/types';
+import { CheckCircleIcon, PhotoIcon, ExclamationTriangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+
+interface LogoGeneratorModuleProps {
+  module: Module;
+}
+
+// Image generation models - Replicate & Together (3 best options each)
+const IMAGE_AI_MODELS = {
+  [AIProvider.REPLICATE]: [
+    { id: 'recraft-ai/recraft-v3-svg', name: 'Recraft V3 SVG', description: '⭐ BEST - Generates SVG logos' },
+    { id: 'black-forest-labs/flux-kontext-pro', name: 'Flux Kontext Pro', description: 'Perfect for logo typography' },
+    { id: 'black-forest-labs/flux-1.1-pro', name: 'Flux 1.1 Pro', description: 'High quality raster' },
+  ],
+  [AIProvider.TOGETHER]: [
+    { id: 'black-forest-labs/FLUX.1-pro', name: 'Flux Pro', description: '⭐ Premium quality' },
+    { id: 'black-forest-labs/FLUX.1-schnell-Free', name: 'Flux Schnell (Free)', description: 'Fast & Free' },
+    { id: 'black-forest-labs/FLUX.1-Kontext-dev', name: 'Flux Kontext Dev', description: 'Good for typography' },
+  ],
+  [AIProvider.LOCAL]: [
+    { id: 'mock-flux', name: 'Mock Flux', description: 'Testing (placeholders)' },
+  ],
+};
 
 export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps) {
   const { updateModule, getCurrentSpace, addLog, addModule, addConnection } = useSpaceStore();
@@ -13,6 +35,31 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
   const outputs = module.outputs as LogoGeneratorOutputs;
   const space = getCurrentSpace();
+
+  // Get module inputs for AI config
+  const inputs = (module.inputs || {}) as any;
+  const selectedProvider: AIProvider = inputs.aiProvider || AIProvider.REPLICATE; // Default to Replicate
+  const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
+
+  const handleProviderChange = (provider: AIProvider) => {
+    const defaultModel = IMAGE_AI_MODELS[provider]?.[0]?.id;
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        aiProvider: provider,
+        aiModel: defaultModel,
+      },
+    });
+  };
+
+  const handleModelChange = (modelId: string) => {
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        aiModel: modelId,
+      },
+    });
+  };
 
   const handleRun = async () => {
     try {
@@ -269,6 +316,71 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         <p className="text-xs text-gray-400 mb-3">
           Generate logo variants using AI. Each variant will appear as a separate node on the canvas. Connect from Naming Engine to get started.
         </p>
+
+        {/* AI Provider Selector */}
+        <div className="space-y-3 mb-3 pb-3 border-b border-[#3A3A3A]/50">
+          <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
+            <SparklesIcon className="w-4 h-4 text-pink-400" />
+            AI Image Generator
+          </div>
+
+          {/* Provider Selector */}
+          <div>
+            <label className="block text-xs text-gray-400 mb-1.5">
+              Service Provider
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleProviderChange(AIProvider.REPLICATE)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  selectedProvider === AIProvider.REPLICATE
+                    ? 'bg-pink-500/20 border-2 border-pink-500 text-pink-300'
+                    : 'bg-[#1A1A1A] border border-[#3A3A3A] text-gray-400 hover:border-pink-500/50'
+                }`}
+              >
+                Replicate
+              </button>
+              <button
+                onClick={() => handleProviderChange(AIProvider.TOGETHER)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  selectedProvider === AIProvider.TOGETHER
+                    ? 'bg-pink-500/20 border-2 border-pink-500 text-pink-300'
+                    : 'bg-[#1A1A1A] border border-[#3A3A3A] text-gray-400 hover:border-pink-500/50'
+                }`}
+              >
+                Together AI
+              </button>
+            </div>
+          </div>
+
+          {/* Model Selector */}
+          <div>
+            <label className="block text-xs text-gray-400 mb-1.5">
+              AI Model ({selectedProvider})
+            </label>
+            <select
+              value={selectedModel}
+              onChange={(e) => handleModelChange(e.target.value)}
+              className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-pink-500 transition-colors"
+            >
+              {IMAGE_AI_MODELS[selectedProvider as keyof typeof IMAGE_AI_MODELS]?.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name} - {model.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* API Key Status */}
+          {selectedProvider !== AIProvider.LOCAL && !space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] && (
+            <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-red-400">⚠️ API Key Missing</span>
+                <span className="text-gray-400">Add {selectedProvider} key in Settings</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Variants selector - only show when module is idle/ready */}
         {(!module.status || module.status === 'idle' || module.status === 'invalid') && (
