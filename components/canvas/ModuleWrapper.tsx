@@ -227,12 +227,13 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
 
         const isCompatible = connectionDragState.isDragging &&
                            port.acceptedTypes?.includes(connectionDragState.sourceDataType!);
+        const isIncompatible = connectionDragState.isDragging && !isCompatible;
         const isHovered = hoveredPort === port.id;
 
         return (
           <div
             key={port.id}
-            className="port absolute -left-3 z-50"
+            className="port absolute -left-4 z-50"
             style={{ top: portTop, transform: 'translateY(-50%)' }}
             onMouseUp={(e) => handleInputPortMouseUp(e, port)}
             onMouseEnter={() => handleInputPortMouseEnter(port)}
@@ -240,11 +241,15 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
             title={`Input: ${port.label}\nAccepts: ${port.acceptedTypes?.join(', ') || 'unknown'}`}
           >
             <div
-              className={`w-8 h-8 ${colorClass} rounded-full border-2 border-dark-bg transition-all cursor-pointer flex items-center justify-center shadow-lg ${
-                isCompatible ? 'ring-4 ring-green-400/50 scale-125' : ''
-              } ${isHovered ? 'scale-110' : 'hover:scale-105'}`}
+              className={`w-10 h-10 ${colorClass} rounded-full border-2 transition-all flex items-center justify-center shadow-xl ${
+                isCompatible
+                  ? 'ring-4 ring-green-400 scale-125 border-green-400 animate-pulse cursor-pointer'
+                  : isIncompatible
+                  ? 'opacity-30 grayscale cursor-not-allowed'
+                  : 'border-dark-bg cursor-pointer hover:scale-110'
+              } ${isHovered && isCompatible ? 'scale-150' : ''}`}
             >
-              <Icon className="w-4 h-4 text-white" />
+              <Icon className="w-5 h-5 text-white" />
             </div>
           </div>
         );
@@ -262,15 +267,15 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
         return (
           <div
             key={port.id}
-            className="port absolute -right-3 z-50"
+            className="port absolute -right-4 z-50"
             style={{ top: portTop, transform: 'translateY(-50%)' }}
             onMouseDown={(e) => handleOutputPortMouseDown(e, port)}
-            title={`Output: ${port.label}\nTipo: ${port.dataType || 'unknown'}`}
+            title={`Output: ${port.label}\nType: ${port.dataType || 'unknown'}`}
           >
             <div
-              className={`w-8 h-8 ${colorClass} rounded-full border-2 border-dark-bg hover:scale-110 transition-transform cursor-pointer flex items-center justify-center shadow-lg`}
+              className={`w-10 h-10 ${colorClass} rounded-full border-2 border-dark-bg hover:scale-125 active:scale-110 transition-all cursor-grab flex items-center justify-center shadow-xl hover:shadow-2xl`}
             >
-              <Icon className="w-4 h-4 text-white" />
+              <Icon className="w-5 h-5 text-white" />
             </div>
           </div>
         );

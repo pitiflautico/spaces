@@ -76,14 +76,128 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
 
         const data = await response.json();
 
+        // Combine all outputs into single JSON object
         updateModule(module.id, {
           status: 'done',
           outputs: {
-            repositoryMetadata: data.repositoryMetadata,
-            fileContents: data.fileContents,
-            repoStructure: data.repoStructure,
-            analysisLog: data.analysisLog,
+            projectAnalysis: {
+              repositoryMetadata: data.repositoryMetadata,
+              fileContents: data.fileContents,
+              repoStructure: data.repoStructure,
+              analysisLog: data.analysisLog,
+            },
           },
+        });
+      } else if (module.type === 'reader-engine') {
+        // AIE Engine Module execution
+        const { getCurrentSpace } = useSpaceStore.getState();
+        const space = getCurrentSpace();
+
+        // Get AI configuration
+        const aiConfig = space?.configuration?.aiConfig;
+        if (!aiConfig || !aiConfig.provider) {
+          throw new Error('AI Provider not configured. Please configure in Settings.');
+        }
+
+        // Get input from connected module
+        const connections = space?.connections || [];
+        const incomingConnection = connections.find(
+          (conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1'
+        );
+
+        if (!incomingConnection) {
+          throw new Error('No input connected. Connect output from Local Project Analysis module.');
+        }
+
+        // Get the source module
+        const sourceModule = space?.modules.find((m) => m.id === incomingConnection.sourceModuleId);
+        if (!sourceModule || !sourceModule.outputs.projectAnalysis) {
+          throw new Error('Source module has no output data. Run Local Project Analysis first.');
+        }
+
+        // Get the data from source module output
+        const projectData = sourceModule.outputs.projectAnalysis;
+        const { repositoryMetadata, fileContents, repoStructure } = projectData;
+
+        // Build prompt for AI
+        const prompt = `You are an expert app intelligence analyzer. Analyze the following project information and extract comprehensive app intelligence.
+
+PROJECT METADATA:
+${JSON.stringify(repositoryMetadata, null, 2)}
+
+FILE CONTENTS:
+${JSON.stringify(fileContents, null, 2)}
+
+REPOSITORY STRUCTURE:
+${JSON.stringify(repoStructure, null, 2)}
+
+Based on this information, provide a comprehensive app intelligence analysis in the following JSON format:
+
+{
+  "summary": "A concise 1-2 sentence summary of the app",
+  "category": "Main category (e.g., Developer Tools, E-commerce, Social Media)",
+  "subcategories": ["Array of subcategories"],
+  "features": ["Array of key features"],
+  "targetAudience": "Description of target audience",
+  "tone": "Description of tone and voice",
+  "designStyle": "Description of design style",
+  "keywords": ["Array of relevant keywords"],
+  "problemsSolved": ["Array of problems this app solves"],
+  "competitiveAngle": "What makes this app unique",
+  "brandColorsSuggested": ["Array of hex colors like #3B82F6"],
+  "iconStyleRecommendation": "Recommendation for icon style"
+}
+
+Respond ONLY with the JSON object, no additional text.`;
+
+        // Get API key from space configuration
+        const getAPIKeyForProvider = (provider: any, apiKeys: Record<string, string | undefined>) => {
+          switch (provider) {
+            case 'openai': return apiKeys.openai;
+            case 'anthropic': return apiKeys.anthropic;
+            case 'replicate': return apiKeys.replicate;
+            case 'together': return apiKeys.together;
+            case 'local': return undefined;
+            default: return undefined;
+          }
+        };
+
+        const apiKey = getAPIKeyForProvider(aiConfig.provider, space.configuration?.apiKeys || {});
+
+        // Dynamic import for AI provider
+        import('@/lib/ai-provider').then(async ({ aiProvider }) => {
+          const response = await aiProvider.run(prompt, {
+            ...aiConfig,
+            apiKey
+          });
+
+          // Parse response
+          let appIntelligence;
+          try {
+            appIntelligence = JSON.parse(response.outputText);
+          } catch (e) {
+            const jsonMatch = response.outputText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              appIntelligence = JSON.parse(jsonMatch[0]);
+            } else {
+              throw new Error('AI response is not valid JSON');
+            }
+          }
+
+          // Update module
+          updateModule(module.id, {
+            status: 'done',
+            outputs: {
+              appIntelligence,
+              aieLog: `Analysis completed using ${response.providerUsed} (${response.model})\n` +
+                      `Tokens used: ${response.tokensUsed || 'N/A'}\n` +
+                      `Timestamp: ${new Date().toISOString()}`
+            }
+          });
+        }).catch((err: any) => {
+          console.error('AIE Engine error:', err);
+          updateModule(module.id, { status: 'error' });
+          alert(`AIE Engine error: ${err.message}`);
         });
       } else {
         // Otros módulos: simulación

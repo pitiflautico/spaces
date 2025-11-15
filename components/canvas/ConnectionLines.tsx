@@ -13,16 +13,30 @@ interface ConnectionLinesProps {
 
 export default function ConnectionLines({ connections, modules, zoom }: ConnectionLinesProps) {
   const { connectionDragState } = useSpaceStore();
-  const getModuleCenter = (moduleId: string, side: 'left' | 'right') => {
+
+  const getPortPosition = (moduleId: string, portId: string, side: 'left' | 'right') => {
     const module = modules.find((m) => m.id === moduleId);
     if (!module) return { x: 0, y: 0 };
 
-    const x = side === 'left'
-      ? module.position.x
-      : module.position.x + module.size.width;
-    const y = module.position.y + module.size.height / 2;
+    // Find the port to get its position
+    const ports = side === 'left' ? module.ports.input : module.ports.output;
+    const portIndex = ports.findIndex((p) => p.id === portId);
 
-    return { x, y };
+    // Calculate port vertical position
+    let portY;
+    if (ports.length === 1) {
+      portY = module.position.y + module.size.height / 2;
+    } else {
+      const percentage = ((portIndex + 1) / (ports.length + 1));
+      portY = module.position.y + (module.size.height * percentage);
+    }
+
+    // Calculate port horizontal position (accounting for -left-4 and -right-4 which is -16px)
+    const portX = side === 'left'
+      ? module.position.x - 16  // -left-4 = -16px
+      : module.position.x + module.size.width + 16;  // -right-4 = +16px beyond
+
+    return { x: portX, y: portY };
   };
 
   const createBezierPath = (
@@ -43,8 +57,8 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
       style={{ width: '100%', height: '100%', overflow: 'visible' }}
     >
       {connections.map((connection) => {
-        const start = getModuleCenter(connection.sourceModuleId, 'right');
-        const end = getModuleCenter(connection.targetModuleId, 'left');
+        const start = getPortPosition(connection.sourceModuleId, connection.sourcePortId, 'right');
+        const end = getPortPosition(connection.targetModuleId, connection.targetPortId, 'left');
 
         const path = createBezierPath(start.x, start.y, end.x, end.y);
 
@@ -101,7 +115,11 @@ export default function ConnectionLines({ connections, modules, zoom }: Connecti
           const sourceModule = modules.find((m) => m.id === connectionDragState.sourceModuleId);
           if (!sourceModule) return null;
 
-          const start = getModuleCenter(connectionDragState.sourceModuleId!, 'right');
+          const start = getPortPosition(
+            connectionDragState.sourceModuleId!,
+            connectionDragState.sourcePortId!,
+            'right'
+          );
           const end = {
             x: (connectionDragState.cursorPosition.x - window.scrollX) / zoom,
             y: (connectionDragState.cursorPosition.y - window.scrollY) / zoom,

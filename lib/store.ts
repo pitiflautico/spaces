@@ -118,9 +118,7 @@ export const useSpaceStore = create<SpaceStore>()(
         ports: {
           input: [],
           output: [
-            { id: 'out-1', type: 'output', label: 'Repository Metadata', connected: false, dataType: DataType.JSON },
-            { id: 'out-2', type: 'output', label: 'File Contents', connected: false, dataType: DataType.JSON },
-            { id: 'out-3', type: 'output', label: 'Repo Structure', connected: false, dataType: DataType.JSON },
+            { id: 'out-1', type: 'output', label: 'Project Analysis', connected: false, dataType: DataType.JSON },
           ],
         },
       },
@@ -129,9 +127,7 @@ export const useSpaceStore = create<SpaceStore>()(
         size: { width: 450, height: 480 },
         ports: {
           input: [
-            { id: 'in-1', type: 'input', label: 'Repository Metadata', connected: false, acceptedTypes: [DataType.JSON] },
-            { id: 'in-2', type: 'input', label: 'File Contents', connected: false, acceptedTypes: [DataType.JSON] },
-            { id: 'in-3', type: 'input', label: 'Repo Structure', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-1', type: 'input', label: 'Project Data', connected: false, acceptedTypes: [DataType.JSON] },
           ],
           output: [
             { id: 'out-1', type: 'output', label: 'App Intelligence', connected: false, dataType: DataType.JSON },

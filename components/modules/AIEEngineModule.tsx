@@ -32,14 +32,28 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         throw new Error('AI Provider not configured. Please configure in Settings.');
       }
 
-      // Get inputs from connected modules
-      const repositoryMetadata = module.inputs.repositoryMetadata;
-      const fileContents = module.inputs.fileContents;
-      const repoStructure = module.inputs.repoStructure;
+      // Get input from connected module
+      // First, find the connection to this module
+      const connections = space?.connections || [];
+      const incomingConnection = connections.find(
+        (conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1'
+      );
 
-      if (!repositoryMetadata || !fileContents || !repoStructure) {
-        throw new Error('Missing required inputs. Connect outputs from Local Project Analysis module.');
+      if (!incomingConnection) {
+        throw new Error('No input connected. Connect output from Local Project Analysis module.');
       }
+
+      // Get the source module
+      const sourceModule = space?.modules.find((m) => m.id === incomingConnection.sourceModuleId);
+      if (!sourceModule || !sourceModule.outputs.projectAnalysis) {
+        throw new Error('Source module has no output data. Run Local Project Analysis first.');
+      }
+
+      // Get the data from source module output
+      const projectData = sourceModule.outputs.projectAnalysis;
+
+      // Extract data from combined input
+      const { repositoryMetadata, fileContents, repoStructure } = projectData;
 
       // Build prompt for AI
       const prompt = buildPrompt(repositoryMetadata, fileContents, repoStructure);
