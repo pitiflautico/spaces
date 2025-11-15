@@ -16,6 +16,8 @@ export type ModuleType =
   | 'naming-engine'
   | 'icon-generator'
   | 'logo-variant'
+  | 'app-icon-generator'
+  | 'app-icon-variant'
   | 'marketing-pack';
 
 // Data types for connections (v1.1)
@@ -353,4 +355,83 @@ export interface LogoVariantOutputs {
     ai_prompt_used: string;
   };
   flowContext?: FlowContext; // Propagate language, colors, naming data
+}
+
+// App Icon Generator types (V1.0 - Module 4B)
+export interface IconBrief {
+  brand_name: string;
+  style: string;
+  color_palette: string[];
+  background_preference?: string; // 'solid', 'gradient', 'transparent'
+  shape?: string; // 'square', 'rounded-square', 'circle'
+  icon_variants: number;
+  include_symbol?: boolean;
+  tagline_in_icon?: boolean;
+  source_logo_url?: string;
+  category?: string;
+}
+
+export interface IconSizeSet {
+  // iOS
+  ios_1024: string; // App Store submission
+
+  // Android
+  android_512: string; // Google Play Store
+  android_xxxhdpi: string; // 192×192
+  android_xxhdpi: string; // 144×144
+  android_xhdpi: string; // 96×96
+  android_hdpi: string; // 72×72
+  android_mdpi: string; // 48×48
+
+  // Optional
+  favicon_32?: string;
+}
+
+export interface AppIconVariant {
+  id: number;
+  preview_image: string; // Main preview (512x512 or 1024x1024)
+  sizes: IconSizeSet;
+  style_summary: string;
+  background_type: string;
+  prompt_used: string;
+}
+
+export interface AppIconOptionsPackage {
+  brand_name: string;
+  num_variants: number;
+  variants: AppIconVariant[];
+}
+
+export interface ChosenAppIcon {
+  brand_name: string;
+  final_icon_id: number;
+  final_ios_icon: string; // 1024×1024
+  final_android_icon: string; // 512×512
+  chosen_at: string;
+  source_module: string;
+}
+
+export interface AppIconGeneratorOutputs {
+  iconOptions?: AppIconOptionsPackage;
+  chosenIcon?: ChosenAppIcon;
+  iconLog?: string;
+  flowContext?: FlowContext;
+}
+
+// App Icon Variant types (V1.0 - Module 4B individual variants)
+export interface AppIconVariantInputs {
+  variantId: number;
+  generatorModuleId: string; // ID of parent App Icon Generator module
+}
+
+export interface AppIconVariantOutputs {
+  iconData: {
+    preview_image: string;
+    brand_name: string;
+    style_summary: string;
+    background_type: string;
+    sizes: IconSizeSet;
+    ai_prompt_used: string;
+  };
+  flowContext?: FlowContext;
 }

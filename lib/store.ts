@@ -169,6 +169,29 @@ export const useSpaceStore = create<SpaceStore>()(
           ],
         },
       },
+      'app-icon-generator': {
+        name: 'App Icon Generator (Module 4B)',
+        size: { width: 400, height: 450 },
+        ports: {
+          input: [
+            { id: 'in-1', type: 'input', label: 'Logo Input (optional)', connected: false, acceptedTypes: [DataType.IMAGE, DataType.JSON] },
+            { id: 'in-2', type: 'input', label: 'Branding Input (optional)', connected: false, acceptedTypes: [DataType.JSON] }
+          ],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Icon Variants', connected: false, dataType: DataType.JSON }
+          ],
+        },
+      },
+      'app-icon-variant': {
+        name: 'App Icon Variant',
+        size: { width: 320, height: 500 },
+        ports: {
+          input: [{ id: 'in-1', type: 'input', label: 'From Generator', connected: false, acceptedTypes: [DataType.JSON] }],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Icon Set + Context', connected: false, dataType: DataType.IMAGE }
+          ],
+        },
+      },
       'marketing-pack': {
         name: 'Marketing Pack',
         size: { width: 400, height: 400 },

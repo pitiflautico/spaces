@@ -48,6 +48,12 @@ const moduleCategories: ModuleCategory[] = [
         description: 'Generate professional logos with AI',
         icon: '🎨',
       },
+      {
+        type: 'app-icon-generator',
+        name: 'App Icon Generator',
+        description: 'Create iOS & Android app icons with all sizes',
+        icon: '📱',
+      },
     ],
   },
   {
