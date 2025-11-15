@@ -1,17 +1,53 @@
 /**
  * Local Mock Image Adapter
  *
- * Returns placeholder images for testing without API calls
+ * Calls our API route for consistency, which returns placeholder images
  */
 
 import type { ImageAdapter, ImageGenerationConfig, ImageGenerationResponse } from '../image-provider';
 
 export class LocalImageAdapter implements ImageAdapter {
   async generate(config: ImageGenerationConfig): Promise<ImageGenerationResponse> {
-    const { prompt, num_outputs = 1 } = config;
+    const { model, prompt, num_outputs = 1 } = config;
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      console.log(`🔄 Using Local Mock adapter`);
+
+      // Call our Next.js API route for consistency
+      const response = await fetch('/api/image-generation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider: 'local',
+          model,
+          prompt,
+          num_outputs,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error (${response.status})`);
+      }
+
+      const result = await response.json();
+
+      return {
+        images: result.images,
+        providerUsed: result.providerUsed,
+        model: result.model,
+        count: result.count,
+      };
+    } catch (error: any) {
+      // Fallback to direct generation if API route fails
+      console.warn('Local adapter API route failed, using fallback:', error.message);
+      return this.generateDirectly(config);
+    }
+  }
+
+  private generateDirectly(config: ImageGenerationConfig): ImageGenerationResponse {
+    const { prompt, num_outputs = 1, model } = config;
 
     // Extract brand name from prompt for placeholder
     const brandMatch = prompt.match(/logo for (?:the brand )?"([^"]+)"/i);
@@ -35,8 +71,8 @@ export class LocalImageAdapter implements ImageAdapter {
 
     return {
       images,
-      providerUsed: 'Local Mock',
-      model: config.model,
+      providerUsed: 'Local Mock (Fallback)',
+      model,
       count: images.length,
     };
   }
