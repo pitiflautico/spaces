@@ -307,6 +307,16 @@ export interface LogoBrief {
   shape_preferences?: string;
   avoid_elements?: string[];
   num_variants?: number;
+
+  // Complete Branding Information (V3.0)
+  visual_direction?: string; // CRITICAL - detailed context about app purpose, users, features, mood
+  branding_concept?: string; // WHY behind the visual choices
+  icon_style?: string; // Icon approach (minimalist, detailed, abstract, etc.)
+  brand_tone?: string; // Overall personality (professional, playful, etc.)
+  target_emotion?: string; // Main emotion to evoke
+  color_meanings?: string[]; // What each color represents
+  primary_font_family?: string; // Main font recommendation
+  secondary_font_family?: string; // Complementary font
 }
 
 export interface LogoOption {
@@ -369,6 +379,14 @@ export interface IconBrief {
   tagline_in_icon?: boolean;
   source_logo_url?: string;
   category?: string;
+
+  // Complete Branding Information (V3.0)
+  visual_direction?: string; // CRITICAL - detailed context about app purpose, users, features, mood
+  branding_concept?: string; // WHY behind the visual choices
+  icon_style?: string; // Icon approach (minimalist, detailed, abstract, etc.)
+  brand_tone?: string; // Overall personality (professional, playful, etc.)
+  target_emotion?: string; // Main emotion to evoke
+  color_meanings?: string[]; // What each color represents
 }
 
 export interface IconSizeSet {

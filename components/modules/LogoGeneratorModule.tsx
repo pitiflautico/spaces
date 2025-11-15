@@ -80,6 +80,16 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         shape_preferences: branding?.shape_style,
 
         num_variants: numVariants,
+
+        // Complete Branding Information (V3.0) - CRITICAL for context-rich logo generation
+        visual_direction: branding?.visual_direction, // What the app does, users, features, mood, visual elements
+        branding_concept: branding?.branding_concept, // WHY behind the visual choices
+        icon_style: branding?.icon_style, // Icon approach (minimalist, detailed, abstract)
+        brand_tone: branding?.brand_tone, // Overall personality
+        target_emotion: branding?.target_emotion, // Main emotion to evoke
+        color_meanings: branding?.color_meanings, // What each color represents
+        primary_font_family: branding?.primary_font_family, // Main font
+        secondary_font_family: branding?.secondary_font_family, // Complementary font
       };
 
       // TODO: Call AI provider for logo generation

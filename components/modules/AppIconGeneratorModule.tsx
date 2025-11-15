@@ -404,6 +404,14 @@ function buildIconBrief(
     include_symbol: !!logoUrl,
     source_logo_url: logoUrl,
     category: flowContext.category || 'App',
+
+    // Complete Branding Information (V3.0) - CRITICAL for context-rich icon generation
+    visual_direction: branding?.visual_direction, // What the app does, users, features, mood, visual elements
+    branding_concept: branding?.branding_concept, // WHY behind the visual choices
+    icon_style: branding?.icon_style, // Icon approach (minimalist, detailed, abstract)
+    brand_tone: branding?.brand_tone, // Overall personality
+    target_emotion: branding?.target_emotion, // Main emotion to evoke
+    color_meanings: branding?.color_meanings, // What each color represents
   };
 }
 
