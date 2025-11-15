@@ -169,8 +169,11 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
     }
   };
 
+  // Determinar si el módulo tiene settings
+  const hasSettings = module.type === 'local-project-analysis';
+
   return (
-    <ModuleWrapper module={module} onRun={handleRun} icon={getModuleIcon()}>
+    <ModuleWrapper module={module} onRun={handleRun} icon={getModuleIcon()} hasSettings={hasSettings}>
       {renderModuleContent()}
     </ModuleWrapper>
   );

@@ -15,6 +15,7 @@ interface ModuleWrapperProps {
   children: ReactNode;
   onRun?: () => void;
   icon?: ReactNode;
+  hasSettings?: boolean; // Solo mostrar settings si el módulo necesita configuración
 }
 
 /**
@@ -33,7 +34,7 @@ interface ModuleWrapperProps {
  *   <div>Contenido específico del módulo</div>
  * </ModuleWrapper>
  */
-export default function ModuleWrapper({ module, children, onRun, icon }: ModuleWrapperProps) {
+export default function ModuleWrapper({ module, children, onRun, icon, hasSettings = false }: ModuleWrapperProps) {
   const {
     updateModule,
     deleteModule,
@@ -187,53 +188,32 @@ export default function ModuleWrapper({ module, children, onRun, icon }: ModuleW
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Header con título y duplicate */}
-      <div className="relative px-5 py-3 flex items-center gap-2">
+      {/* Header con título e iconos de inputs aceptados */}
+      <div className="relative px-5 py-3 flex items-center gap-3">
         {/* Icon del módulo */}
         {icon && <div className="flex-shrink-0">{icon}</div>}
 
         {/* Título */}
         <h3 className="text-white font-medium text-sm flex-1">{module.name}</h3>
 
-        {/* Duplicate button */}
-        <button
-          onClick={handleDuplicate}
-          className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-dark-card/50 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
-          title="Duplicate module"
-        >
-          <Square2StackIcon className="w-4 h-4" />
-        </button>
+        {/* Input types badges (si tiene inputs) */}
+        {module.ports.input.length > 0 && (
+          <div className="flex items-center gap-1 px-2 py-1 bg-dark-card/50 rounded-full border border-dark-border">
+            {module.ports.input.map((port, index) => {
+              const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
+              return (
+                <div key={port.id} className="flex items-center" title={`Accepts: ${port.label}`}>
+                  <Icon className="w-3.5 h-3.5 text-gray-400" />
+                  {index < module.ports.input.length - 1 && (
+                    <span className="mx-0.5 text-gray-600">·</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Puertos de ENTRADA (Izquierda) */}
-      {module.ports.input.map((port, index) => {
-        const Icon = getDataTypeIcon(port.acceptedTypes?.[0]);
-        const isCompatible = hoveredPort === port.id;
-        const portTop =
-          module.ports.input.length === 1
-            ? '50%'
-            : `${((index + 1) / (module.ports.input.length + 1)) * 100}%`;
-
-        return (
-          <div
-            key={port.id}
-            className="port absolute left-0 -translate-x-1/2"
-            style={{ top: portTop, transform: 'translate(-50%, -50%)' }}
-            onMouseUp={(e) => handleInputPortMouseUp(e, port)}
-            onMouseEnter={() => handleInputPortMouseEnter(port)}
-            onMouseLeave={handleInputPortMouseLeave}
-            title={`Input: ${port.label}\nAcepta: ${port.acceptedTypes?.join(', ') || 'any'}`}
-          >
-            <div
-              className={`w-6 h-6 bg-blue-500 rounded-full border-2 border-dark-sidebar hover:scale-110 transition-all cursor-pointer flex items-center justify-center ${
-                isCompatible ? 'scale-110 ring-2 ring-green-400' : ''
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5 text-white" />
-            </div>
-          </div>
-        );
-      })}
 
       {/* Puertos de SALIDA (Derecha) */}
       {module.ports.output.map((port, index) => {
@@ -264,15 +244,19 @@ export default function ModuleWrapper({ module, children, onRun, icon }: ModuleW
       {/* Contenido del módulo */}
       <div className="module-content px-5 pb-16">{children}</div>
 
-      {/* Footer con botones Play y Settings */}
+      {/* Footer con botones Play y Settings (condicionales) */}
       <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between pointer-events-none">
-        {/* Settings button */}
-        <button
-          className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-dark-card/80 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
-          title="Module settings"
-        >
-          <Cog6ToothIcon className="w-5 h-5" />
-        </button>
+        {/* Settings button - solo si el módulo tiene configuración */}
+        {hasSettings ? (
+          <button
+            className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-dark-card/80 hover:bg-dark-card text-gray-400 hover:text-white transition-all"
+            title="Module settings"
+          >
+            <Cog6ToothIcon className="w-5 h-5" />
+          </button>
+        ) : (
+          <div /> /* Spacer para mantener el play button a la derecha */
+        )}
 
         {/* Play button */}
         {onRun && (
