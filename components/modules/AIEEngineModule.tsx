@@ -12,6 +12,32 @@ interface AIEEngineModuleProps {
   module: Module;
 }
 
+// Predefined AI models per provider
+const AI_MODELS = {
+  [AIProvider.REPLICATE]: [
+    { id: 'meta/meta-llama-3-70b-instruct', name: 'Meta Llama 3 70B', description: 'Fast and powerful' },
+    { id: 'meta/meta-llama-3.1-405b-instruct', name: 'Meta Llama 3.1 405B', description: 'Most powerful' },
+  ],
+  [AIProvider.TOGETHER]: [
+    { id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', name: 'Llama 3.3 70B Turbo', description: 'Recommended' },
+    { id: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo', name: 'Llama 3.1 405B Turbo', description: 'Most powerful' },
+    { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B', description: 'Fast and efficient' },
+  ],
+  [AIProvider.OPENAI]: [
+    { id: 'gpt-4', name: 'GPT-4', description: 'Most capable' },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Faster GPT-4' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Fast and affordable' },
+  ],
+  [AIProvider.ANTHROPIC]: [
+    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Most powerful' },
+    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced' },
+    { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fastest' },
+  ],
+  [AIProvider.LOCAL]: [
+    { id: 'mock-gpt-4', name: 'Mock GPT-4', description: 'Local testing' },
+  ],
+};
+
 export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,16 +46,40 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
   const outputs = module.outputs as AIEEngineOutputs;
   const space = getCurrentSpace();
 
+  // Get module inputs (will store AI config here)
+  const inputs = (module.inputs || {}) as any;
+  const selectedProvider: AIProvider = inputs.aiProvider || space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
+  const selectedModel = inputs.aiModel || AI_MODELS[selectedProvider as keyof typeof AI_MODELS]?.[0]?.id;
+
+  const handleProviderChange = (provider: AIProvider) => {
+    const defaultModel = AI_MODELS[provider]?.[0]?.id;
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        aiProvider: provider,
+        aiModel: defaultModel,
+      },
+    });
+  };
+
+  const handleModelChange = (modelId: string) => {
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        aiModel: modelId,
+      },
+    });
+  };
+
   const handleRun = async () => {
     try {
       setIsProcessing(true);
       setError(null);
       updateModule(module.id, { status: 'running' });
 
-      // Get AI configuration
-      const aiConfig = space?.configuration?.aiConfig;
-      if (!aiConfig || !aiConfig.provider) {
-        throw new Error('AI Provider not configured. Please configure in Settings.');
+      // Use module's own AI configuration
+      if (!selectedProvider || !selectedModel) {
+        throw new Error('Please select an AI provider and model.');
       }
 
       // Get input from connected module
@@ -69,10 +119,17 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       const prompt = buildPrompt(repositoryMetadata, fileContents, repoStructure);
 
       // Get API key from space configuration
-      const apiKey = getAPIKeyForProvider(aiConfig.provider, space.configuration?.apiKeys || {});
+      const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
+
+      if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
+      }
 
       const config: AIConfiguration = {
-        ...aiConfig,
+        provider: selectedProvider,
+        model: selectedModel,
+        temperature: 0.7,
+        maxTokens: 4096,
         apiKey
       };
 
@@ -130,20 +187,61 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
         </p>
       </div>
 
-      {/* AI Provider Status */}
-      <div className="px-3 py-2 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg">
-        <div className="flex items-center gap-2 text-xs">
+      {/* AI Configuration - Embedded in Module */}
+      <div className="space-y-3">
+        <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
           <SparklesIcon className="w-4 h-4 text-orange-400" />
-          <span className="text-gray-400">AI Provider:</span>
-          <span className="text-white font-medium">
-            {space?.configuration?.aiConfig?.provider || 'Not configured'}
-          </span>
+          AI Configuration
         </div>
-        {space?.configuration?.aiConfig?.model && (
-          <div className="text-xs text-gray-500 mt-1 ml-6">
-            Model: {space.configuration.aiConfig.model}
+
+        {/* Provider Selector */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Provider</label>
+          <select
+            value={selectedProvider}
+            onChange={(e) => handleProviderChange(e.target.value as AIProvider)}
+            className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+          >
+            <option value={AIProvider.TOGETHER}>Together AI (Recommended)</option>
+            <option value={AIProvider.REPLICATE}>Replicate</option>
+            <option value={AIProvider.OPENAI}>OpenAI</option>
+            <option value={AIProvider.ANTHROPIC}>Anthropic</option>
+            <option value={AIProvider.LOCAL}>Local (Testing)</option>
+          </select>
+        </div>
+
+        {/* Model Selector */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Model</label>
+          <select
+            value={selectedModel}
+            onChange={(e) => handleModelChange(e.target.value)}
+            className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+          >
+            {AI_MODELS[selectedProvider]?.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name} - {model.description}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Selected: <span className="text-gray-400 font-mono">{selectedModel}</span>
+          </p>
+        </div>
+
+        {/* API Key Status */}
+        <div className="px-3 py-2 bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-400">API Key Status:</span>
+            {selectedProvider === AIProvider.LOCAL ? (
+              <span className="text-green-400">✓ Not required</span>
+            ) : space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] ? (
+              <span className="text-green-400">✓ Configured</span>
+            ) : (
+              <span className="text-red-400">✗ Missing (add in Settings)</span>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Error Display */}

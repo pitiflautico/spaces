@@ -1,6 +1,8 @@
 /**
  * Anthropic Adapter (V2.0)
  * https://www.anthropic.com/
+ *
+ * Uses Next.js API route as proxy to avoid CORS issues
  */
 
 import type { AIAdapter } from '../ai-provider';
@@ -9,35 +11,33 @@ import { AIProvider } from '@/types';
 
 export class AnthropicAdapter implements AIAdapter {
   async run(prompt: string, config: AIConfiguration): Promise<AIProviderResponse> {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call Next.js API route instead of calling Anthropic directly
+    const response = await fetch('/api/ai-inference', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.apiKey || '',
-        'anthropic-version': '2023-06-01'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: config.model || 'claude-3-opus-20240229',
-        messages: [
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: config.maxTokens || 4096,
+        provider: 'anthropic',
+        model: config.model,
+        prompt: prompt,
+        apiKey: config.apiKey,
         temperature: config.temperature || 0.7,
-        stream: config.mode === 'streaming'
+        maxTokens: config.maxTokens || 4096
       })
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.error?.message || `HTTP ${response.status}`);
+      throw new Error(error.error || `HTTP ${response.status}`);
     }
 
     const data = await response.json();
 
     return {
-      outputText: data.content?.[0]?.text || '',
-      rawResponse: data,
-      tokensUsed: data.usage?.input_tokens + data.usage?.output_tokens,
+      outputText: data.outputText,
+      rawResponse: data.rawResponse,
+      tokensUsed: data.tokensUsed,
       providerUsed: AIProvider.ANTHROPIC,
       model: config.model
     };
@@ -45,18 +45,19 @@ export class AnthropicAdapter implements AIAdapter {
 
   async testConnection(config: AIConfiguration): Promise<boolean> {
     try {
-      // Anthropic doesn't have a simple /models endpoint, so we make a minimal request
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // Simple test - try to call with a minimal prompt
+      const response = await fetch('/api/ai-inference', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.apiKey || '',
-          'anthropic-version': '2023-06-01'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
-          messages: [{ role: 'user', content: 'test' }],
-          max_tokens: 10
+          provider: 'anthropic',
+          model: config.model,
+          prompt: 'Test',
+          apiKey: config.apiKey,
+          temperature: 0.7,
+          maxTokens: 10
         })
       });
       return response.ok;

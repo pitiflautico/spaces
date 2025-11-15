@@ -1,6 +1,8 @@
 /**
  * Replicate Adapter (V2.0)
  * https://replicate.com/
+ *
+ * Uses Next.js API route as proxy to avoid CORS issues
  */
 
 import type { AIAdapter } from '../ai-provider';
@@ -9,49 +11,33 @@ import { AIProvider } from '@/types';
 
 export class ReplicateAdapter implements AIAdapter {
   async run(prompt: string, config: AIConfiguration): Promise<AIProviderResponse> {
-    const response = await fetch('https://api.replicate.com/v1/predictions', {
+    // Call Next.js API route instead of calling Replicate directly
+    const response = await fetch('/api/ai-inference', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${config.apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        version: config.model,
-        input: {
-          prompt: prompt,
-          max_tokens: config.maxTokens || 4096,
-          temperature: config.temperature || 0.7
-        }
+        provider: 'replicate',
+        model: config.model,
+        prompt: prompt,
+        apiKey: config.apiKey,
+        temperature: config.temperature || 0.7,
+        maxTokens: config.maxTokens || 4096
       })
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      throw new Error(error.error || `HTTP ${response.status}`);
     }
 
-    const prediction = await response.json();
-
-    // Poll for completion (Replicate is async)
-    let result = prediction;
-    while (result.status === 'starting' || result.status === 'processing') {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const checkResponse = await fetch(result.urls.get, {
-        headers: {
-          'Authorization': `Token ${config.apiKey}`
-        }
-      });
-      result = await checkResponse.json();
-    }
-
-    if (result.status === 'failed') {
-      throw new Error(result.error || 'Prediction failed');
-    }
+    const data = await response.json();
 
     return {
-      outputText: Array.isArray(result.output) ? result.output.join('') : result.output,
-      rawResponse: result,
-      tokensUsed: undefined,
+      outputText: data.outputText,
+      rawResponse: data.rawResponse,
+      tokensUsed: data.tokensUsed,
       providerUsed: AIProvider.REPLICATE,
       model: config.model
     };
@@ -59,10 +45,20 @@ export class ReplicateAdapter implements AIAdapter {
 
   async testConnection(config: AIConfiguration): Promise<boolean> {
     try {
-      const response = await fetch('https://api.replicate.com/v1/models', {
+      // Simple test - try to call with a minimal prompt
+      const response = await fetch('/api/ai-inference', {
+        method: 'POST',
         headers: {
-          'Authorization': `Token ${config.apiKey}`
-        }
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          provider: 'replicate',
+          model: config.model,
+          prompt: 'Test',
+          apiKey: config.apiKey,
+          temperature: 0.7,
+          maxTokens: 10
+        })
       });
       return response.ok;
     } catch (error) {

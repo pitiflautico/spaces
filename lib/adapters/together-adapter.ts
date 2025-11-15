@@ -1,6 +1,8 @@
 /**
  * Together AI Adapter (V2.0)
  * https://together.ai/
+ *
+ * Uses Next.js API route as proxy to avoid CORS issues
  */
 
 import type { AIAdapter } from '../ai-provider';
@@ -9,32 +11,33 @@ import { AIProvider } from '@/types';
 
 export class TogetherAdapter implements AIAdapter {
   async run(prompt: string, config: AIConfiguration): Promise<AIProviderResponse> {
-    const response = await fetch('https://api.together.xyz/v1/completions', {
+    // Call Next.js API route instead of calling Together directly
+    const response = await fetch('/api/ai-inference', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: config.model || 'together_ai/llama-3-70b',
+        provider: 'together',
+        model: config.model,
         prompt: prompt,
-        max_tokens: config.maxTokens || 4096,
+        apiKey: config.apiKey,
         temperature: config.temperature || 0.7,
-        stream: config.mode === 'streaming'
+        maxTokens: config.maxTokens || 4096
       })
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      throw new Error(error.error || `HTTP ${response.status}`);
     }
 
     const data = await response.json();
 
     return {
-      outputText: data.choices?.[0]?.text || data.output || '',
-      rawResponse: data,
-      tokensUsed: data.usage?.total_tokens,
+      outputText: data.outputText,
+      rawResponse: data.rawResponse,
+      tokensUsed: data.tokensUsed,
       providerUsed: AIProvider.TOGETHER,
       model: config.model
     };
@@ -42,10 +45,20 @@ export class TogetherAdapter implements AIAdapter {
 
   async testConnection(config: AIConfiguration): Promise<boolean> {
     try {
-      const response = await fetch('https://api.together.xyz/v1/models', {
+      // Simple test - try to call with a minimal prompt
+      const response = await fetch('/api/ai-inference', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiKey}`
-        }
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          provider: 'together',
+          model: config.model,
+          prompt: 'Test',
+          apiKey: config.apiKey,
+          temperature: 0.7,
+          maxTokens: 10
+        })
       });
       return response.ok;
     } catch (error) {

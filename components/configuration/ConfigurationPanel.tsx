@@ -279,7 +279,9 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
 
               {/* Model */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">Model</label>
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Model <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={config.aiConfig?.model || ''}
@@ -299,15 +301,27 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                       : config.aiConfig?.provider === AIProvider.ANTHROPIC
                       ? 'claude-3-opus-20240229'
                       : config.aiConfig?.provider === AIProvider.TOGETHER
-                      ? 'together_ai/llama-3-70b'
+                      ? 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
                       : config.aiConfig?.provider === AIProvider.REPLICATE
-                      ? 'meta/llama-2-70b-chat'
+                      ? 'meta/meta-llama-3-70b-instruct'
                       : 'mock-gpt-4'
                   }
                   className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Specific model to use (leave empty for default)
+                  {config.aiConfig?.provider === AIProvider.REPLICATE && (
+                    <>Find models at <a href="https://replicate.com/explore" target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:underline">replicate.com/explore</a></>
+                  )}
+                  {config.aiConfig?.provider === AIProvider.TOGETHER && (
+                    <>Find models at <a href="https://api.together.xyz/models" target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:underline">together.xyz/models</a></>
+                  )}
+                  {config.aiConfig?.provider === AIProvider.OPENAI && (
+                    <>Examples: gpt-4, gpt-3.5-turbo</>
+                  )}
+                  {config.aiConfig?.provider === AIProvider.ANTHROPIC && (
+                    <>Examples: claude-3-opus-20240229, claude-3-sonnet-20240229</>
+                  )}
+                  {!config.aiConfig?.provider && <>Enter the model identifier for your chosen provider</>}
                 </p>
               </div>
 

@@ -60,11 +60,41 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
     }
   };
 
-  const handleSubfolderSelect = (subfolder: string) => {
+  const handleSubfolderSelect = async (subfolder: string) => {
     const folder = savedFolders.find(f => f.id === selectedFolder);
-    if (folder) {
+    if (!folder) return;
+
+    try {
+      // Get the parent folder handle
+      const parentHandle = await getFolderHandle(folder.id);
+      if (!parentHandle) {
+        alert('No se pudo acceder a la carpeta. Intenta nuevamente desde Configuración.');
+        return;
+      }
+
+      // Get subfolder handle
+      const subfolderHandle = await parentHandle.getDirectoryHandle(subfolder);
+
+      // Save the subfolder handle to IndexedDB with a new ID
+      const { saveFolderHandle } = await import('@/lib/folder-permissions');
+      const subFolderId = `folder-${Date.now()}-${subfolder}`;
       const fullPath = `${folder.path}/${subfolder}`;
-      handleInputChange('localProjectPath', fullPath);
+
+      await saveFolderHandle(subFolderId, subfolder, fullPath, subfolderHandle);
+
+      // Update inputs with both path and folderId
+      const newInputs = {
+        localProjectPath: fullPath,
+        folderId: subFolderId,
+        includeHiddenFiles: inputs.includeHiddenFiles || false,
+        includeNodeModules: inputs.includeNodeModules || false,
+      };
+
+      console.log('[LocalProjectAnalysis] Subfolder selected:', newInputs);
+      updateModule(module.id, { inputs: newInputs });
+    } catch (error) {
+      console.error('Error selecting subfolder:', error);
+      alert('Error al seleccionar la subcarpeta. Verifica los permisos.');
     }
   };
 
@@ -85,28 +115,41 @@ export default function LocalProjectAnalysisModule({ module }: LocalProjectAnaly
       // Check if File System Access API is supported
       if ('showDirectoryPicker' in window) {
         // @ts-ignore - File System Access API
-        const dirHandle = await window.showDirectoryPicker();
+        const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
         const folderName = dirHandle.name;
 
-        // Detect OS and construct path
+        // Save folder handle to IndexedDB
+        const { saveFolderHandle } = await import('@/lib/folder-permissions');
+        const folderId = `folder-${Date.now()}-${folderName}`;
+
+        // Construct a display path (for UI only, not for actual file access)
         const userAgent = navigator.userAgent.toLowerCase();
         const isMac = userAgent.includes('mac');
         const isWindows = userAgent.includes('win');
 
-        let detectedPath = '';
+        let displayPath = '';
         if (isMac) {
-          detectedPath = `/Users/${process.env.USER || 'user'}/Projects/${folderName}`;
+          displayPath = `~/Projects/${folderName}`;
         } else if (isWindows) {
-          detectedPath = `C:\\Users\\${process.env.USERNAME || 'user'}\\Documents\\${folderName}`;
+          displayPath = `C:\\Users\\...\\${folderName}`;
         } else {
-          detectedPath = `/home/${process.env.USER || 'user'}/projects/${folderName}`;
+          displayPath = `~/projects/${folderName}`;
         }
 
-        // ONLY set the path - don't mark as done
-        // User must click Play button to actually analyze the project
-        handleInputChange('localProjectPath', detectedPath);
+        await saveFolderHandle(folderId, folderName, displayPath, dirHandle);
+
+        // Update inputs with both display path and folderId
+        const newInputs = {
+          localProjectPath: displayPath,
+          folderId: folderId,
+          includeHiddenFiles: inputs.includeHiddenFiles || false,
+          includeNodeModules: inputs.includeNodeModules || false,
+        };
+
+        console.log('[LocalProjectAnalysis] Folder selected:', newInputs);
+        updateModule(module.id, { inputs: newInputs });
       } else {
-        alert('Folder selection not supported in this browser. Please use Chrome or Edge, or enter the path manually.');
+        alert('Folder selection not supported in this browser. Please use Chrome or Edge.');
       }
     } catch (error: any) {
       // User cancelled or error occurred

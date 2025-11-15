@@ -131,6 +131,7 @@ export interface CanvasState {
 
 export interface LocalProjectAnalysisInputs {
   localProjectPath: string;
+  folderId?: string; // ID of the folder handle in IndexedDB
   includeHiddenFiles: boolean;
   includeNodeModules: boolean;
 }

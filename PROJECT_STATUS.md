@@ -1,16 +1,206 @@
-# 📋 PROJECT STATUS — MARKETING SPACES v2.0
+# 📋 PROJECT STATUS — MARKETING SPACES v2.1
 **Documento de Estado del Proyecto para Continuidad de Desarrollo con IA**
 
 > **PROPÓSITO**: Este documento es la fuente de verdad para cualquier IA que trabaje en este proyecto.
 > Contiene TODO lo necesario para entender el estado actual, evitar duplicación de código y continuar el desarrollo de forma coherente.
 
-**Última actualización**: 2025-11-15 (Session 3 - UX Improvements)
-**Versión del sistema**: v2.0 (implementación completa + mejoras UX)
-**Fase actual**: ✅ Session 3: UX refinements (port visibility + config panel restructuring)
+**Última actualización**: 2025-11-15 (Session 4 - Browser-based Analysis + Embedded AI Config)
+**Versión del sistema**: v2.1 (browser file scanning + embedded AI selector)
+**Fase actual**: ✅ Session 4: Browser-based architecture + Module-level AI configuration
 
 ---
 
 ## 🆕 ÚLTIMOS CAMBIOS (2025-11-15)
+
+### ✅ SESIÓN 4: Browser-Based File Scanning + Embedded AI Configuration
+
+**PROBLEMA SOLUCIONADO**: Múltiples problemas críticos:
+1. **Local path no se leía**: Path genérico `/Users/user/Projects/...` causaba error
+2. **CORS blocking AI providers**: Fetch directo desde navegador a Replicate/Together bloqueado
+3. **Missing AI model**: Campo model no estaba configurado
+4. **Errores no visibles**: Alerts del sistema en lugar de UI de la plataforma
+
+**Archivos NUEVOS**:
+- ✅ `/lib/browser-file-scanner.ts` - Scanner de archivos 100% en navegador
+- ✅ `/types/file-system.d.ts` - Definiciones TypeScript para File System Access API
+- ✅ `/app/api/ai-inference/route.ts` - Proxy API para evitar CORS
+
+**Archivos MODIFICADOS**:
+- ✅ `/components/canvas/ModuleBlock.tsx` - Usa browser scanner + mejores errores
+- ✅ `/components/modules/LocalProjectAnalysisModule.tsx` - Guarda folder handles
+- ✅ `/components/modules/AIEEngineModule.tsx` - Selector AI embebido en módulo
+- ✅ `/components/canvas/ModuleWrapper.tsx` - Display de errores en módulo
+- ✅ `/components/configuration/ConfigurationPanel.tsx` - Modelo marcado requerido
+- ✅ `/lib/adapters/*.ts` - Todos los adapters usan proxy API
+- ✅ `/types/index.ts` - Añadido `folderId` a LocalProjectAnalysisInputs
+
+#### 1. ✅ **Browser-Based File Scanning (Sin backend filesystem)**
+
+**Arquitectura anterior** (❌ Fallaba):
+```
+Browser → Backend API → fs.readdir() → ❌ Path incorrecto
+```
+
+**Nueva arquitectura** (✅ Funciona):
+```
+Browser → FileSystemDirectoryHandle → IndexedDB → Browser-based scanner
+```
+
+**Características**:
+- ✅ File System Access API para acceso a carpetas
+- ✅ Handles persistentes en IndexedDB
+- ✅ Permisos se mantienen entre sesiones
+- ✅ Scanning recursivo desde el navegador
+- ✅ No necesita paths del filesystem (solo handles)
+- ✅ Funciona con carpetas guardadas en configuración
+
+**Código de referencia**:
+```typescript
+// Guardar handle con ID único
+const folderId = `folder-${Date.now()}-${folderName}`;
+await saveFolderHandle(folderId, folderName, displayPath, dirHandle);
+
+// Recuperar y usar handle
+const folderHandle = await getFolderHandle(folderId);
+const data = await analyzeProjectFromHandle(folderHandle, options);
+```
+
+#### 2. ✅ **API Proxy para AI Providers (CORS resuelto)**
+
+**Problema anterior**:
+```
+Browser → https://api.replicate.com → ❌ CORS blocked
+```
+
+**Solución**:
+```
+Browser → /api/ai-inference → Replicate API → ✅ Success
+```
+
+**Características**:
+- ✅ Proxy unificado para todos los providers (Replicate, Together, OpenAI, Anthropic)
+- ✅ Maneja polling asíncrono de Replicate
+- ✅ Normaliza respuestas de diferentes APIs
+- ✅ API keys seguras (nunca expuestas en navegador)
+- ✅ Errores HTTP traducidos a mensajes claros
+
+**Código de referencia**:
+```typescript
+// Adapter llama al proxy
+const response = await fetch('/api/ai-inference', {
+  body: JSON.stringify({
+    provider: 'replicate',
+    model: 'meta/meta-llama-3-70b-instruct',
+    prompt: '...',
+    apiKey: '...',
+  })
+});
+
+// Proxy hace polling y retorna respuesta normalizada
+return { outputText, tokensUsed, provider, model };
+```
+
+#### 3. ✅ **Configuración AI Embebida en Módulo AIE Engine**
+
+**Antes**: Configuración global en Settings (confuso)
+**Ahora**: Selector de IA directamente en el módulo
+
+**Características**:
+- ✅ Selector de provider en el módulo (Together, Replicate, OpenAI, Anthropic)
+- ✅ Combo de modelos predefinidos por provider
+- ✅ Modelo por defecto: "Llama 3.3 70B Turbo" (Together)
+- ✅ Indicador de API key status
+- ✅ Links a documentación según provider
+- ✅ Configuración independiente por módulo
+
+**Modelos predefinidos**:
+```typescript
+const AI_MODELS = {
+  [AIProvider.TOGETHER]: [
+    { id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', name: 'Llama 3.3 70B Turbo', description: 'Recommended' },
+    { id: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo', name: 'Llama 3.1 405B Turbo', description: 'Most powerful' },
+    { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B', description: 'Fast and efficient' },
+  ],
+  [AIProvider.REPLICATE]: [
+    { id: 'meta/meta-llama-3-70b-instruct', name: 'Meta Llama 3 70B', description: 'Fast and powerful' },
+    { id: 'meta/meta-llama-3.1-405b-instruct', name: 'Meta Llama 3.1 405B', description: 'Most powerful' },
+  ],
+  // ... OpenAI, Anthropic
+};
+```
+
+**UI del módulo**:
+```tsx
+<select onChange={(e) => handleProviderChange(e.target.value)}>
+  <option value="together">Together AI (Recommended)</option>
+  <option value="replicate">Replicate</option>
+  <option value="openai">OpenAI</option>
+  <option value="anthropic">Anthropic</option>
+</select>
+
+<select onChange={(e) => handleModelChange(e.target.value)}>
+  {AI_MODELS[selectedProvider].map(model => (
+    <option value={model.id}>{model.name} - {model.description}</option>
+  ))}
+</select>
+```
+
+#### 4. ✅ **Sistema de Errores Mejorado**
+
+**Antes**: `alert()` del sistema
+**Ahora**: Errores integrados en la plataforma
+
+**Características**:
+- ✅ Errores se muestran en el módulo (caja roja con ícono)
+- ✅ Errores en logs del sistema (trazables)
+- ✅ Mensajes de error específicos por código HTTP
+- ✅ Módulo cambia a estado 'error' con borde rojo
+- ✅ Ya NO usa `alert()` nativo
+
+**Mensajes mejorados**:
+```typescript
+// HTTP 401 → "Authentication failed: Invalid API key for replicate. Please check your API key in Settings."
+// HTTP 429 → "Rate limit exceeded for together. Please try again later."
+// HTTP 500 → "replicate server error. Please try again later."
+// Missing model → "AI Model not configured. Please select a model in Settings."
+```
+
+**Display en módulo**:
+```tsx
+{module.status === 'error' && module.errorMessage && (
+  <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+    <div className="flex items-start gap-2">
+      <svg className="w-5 h-5 text-red-400">...</svg>
+      <div>
+        <h4 className="text-sm font-semibold text-red-400">Error</h4>
+        <p className="text-xs text-red-300">{module.errorMessage}</p>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+#### 5. ✅ **Mejoras en Configuración Global**
+
+**Configuration Panel**:
+- ✅ Campo "Model" marcado como requerido (*)
+- ✅ Placeholders actualizados con modelos reales
+- ✅ Enlaces a documentación por provider:
+  - Replicate → replicate.com/explore
+  - Together → api.together.xyz/models
+  - OpenAI → Ejemplos: gpt-4, gpt-3.5-turbo
+  - Anthropic → Ejemplos: claude-3-opus-20240229
+
+**Validación mejorada**:
+```typescript
+if (!aiConfig.model) {
+  throw new Error('AI Model not configured. Please select a model in Settings.');
+}
+```
+
+---
+
+## 🆕 ÚLTIMOS CAMBIOS (2025-11-15 - Sesión Anterior)
 
 ### ✅ SESIÓN 3: UX Improvements - Port Visibility & Configuration Panel
 
