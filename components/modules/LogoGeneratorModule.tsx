@@ -5,6 +5,8 @@ import { useSpaceStore } from '@/lib/store';
 import type { Module, LogoGeneratorOutputs, LogoBrief, LogoOption, LogoOptionsPackage, ChosenLogo, FlowContext, LogoVariantOutputs } from '@/types';
 import { AIProvider } from '@/types';
 import { CheckCircleIcon, PhotoIcon, ExclamationTriangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import imageProvider from '@/lib/image-provider';
+import '@/lib/image-adapters'; // Initialize image adapters
 
 interface LogoGeneratorModuleProps {
   module: Module;
@@ -125,32 +127,43 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         secondary_font_family: branding?.secondary_font_family, // Complementary font
       };
 
-      // TODO: Call AI provider for logo generation
-      // For now, create mock logos
-      addLog('info', `Generating ${logoBrief.num_variants} logo variants for "${logoBrief.brand_name}"...`, module.id);
+      // Generate logos using AI image provider
+      addLog('info', `Generating ${logoBrief.num_variants} logo variants for "${logoBrief.brand_name}" with ${selectedProvider}...`, module.id);
 
-      // Simulate AI generation (replace with actual AI call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get API key from space configuration
+      const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
 
-      // Generate logo color from brand palette
-      const primaryColor = logoBrief.color_palette[0]?.replace('#', '') || '3B82F6';
-      const secondaryColor = logoBrief.color_palette[1]?.replace('#', '') || '10B981';
+      if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
+      }
 
-      const mockLogos: LogoOption[] = Array.from({ length: logoBrief.num_variants || 3 }, (_, i) => {
-        // Alternate colors for variety
-        const bgColor = i % 2 === 0 ? primaryColor : secondaryColor;
-        const textColor = i % 2 === 0 ? secondaryColor : primaryColor;
+      // Build prompt using the complete branding information
+      const logoPrompt = buildLogoPrompt(logoBrief, 1, flowContext.language || 'en', branding);
 
-        return {
-          id: i + 1,
-          image_url: `https://placehold.co/512x512/${bgColor}/${textColor}/png?text=${encodeURIComponent(logoBrief.brand_name)}`,
-          style_summary: `${logoBrief.style} logo variant ${i + 1}`,
-          colors_used: logoBrief.color_palette,
-          strengths: `Creative interpretation of ${logoBrief.brand_name}`,
-          weaknesses: 'Placeholder image - needs AI generation',
-          ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en', branding),
-        };
+      // Call image generation API with num_outputs parameter
+      const imageResult = await imageProvider.generate({
+        provider: selectedProvider,
+        model: selectedModel,
+        apiKey,
+        prompt: logoPrompt,
+        num_outputs: logoBrief.num_variants, // Generate all variants in ONE call
+        aspect_ratio: '1:1',
+        width: 1024,
+        height: 1024,
       });
+
+      addLog('success', `Generated ${imageResult.count} logo variants using ${imageResult.providerUsed}`, module.id);
+
+      // Create LogoOption objects from generated images
+      const mockLogos: LogoOption[] = imageResult.images.map((imageUrl, i) => ({
+        id: i + 1,
+        image_url: imageUrl,
+        style_summary: `${logoBrief.style} logo variant ${i + 1}`,
+        colors_used: logoBrief.color_palette,
+        strengths: `AI-generated using ${imageResult.model}`,
+        weaknesses: i === 0 ? 'Primary variant' : `Alternative ${i}`,
+        ai_prompt_used: buildLogoPrompt(logoBrief, i + 1, flowContext.language || 'en', branding),
+      }));
 
       // Delete any existing variant nodes from previous runs
       const existingVariants = space?.modules.filter(
@@ -501,4 +514,24 @@ ${branding ? `STYLE GUIDANCE:
 Follow the ${branding.design_style} aesthetic with ${branding.shape_style} geometric forms.
 Icon should be ${branding.icon_style}.
 Overall feel should evoke ${branding.target_emotion} and communicate ${branding.brand_values[0]}.` : ''}`;
+}
+
+/**
+ * Get API key for the selected provider
+ */
+function getAPIKeyForProvider(provider: AIProvider, apiKeys: Record<string, string | undefined>): string | undefined {
+  switch (provider) {
+    case AIProvider.OPENAI:
+      return apiKeys.openai;
+    case AIProvider.ANTHROPIC:
+      return apiKeys.anthropic;
+    case AIProvider.REPLICATE:
+      return apiKeys.replicate;
+    case AIProvider.TOGETHER:
+      return apiKeys.together;
+    case AIProvider.LOCAL:
+      return undefined; // Mock doesn't need API key
+    default:
+      return undefined;
+  }
 }

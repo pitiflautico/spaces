@@ -538,20 +538,21 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
 
           {/* Branding Preview - Collapsible */}
           {outputs.namingPackage.branding && (
-            <details className="group/branding">
-              <summary className="px-4 py-3 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg cursor-pointer hover:border-pink-500/50 transition-colors list-none">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-pink-400 font-semibold">🎨 Branding Preview</span>
-                    <span className="text-xs text-gray-500">(click to see full branding)</span>
+            <div className="bg-gradient-to-br from-pink-500/5 to-purple-500/5 border border-pink-500/20 rounded-lg overflow-hidden">
+              <details className="group/branding">
+                <summary className="px-4 py-3 cursor-pointer hover:bg-pink-500/10 transition-colors list-none">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-pink-400 font-semibold">🎨 Branding Preview</span>
+                      <span className="text-xs text-gray-500">(click to expand/collapse)</span>
+                    </div>
+                    <svg className="w-4 h-4 text-pink-400 transition-transform group-open/branding:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                  <svg className="w-4 h-4 text-pink-400 transition-transform group-open/branding:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </summary>
+                </summary>
 
-              <div className="mt-3 space-y-3 px-2">
+                <div className="px-4 pb-3 space-y-3 border-t border-pink-500/20">
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-pink-500/30 rounded-lg">
@@ -623,15 +624,16 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
                   <p className="text-xs text-gray-200 leading-relaxed">{outputs.namingPackage.branding.visual_direction}</p>
                 </div>
 
-                {/* View Full Details Button */}
-                <button
-                  onClick={() => setIsPanelOpen(true)}
-                  className="w-full px-3 py-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-lg text-xs text-pink-400 font-medium transition-colors"
-                >
-                  📋 View Complete Branding Details
-                </button>
-              </div>
-            </details>
+                  {/* View Full Details Button */}
+                  <button
+                    onClick={() => setIsPanelOpen(true)}
+                    className="w-full px-3 py-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-lg text-xs text-pink-400 font-medium transition-colors"
+                  >
+                    📋 View Complete Branding Details
+                  </button>
+                </div>
+              </details>
+            </div>
           )}
 
           {/* Open Naming Panel Button */}
