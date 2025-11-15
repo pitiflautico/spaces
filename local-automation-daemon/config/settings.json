@@ -1,0 +1,32 @@
+{
+  "daemon": {
+    "version": "1.0.0",
+    "port": 5050,
+    "host": "localhost"
+  },
+  "automation": {
+    "default_wait_seconds": 1,
+    "screenshot_delay_ms": 500,
+    "tap_delay_ms": 100,
+    "scroll_delay_ms": 300
+  },
+  "security": {
+    "allowed_origins": [
+      "http://localhost:3000"
+    ],
+    "allowed_paths": [
+      "/Users",
+      "/tmp/daemon"
+    ]
+  },
+  "simulator": {
+    "boot_timeout_ms": 120000,
+    "launch_timeout_ms": 30000,
+    "default_device": "iPhone 15 Pro"
+  },
+  "screenshots": {
+    "format": "png",
+    "quality": "high",
+    "auto_resize": false
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "name": "Onboarding Flow",
+  "description": "Navigate through app onboarding screens and capture screenshots",
+  "steps": [
+    {
+      "action": "wait",
+      "seconds": 3,
+      "comment": "Wait for app to fully load"
+    },
+    {
+      "action": "screenshot",
+      "name": "01_welcome.png",
+      "comment": "Capture welcome screen"
+    },
+    {
+      "action": "tap",
+      "x": 375,
+      "y": 750,
+      "comment": "Tap 'Get Started' button"
+    },
+    {
+      "action": "wait",
+      "seconds": 1
+    },
+    {
+      "action": "screenshot",
+      "name": "02_feature_1.png",
+      "comment": "First feature screen"
+    },
+    {
+      "action": "tap",
+      "x": 375,
+      "y": 750,
+      "comment": "Tap 'Next'"
+    },
+    {
+      "action": "wait",
+      "seconds": 1
+    },
+    {
+      "action": "screenshot",
+      "name": "03_feature_2.png",
+      "comment": "Second feature screen"
+    },
+    {
+      "action": "tap",
+      "x": 375,
+      "y": 750,
+      "comment": "Tap 'Next'"
+    },
+    {
+      "action": "wait",
+      "seconds": 1
+    },
+    {
+      "action": "screenshot",
+      "name": "04_feature_3.png",
+      "comment": "Third feature screen"
+    },
+    {
+      "action": "tap",
+      "x": 375,
+      "y": 750,
+      "comment": "Tap 'Done'"
+    },
+    {
+      "action": "wait",
+      "seconds": 1
+    },
+    {
+      "action": "screenshot",
+      "name": "05_home.png",
+      "comment": "Main home screen"
+    }
+  ]
+}

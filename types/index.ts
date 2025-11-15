@@ -18,6 +18,7 @@ export type ModuleType =
   | 'logo-variant'
   | 'app-icon-generator'
   | 'app-icon-variant'
+  | 'metadata-generator'
   | 'marketing-pack';
 
 // Data types for connections (v1.1)
@@ -452,4 +453,88 @@ export interface AppIconVariantOutputs {
     ai_prompt_used: string;
   };
   flowContext?: FlowContext;
+}
+
+// ============================================================
+// MÓDULO 5 - METADATA GENERATOR (V3.0)
+// ============================================================
+
+// Metadata for App Store (iOS)
+export interface AppStoreMetadata {
+  title: string;                           // ≤ 30 chars
+  subtitle: string;                        // ≤ 30 chars
+  promotional_text: string;                // ≤ 170 chars
+  description: string;                     // No strict limit
+  keywords: string;                        // ≤ 100 chars (comma-separated)
+}
+
+// Metadata for Google Play (Android)
+export interface GooglePlayMetadata {
+  title: string;                           // ≤ 30 chars
+  short_description: string;               // ≤ 80 chars
+  full_description: string;                // ≤ 4,000 chars
+  tags: string[];                          // Array of tags
+}
+
+// One complete metadata variant (App Store + Google Play)
+export interface MetadataVariant {
+  id: number;
+  app_store: AppStoreMetadata;
+  google_play: GooglePlayMetadata;
+
+  // Variant metadata
+  variant_name: string;                    // e.g., "Professional Focus", "Student Friendly"
+  target_persona: string;                  // Who this variant targets
+  tone: string;                            // Tone used (friendly, professional, technical)
+  emphasis: string;                        // What aspects it emphasizes
+
+  // AI info
+  ai_prompt_used: string;
+  generated_at: string;
+}
+
+// Complete package with all variants
+export interface MetadataPackage {
+  brand_name: string;
+  num_variants: number;
+  variants: MetadataVariant[];
+
+  // Package metadata
+  category: string;
+  language: string;                        // 'en', 'es', 'fr', etc.
+  generated_at: string;
+  validation_passed: boolean;              // All variants pass limits
+  validation_warnings?: string[];          // Validation warnings
+}
+
+// Final metadata chosen by user
+export interface ChosenMetadata {
+  variant_id: number;
+  app_store: AppStoreMetadata;
+  google_play: GooglePlayMetadata;
+  chosen_at: string;
+  source_module: string;
+  engine_version: string;
+}
+
+// Input for Metadata Generator module (combined from M2 + M3 + M4B)
+export interface MetadataGeneratorInputs {
+  // Module configuration
+  numVariants?: number;                    // Number of variants to generate (default: 3)
+  targetMarket?: string;                   // 'US', 'EU', 'LATAM', 'ASIA', 'Global'
+  emphasizeFeatures?: string[];            // Specific features to emphasize
+  style?: 'conservative' | 'creative' | 'balanced';  // Default: 'balanced'
+
+  // AI Provider settings (module-level override)
+  aiProvider?: AIProvider;
+  aiModel?: string;
+  temperature?: number;                    // Default: 0.7
+}
+
+// Outputs of Metadata Generator module
+export interface MetadataGeneratorOutputs {
+  metadataPackage?: MetadataPackage;       // All variants
+  chosenMetadata?: ChosenMetadata;         // Final selected variant
+  metadataLog?: string;                    // Generation log
+  flowContext?: FlowContext;               // Propagated context
 }

@@ -1,0 +1,31 @@
+{
+  "comment": "Predefined simulator configurations",
+  "simulators": [
+    {
+      "name": "iPhone 15 Pro",
+      "default": true,
+      "screen_size": "6.1\"",
+      "resolution": "1179x2556"
+    },
+    {
+      "name": "iPhone 15 Pro Max",
+      "screen_size": "6.7\"",
+      "resolution": "1290x2796"
+    },
+    {
+      "name": "iPhone 14",
+      "screen_size": "6.1\"",
+      "resolution": "1170x2532"
+    },
+    {
+      "name": "iPhone SE (3rd generation)",
+      "screen_size": "4.7\"",
+      "resolution": "750x1334"
+    }
+  ],
+  "app_store_sizes": {
+    "iphone_67": "1290x2796",
+    "iphone_65": "1242x2688",
+    "iphone_55": "1242x2208"
+  }
+}

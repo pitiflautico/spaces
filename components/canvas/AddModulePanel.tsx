@@ -60,6 +60,12 @@ const moduleCategories: ModuleCategory[] = [
     name: 'Marketing',
     modules: [
       {
+        type: 'metadata-generator',
+        name: 'Metadata Generator',
+        description: 'Generate App Store & Google Play metadata with AI',
+        icon: '📝',
+      },
+      {
         type: 'marketing-pack',
         name: 'Marketing Pack',
         description: 'Complete marketing materials for your app',

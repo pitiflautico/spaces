@@ -192,6 +192,24 @@ export const useSpaceStore = create<SpaceStore>()(
           ],
         },
       },
+      'metadata-generator': {
+        name: 'Metadata Generator',
+        size: { width: 450, height: 520 },
+        ports: {
+          input: [
+            { id: 'in-1', type: 'input', label: 'App Intelligence', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-2', type: 'input', label: 'Naming Package', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-3', type: 'input', label: 'Chosen Name', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-4', type: 'input', label: 'Icon Options', connected: false, acceptedTypes: [DataType.JSON] },
+          ],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Metadata Package', connected: false, dataType: DataType.JSON },
+            { id: 'out-2', type: 'output', label: 'Chosen Metadata', connected: false, dataType: DataType.JSON },
+            { id: 'out-3', type: 'output', label: 'Metadata Log', connected: false, dataType: DataType.TEXT },
+            { id: 'out-4', type: 'output', label: 'Flow Context', connected: false, dataType: DataType.JSON },
+          ],
+        },
+      },
       'marketing-pack': {
         name: 'Marketing Pack',
         size: { width: 400, height: 400 },
