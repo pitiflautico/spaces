@@ -15,8 +15,20 @@ export default function Canvas() {
   const [dragStart, setDragStart] = useState<Position>({ x: 0, y: 0 });
   const [spacePressed, setSpacePressed] = useState(false);
 
-  const { canvasState, setPan, setZoom, getCurrentSpace, connectionDragState, updateConnectionDrag, endConnectionDrag } = useSpaceStore();
-  const currentSpace = getCurrentSpace();
+  const {
+    canvasState,
+    setPan,
+    setZoom,
+    getCurrentSpace,
+    connectionDragState,
+    updateConnectionDrag,
+    endConnectionDrag,
+    spaces,
+    currentSpaceId
+  } = useSpaceStore();
+
+  // Subscribe to spaces and currentSpaceId to re-render when they change
+  const currentSpace = spaces.find(s => s.id === currentSpaceId) || null;
 
   // Handle mouse wheel zoom
   const handleWheel = useCallback(
