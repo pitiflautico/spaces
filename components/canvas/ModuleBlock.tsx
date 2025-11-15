@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import ModuleWrapper from './ModuleWrapper';
 import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
+import AIEEngineModule from '@/components/modules/AIEEngineModule';
 
 interface ModuleBlockProps {
   module: Module;
@@ -38,7 +39,7 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
       case 'local-project-analysis':
         return <DocumentTextIcon className="w-5 h-5 text-blue-400" />;
       case 'reader-engine':
-        return <CubeIcon className="w-5 h-5 text-purple-400" />;
+        return <SparklesIcon className="w-5 h-5 text-orange-400" />;
       case 'naming-engine':
         return <SparklesIcon className="w-5 h-5 text-yellow-400" />;
       case 'icon-generator':
@@ -109,17 +110,7 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <LocalProjectAnalysisModule module={module} />;
 
       case 'reader-engine':
-        return (
-          <div className="py-4">
-            <p className="text-gray-400 text-sm mb-3">Reader Engine</p>
-            <p className="text-gray-500 text-xs">
-              Procesa metadatos del proyecto y genera estructura legible.
-            </p>
-            <div className="mt-3 p-3 bg-dark-card rounded-lg">
-              <p className="text-gray-600 text-xs">Módulo pendiente de implementación</p>
-            </div>
-          </div>
-        );
+        return <AIEEngineModule module={module} />;
 
       case 'naming-engine':
         return (

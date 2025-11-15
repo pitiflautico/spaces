@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
-import { XMarkIcon, KeyIcon, FolderIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, KeyIcon, FolderIcon, Cog6ToothIcon, CpuChipIcon } from '@heroicons/react/24/outline';
 import type { SpaceConfiguration } from '@/types';
+import { AIProvider } from '@/types';
 
 interface ConfigurationPanelProps {
   isOpen: boolean;
@@ -127,9 +128,149 @@ export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPan
                   className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
+
+              {/* Replicate */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Replicate API Key</label>
+                <input
+                  type="password"
+                  value={config.apiKeys?.replicate || ''}
+                  onChange={(e) => handleApiKeyChange('replicate', e.target.value)}
+                  placeholder="r8_..."
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                />
+              </div>
+
+              {/* Together */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Together API Key</label>
+                <input
+                  type="password"
+                  value={config.apiKeys?.together || ''}
+                  onChange={(e) => handleApiKeyChange('together', e.target.value)}
+                  placeholder="..."
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                />
+              </div>
             </div>
             <p className="text-xs text-gray-500 mt-3">
               Your API keys are stored locally and never shared
+            </p>
+          </div>
+
+          {/* AI Provider Configuration */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <CpuChipIcon className="w-5 h-5 text-orange-400" />
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                AI Provider (V2.0)
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {/* Provider Selection */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">AI Provider</label>
+                <select
+                  value={config.aiConfig?.provider || AIProvider.LOCAL}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      aiConfig: {
+                        ...config.aiConfig,
+                        provider: e.target.value as AIProvider,
+                        model: config.aiConfig?.model || '',
+                      },
+                    })
+                  }
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+                >
+                  <option value={AIProvider.LOCAL}>Mock / Local (for testing)</option>
+                  <option value={AIProvider.TOGETHER}>Together AI</option>
+                  <option value={AIProvider.REPLICATE}>Replicate</option>
+                  <option value={AIProvider.OPENAI}>OpenAI</option>
+                  <option value={AIProvider.ANTHROPIC}>Anthropic</option>
+                </select>
+              </div>
+
+              {/* Model */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Model</label>
+                <input
+                  type="text"
+                  value={config.aiConfig?.model || ''}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      aiConfig: {
+                        ...config.aiConfig,
+                        provider: config.aiConfig?.provider || AIProvider.LOCAL,
+                        model: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder={
+                    config.aiConfig?.provider === AIProvider.OPENAI
+                      ? 'gpt-4'
+                      : config.aiConfig?.provider === AIProvider.ANTHROPIC
+                      ? 'claude-3-opus-20240229'
+                      : config.aiConfig?.provider === AIProvider.TOGETHER
+                      ? 'together_ai/llama-3-70b'
+                      : 'mock-gpt-4'
+                  }
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                />
+              </div>
+
+              {/* Temperature */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">
+                  Temperature: {config.aiConfig?.temperature || 0.7}
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={config.aiConfig?.temperature || 0.7}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      aiConfig: {
+                        ...config.aiConfig,
+                        provider: config.aiConfig?.provider || AIProvider.LOCAL,
+                        model: config.aiConfig?.model || '',
+                        temperature: parseFloat(e.target.value),
+                      },
+                    })
+                  }
+                  className="w-full"
+                />
+              </div>
+
+              {/* Max Tokens */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Max Tokens</label>
+                <input
+                  type="number"
+                  value={config.aiConfig?.maxTokens || 4096}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      aiConfig: {
+                        ...config.aiConfig,
+                        provider: config.aiConfig?.provider || AIProvider.LOCAL,
+                        model: config.aiConfig?.model || '',
+                        maxTokens: parseInt(e.target.value),
+                      },
+                    })
+                  }
+                  placeholder="4096"
+                  className="w-full bg-[#0A0A0A] border border-[#3A3A3A] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Configure which AI provider modules will use for generation
             </p>
           </div>
 

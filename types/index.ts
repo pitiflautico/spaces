@@ -64,14 +64,35 @@ export interface Module {
   };
 }
 
+// AI Provider types (V2.0)
+export enum AIProvider {
+  REPLICATE = 'replicate',
+  TOGETHER = 'together',
+  OPENAI = 'openai',
+  ANTHROPIC = 'anthropic',
+  LOCAL = 'local'
+}
+
+export interface AIConfiguration {
+  provider: AIProvider;
+  apiKey?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  mode?: 'streaming' | 'non-streaming';
+}
+
 export interface SpaceConfiguration {
   projectPath?: string;
   apiKeys?: {
     openai?: string;
     anthropic?: string;
     stability?: string;
+    replicate?: string;
+    together?: string;
     [key: string]: string | undefined;
   };
+  aiConfig?: AIConfiguration; // V2.0: AI Provider configuration
   preferences?: {
     autoSave?: boolean;
     darkMode?: boolean;
@@ -133,4 +154,40 @@ export interface ConnectionDragState {
   sourcePortId: string | null;
   sourceDataType: DataType | null;
   cursorPosition: Position | null;
+}
+
+// AIE Engine / Reader Engine types (V2.0 - Module 2)
+export interface AIEEngineInputs {
+  repositoryMetadata?: any;
+  fileContents?: any;
+  repoStructure?: any;
+}
+
+export interface AppIntelligence {
+  summary: string;
+  category: string;
+  subcategories: string[];
+  features: string[];
+  targetAudience: string;
+  tone: string;
+  designStyle: string;
+  keywords: string[];
+  problemsSolved: string[];
+  competitiveAngle: string;
+  brandColorsSuggested: string[];
+  iconStyleRecommendation: string;
+}
+
+export interface AIEEngineOutputs {
+  appIntelligence?: AppIntelligence;
+  aieLog?: string;
+}
+
+// AI Provider response (V2.0)
+export interface AIProviderResponse {
+  outputText: string;
+  rawResponse?: any;
+  tokensUsed?: number;
+  providerUsed: string;
+  model: string;
 }

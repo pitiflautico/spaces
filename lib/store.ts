@@ -119,11 +119,17 @@ export const useSpaceStore = create<SpaceStore>()(
         },
       },
       'reader-engine': {
-        name: 'Reader Engine',
-        size: { width: 400, height: 400 },
+        name: 'AIE Engine (Reader Engine)',
+        size: { width: 450, height: 480 },
         ports: {
-          input: [{ id: 'in-1', type: 'input', label: 'Project Metadata', connected: false, acceptedTypes: [DataType.JSON] }],
-          output: [{ id: 'out-1', type: 'output', label: 'Processed Data', connected: false, dataType: DataType.JSON }],
+          input: [
+            { id: 'in-1', type: 'input', label: 'Repository Metadata', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-2', type: 'input', label: 'File Contents', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-3', type: 'input', label: 'Repo Structure', connected: false, acceptedTypes: [DataType.JSON] },
+          ],
+          output: [
+            { id: 'out-1', type: 'output', label: 'App Intelligence', connected: false, dataType: DataType.JSON },
+          ],
         },
       },
       'naming-engine': {
