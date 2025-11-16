@@ -23,11 +23,13 @@ import {
   DocumentTextIcon,
   GlobeAltIcon,
   CubeIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import aiProvider from '@/lib/ai-provider';
 import { AI_MODELS, getDefaultModelForProvider } from '@/lib/ai-models';
 import '@/lib/adapters'; // Initialize adapters
 import MetadataVariantsPanel from './MetadataVariantsPanel';
+import { ModuleInfoPanel } from '@/components/shared/PortTooltip';
 
 interface MetadataGeneratorModuleProps {
   module: Module;
@@ -54,6 +56,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
 
   const outputs = module.outputs as MetadataGeneratorOutputs;
   const space = getCurrentSpace();
@@ -421,15 +424,30 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
   };
 
   return (
-    <div className="p-4">
-      {/* Configuration Section */}
-      <div className="space-y-4">
-        {/* Brand Info (Read-only from inputs) */}
-        <div className="bg-dark-card rounded-lg p-3 border border-dark-border">
-          <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-            <CubeIcon className="w-4 h-4" />
-            Configuration
-          </h4>
+    <>
+      <div className="p-4">
+        {/* Help Button */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-xs text-gray-500">
+            {module.ports?.input?.length || 0} inputs • {module.ports?.output?.length || 0} outputs
+          </div>
+          <button
+            onClick={() => setShowInfoPanel(true)}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
+          >
+            <InformationCircleIcon className="w-4 h-4" />
+            Help
+          </button>
+        </div>
+
+        {/* Configuration Section */}
+        <div className="space-y-4">
+          {/* Brand Info (Read-only from inputs) */}
+          <div className="bg-dark-card rounded-lg p-3 border border-dark-border">
+            <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+              <CubeIcon className="w-4 h-4" />
+              Configuration
+            </h4>
 
           {outputs?.metadataPackage && (
             <div className="space-y-1 text-xs">
@@ -923,4 +941,77 @@ function buildMetadataLog(
   log += `================================\n`;
 
   return log;
+}
+      </div>
+
+      {/* Info Panel */}
+      {showInfoPanel && (
+        <ModuleInfoPanel
+          moduleName="Metadata Generator (Module 5)"
+          moduleDescription="Generate professional App Store and Google Play metadata using AI. Creates multiple variants with different tones and target personas."
+          inputs={[
+            {
+              id: 'in-1',
+              label: 'App Intelligence',
+              description: 'Project analysis with category, features, keywords, and competitive angle. Used to create contextually relevant metadata.',
+              required: true,
+              source: 'Module 2 (AIE Engine) → Output Port 1',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-2',
+              label: 'Naming Package',
+              description: 'All naming suggestions including slogan and rationale. Provides additional branding context for metadata generation.',
+              required: true,
+              source: 'Module 3 (Naming Engine) → Output Port 1',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-3',
+              label: 'Chosen Name',
+              description: 'The final selected app name. This is the main name that will appear in the metadata title fields.',
+              required: true,
+              source: 'Module 3 (Naming Engine) → Output Port 2',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-4',
+              label: 'Icon Options',
+              description: 'Generated app icon information (optional). Can provide visual context for metadata tone, though not strictly required.',
+              required: false,
+              source: 'Module 4B (App Icon Generator) → Output Port 1',
+              dataType: 'JSON',
+            },
+          ]}
+          outputs={[
+            {
+              id: 'out-1',
+              label: 'Metadata Package',
+              description: 'ALL generated variants (1-5 versions) with different tones, target personas, and emphasis. Use this to compare options or export all variations.',
+              dataType: 'JSON',
+            },
+            {
+              id: 'out-2',
+              label: 'Chosen Metadata',
+              description: 'The FINAL selected metadata variant. Ready to use in App Store Connect and Google Play Console. Connect this to Module 7.',
+              dataType: 'JSON',
+            },
+            {
+              id: 'out-3',
+              label: 'Metadata Log',
+              description: 'Detailed log of the generation process including AI prompt, validation results, and character counts. Useful for debugging.',
+              dataType: 'TEXT',
+            },
+            {
+              id: 'out-4',
+              label: 'Flow Context',
+              description: 'Propagates branding context (language, colors, design style) to downstream modules like Module 7 (App Store Connect).',
+              dataType: 'JSON',
+            },
+          ]}
+          onClose={() => setShowInfoPanel(false)}
+        />
+      )}
+    </>
+  );
 }

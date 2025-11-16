@@ -21,7 +21,9 @@ import {
   PhotoIcon,
   CubeIcon,
   KeyIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
+import { ModuleInfoPanel } from '@/components/shared/PortTooltip';
 
 interface AppStoreConnectModuleProps {
   module: Module;
@@ -33,6 +35,7 @@ export default function AppStoreConnectModule({ module }: AppStoreConnectModuleP
   const [error, setError] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
 
   const outputs = module.outputs as AppStoreConnectOutputs;
   const inputs = (module.inputs || {}) as AppStoreConnectInputs;
@@ -157,9 +160,18 @@ export default function AppStoreConnectModule({ module }: AppStoreConnectModuleP
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#2A2A2A]">
-        <div className="flex items-center gap-2">
-          <RocketLaunchIcon className="w-5 h-5 text-purple-400" />
-          <span className="text-sm font-semibold text-white">App Store Connect</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <RocketLaunchIcon className="w-5 h-5 text-purple-400" />
+            <span className="text-sm font-semibold text-white">App Store Connect</span>
+          </div>
+          <button
+            onClick={() => setShowInfoPanel(true)}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
+          >
+            <InformationCircleIcon className="w-4 h-4" />
+            Help
+          </button>
         </div>
       </div>
 
@@ -351,6 +363,61 @@ export default function AppStoreConnectModule({ module }: AppStoreConnectModuleP
           {isProcessing ? '⏳ Running Automation...' : '🚀 Run App Store Connect'}
         </button>
       </div>
+
+      {/* Info Panel */}
+      {showInfoPanel && (
+        <ModuleInfoPanel
+          moduleName="App Store Connect (Module 7)"
+          moduleDescription="Automate app creation and configuration in App Store Connect using browser automation. Uploads metadata, assets, and configures privacy settings."
+          inputs={[
+            {
+              id: 'in-1',
+              label: 'Metadata',
+              description: 'Final selected metadata for App Store and Google Play. Contains title, description, keywords, etc. This is the core content that will be uploaded.',
+              required: true,
+              source: 'Module 5 (Metadata Generator) → Output Port 2 (Chosen Metadata)',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-2',
+              label: 'Icon',
+              description: 'App icon file (1024x1024 PNG). Optional but highly recommended. Will be uploaded as the primary app icon to App Store Connect.',
+              required: false,
+              source: 'Module 4B (App Icon Generator) → Output Port 2 (Icon Path)',
+              dataType: 'IMAGE',
+            },
+            {
+              id: 'in-3',
+              label: 'Screenshots',
+              description: 'Screenshot sets organized by device type. Optional. Will be uploaded to appropriate device categories in App Store Connect.',
+              required: false,
+              source: 'Module 6 (Screenshot Generator) → Output Port 1',
+              dataType: 'JSON',
+            },
+          ]}
+          outputs={[
+            {
+              id: 'out-1',
+              label: 'Automation Result',
+              description: 'Complete automation result including success status, what was uploaded (metadata, icon, screenshots), validation status, and any errors encountered.',
+              dataType: 'JSON',
+            },
+            {
+              id: 'out-2',
+              label: 'Connect Log',
+              description: 'Detailed execution log from the automation process. Shows every step performed, timing information, and debug details.',
+              dataType: 'TEXT',
+            },
+            {
+              id: 'out-3',
+              label: 'Validation Report',
+              description: 'App Store Connect validation results with detailed errors and warnings. Includes character limit checks and policy compliance.',
+              dataType: 'JSON',
+            },
+          ]}
+          onClose={() => setShowInfoPanel(false)}
+        />
+      )}
     </div>
   );
 }
