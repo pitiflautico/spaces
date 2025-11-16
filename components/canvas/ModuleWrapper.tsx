@@ -7,6 +7,7 @@ import {
   PlayIcon,
   Cog6ToothIcon,
   Square2StackIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { getDataTypeIcon, getDataTypeColor } from '@/lib/data-type-icons';
 
@@ -280,6 +281,35 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
 
             {/* Título */}
             <h3 className="text-white font-medium text-sm flex-1">{module.name}</h3>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1">
+              {/* Duplicate button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDuplicate();
+                }}
+                className="p-1.5 hover:bg-dark-card rounded-lg transition-colors group"
+                title="Duplicate module"
+              >
+                <Square2StackIcon className="w-4 h-4 text-gray-500 group-hover:text-blue-400" />
+              </button>
+
+              {/* Delete button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`¿Eliminar "${module.name}"?`)) {
+                    deleteModule(module.id);
+                  }
+                }}
+                className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors group"
+                title="Delete module"
+              >
+                <TrashIcon className="w-4 h-4 text-gray-500 group-hover:text-red-400" />
+              </button>
+            </div>
 
             {/* Status Badge */}
             {module.status === 'done' && (
