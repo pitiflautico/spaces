@@ -12,6 +12,51 @@ interface AppIconGeneratorModuleProps {
   module: Module;
 }
 
+/**
+ * Resize and center an image to a specific size
+ * Returns a data URL of the resized image
+ */
+async function resizeImageToSquare(imageUrl: string, targetSize: number = 1024): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = targetSize;
+      canvas.height = targetSize;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+
+      // Fill with transparent background
+      ctx.clearRect(0, 0, targetSize, targetSize);
+
+      // Calculate scaling to fit image while maintaining aspect ratio
+      const scale = Math.min(targetSize / img.width, targetSize / img.height);
+      const scaledWidth = img.width * scale;
+      const scaledHeight = img.height * scale;
+
+      // Center the image
+      const x = (targetSize - scaledWidth) / 2;
+      const y = (targetSize - scaledHeight) / 2;
+
+      // Draw image centered and scaled
+      ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+      // Convert to data URL
+      resolve(canvas.toDataURL('image/png'));
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = imageUrl;
+  });
+}
+
 // Icon Style Presets - Guide AI generation for app icons
 const ICON_STYLES = {
   flat: {
@@ -182,6 +227,71 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
         ...(logoFlowContext || {}),
         ...(brandingFlowContext || {}),
       };
+
+      // ============================================================
+      // MODE: RESIZE FROM LOGO
+      // ============================================================
+      if (generationMode === 'resize') {
+        // Resize mode requires a logo
+        if (!logoUrl) {
+          throw new Error(
+            'Resize mode requires a logo.\n\n' +
+            'Please connect a logo from Module 4A (Port 1) or switch to AI Generate mode.'
+          );
+        }
+
+        addLog('info', `Resizing logo to app icon sizes (1024x1024)...`, module.id);
+
+        // Resize the logo to 1024x1024
+        const resizedIcon1024 = await resizeImageToSquare(logoUrl, 1024);
+        const resizedIcon512 = await resizeImageToSquare(logoUrl, 512);
+
+        // Create a single variant with resized logo
+        const variant: AppIconVariant = {
+          id: 1,
+          variant_name: 'Resized Logo',
+          design_concept: 'Direct resize from logo',
+          target_persona: 'All users',
+          tone: 'Brand consistent',
+          image_url: resizedIcon1024,
+          image_prompt: 'N/A (resized from logo)',
+          ios_sizes: {
+            app_store_1024: resizedIcon1024,
+          },
+          android_sizes: {
+            google_play_512: resizedIcon512,
+          },
+          generated_at: new Date().toISOString(),
+        };
+
+        // Create icon options package
+        const iconOptions: AppIconOptionsPackage = {
+          brand_name: brandingData?.chosenName?.final_name || 'App',
+          num_variants: 1,
+          variants: [variant],
+          base_style: 'resize',
+          generated_at: new Date().toISOString(),
+        };
+
+        // Update module outputs
+        const newOutputs: AppIconGeneratorOutputs = {
+          iconOptions,
+          flowContext,
+        };
+
+        updateModule(module.id, {
+          status: 'done',
+          outputs: newOutputs,
+        });
+
+        addLog('success', `✓ Icon resized successfully!`, module.id);
+        setIsProcessing(false);
+        return;
+      }
+
+      // ============================================================
+      // MODE: AI GENERATION
+      // ============================================================
 
       // Build icon brief from available data
       const iconBrief: IconBrief = buildIconBrief(
