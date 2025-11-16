@@ -66,6 +66,12 @@ const moduleCategories: ModuleCategory[] = [
         icon: '📝',
       },
       {
+        type: 'appstore-connect',
+        name: 'App Store Connect',
+        description: 'Automate app creation and configuration in App Store Connect',
+        icon: '🚀',
+      },
+      {
         type: 'marketing-pack',
         name: 'Marketing Pack',
         description: 'Complete marketing materials for your app',

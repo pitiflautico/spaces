@@ -210,6 +210,23 @@ export const useSpaceStore = create<SpaceStore>()(
           ],
         },
       },
+      'appstore-connect': {
+        name: 'App Store Connect',
+        size: { width: 450, height: 550 },
+        ports: {
+          input: [
+            { id: 'in-1', type: 'input', label: 'Metadata', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-2', type: 'input', label: 'Icon', connected: false, acceptedTypes: [DataType.IMAGE] },
+            { id: 'in-3', type: 'input', label: 'Screenshots', connected: false, acceptedTypes: [DataType.JSON] },
+            { id: 'in-4', type: 'input', label: 'Build Config', connected: false, acceptedTypes: [DataType.JSON] },
+          ],
+          output: [
+            { id: 'out-1', type: 'output', label: 'Automation Result', connected: false, dataType: DataType.JSON },
+            { id: 'out-2', type: 'output', label: 'Connect Log', connected: false, dataType: DataType.TEXT },
+            { id: 'out-3', type: 'output', label: 'Validation Report', connected: false, dataType: DataType.JSON },
+          ],
+        },
+      },
       'marketing-pack': {
         name: 'Marketing Pack',
         size: { width: 400, height: 400 },

@@ -11,6 +11,7 @@ import {
   MegaphoneIcon,
   DevicePhoneMobileIcon,
   ClipboardDocumentListIcon,
+  RocketLaunchIcon,
 } from '@heroicons/react/24/outline';
 import ModuleWrapper from './ModuleWrapper';
 import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
@@ -21,6 +22,7 @@ import LogoVariantModule from '@/components/modules/LogoVariantModule';
 import AppIconGeneratorModule from '@/components/modules/AppIconGeneratorModule';
 import AppIconVariantModule from '@/components/modules/AppIconVariantModule';
 import MetadataGeneratorModule from '@/components/modules/MetadataGeneratorModule';
+import AppStoreConnectModule from '@/components/modules/AppStoreConnectModule';
 
 interface ModuleBlockProps {
   module: Module;
@@ -60,6 +62,8 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <DevicePhoneMobileIcon className="w-5 h-5 text-cyan-400" />;
       case 'metadata-generator':
         return <ClipboardDocumentListIcon className="w-5 h-5 text-orange-400" />;
+      case 'appstore-connect':
+        return <RocketLaunchIcon className="w-5 h-5 text-purple-400" />;
       case 'marketing-pack':
         return <MegaphoneIcon className="w-5 h-5 text-green-400" />;
       default:
@@ -212,6 +216,9 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
 
       case 'metadata-generator':
         return <MetadataGeneratorModule module={module} />;
+
+      case 'appstore-connect':
+        return <AppStoreConnectModule module={module} />;
 
       case 'marketing-pack':
         return (

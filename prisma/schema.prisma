@@ -1,0 +1,245 @@
+// Marketing Spaces Database Schema
+// Using Prisma ORM with MySQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// SPACES - Main workspace container
+// ============================================================================
+
+model Space {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Canvas state
+  zoom        Float    @default(1.0)
+  panX        Float    @default(0)
+  panY        Float    @default(0)
+
+  // Configuration (JSON)
+  configuration Json?
+
+  // Relations
+  modules     Module[]
+  connections Connection[]
+  logs        LogEntry[]
+
+  @@index([createdAt])
+  @@map("spaces")
+}
+
+// ============================================================================
+// MODULES - Individual processing modules on canvas
+// ============================================================================
+
+model Module {
+  id        String   @id @default(uuid())
+  spaceId   String
+  type      String   // 'local-analysis', 'reader-engine', 'naming-engine', etc.
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Position on canvas
+  positionX Float
+  positionY Float
+
+  // Module state
+  status    String   @default("idle") // 'idle', 'running', 'done', 'error', 'warning'
+
+  // Module data (JSON)
+  inputs    Json?    // Configuration and inputs
+  outputs   Json?    // Generated outputs
+  ports     Json?    // Port configuration
+
+  // Error handling
+  errorMessage String? @db.Text
+
+  // Relations
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  // Connections where this module is source
+  sourceConnections Connection[] @relation("SourceModule")
+  // Connections where this module is target
+  targetConnections Connection[] @relation("TargetModule")
+
+  @@index([spaceId])
+  @@index([type])
+  @@index([status])
+  @@map("modules")
+}
+
+// ============================================================================
+// CONNECTIONS - Links between modules
+// ============================================================================
+
+model Connection {
+  id        String   @id @default(uuid())
+  spaceId   String
+  createdAt DateTime @default(now())
+
+  // Source module and port
+  sourceModuleId String
+  sourcePortId   String
+
+  // Target module and port
+  targetModuleId String
+  targetPortId   String
+
+  // Connection state
+  isValid   Boolean  @default(true)
+  dataType  String?  // 'image', 'text', 'json', etc.
+
+  // Relations
+  space        Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  sourceModule Module @relation("SourceModule", fields: [sourceModuleId], references: [id], onDelete: Cascade)
+  targetModule Module @relation("TargetModule", fields: [targetModuleId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceModuleId, sourcePortId, targetModuleId, targetPortId])
+  @@index([spaceId])
+  @@index([sourceModuleId])
+  @@index([targetModuleId])
+  @@map("connections")
+}
+
+// ============================================================================
+// LOGS - Activity and execution logs
+// ============================================================================
+
+model LogEntry {
+  id        String   @id @default(uuid())
+  spaceId   String
+  timestamp DateTime @default(now())
+
+  level     String   // 'info', 'warning', 'error', 'success'
+  message   String   @db.Text
+  moduleId  String?  // Optional: associated module
+
+  // Additional context (JSON)
+  metadata  Json?
+
+  // Relations
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId])
+  @@index([timestamp])
+  @@index([level])
+  @@map("logs")
+}
+
+// ============================================================================
+// API KEYS - Encrypted storage for user API keys
+// ============================================================================
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  userId    String   // Will be used when auth is implemented
+  provider  String   // 'openai', 'anthropic', 'together', etc.
+
+  // Encrypted key
+  keyHash   String   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastUsed  DateTime?
+
+  // Track usage
+  usageCount Int     @default(0)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// ============================================================================
+// TEMPLATES - Saved space templates
+// ============================================================================
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  category    String   // 'marketing', 'branding', 'custom'
+
+  // Template data (complete space snapshot)
+  spaceData   Json
+
+  // Metadata
+  thumbnail   String?  @db.Text
+  isPublic    Boolean  @default(false)
+  downloads   Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPublic])
+  @@map("templates")
+}
+
+// ============================================================================
+// EXECUTION HISTORY - Track module executions
+// ============================================================================
+
+model ExecutionHistory {
+  id          String   @id @default(uuid())
+  moduleId    String
+  moduleType  String
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?     // Duration in milliseconds
+
+  status      String   // 'success', 'error', 'cancelled'
+
+  // Execution details
+  inputData   Json?
+  outputData  Json?
+  errorData   Json?
+
+  // AI provider info
+  aiProvider  String?
+  aiModel     String?
+  tokensUsed  Int?
+
+  @@index([moduleId])
+  @@index([moduleType])
+  @@index([startedAt])
+  @@map("execution_history")
+}
+
+// ============================================================================
+// GENERATED ASSETS - Track generated files
+// ============================================================================
+
+model GeneratedAsset {
+  id          String   @id @default(uuid())
+  moduleId    String
+  moduleType  String
+
+  assetType   String   // 'logo', 'icon', 'metadata', 'screenshot'
+  fileName    String
+  filePath    String   @db.Text
+  fileSize    Int      // Size in bytes
+  mimeType    String
+
+  // Metadata
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+
+  @@index([moduleId])
+  @@index([assetType])
+  @@index([createdAt])
+  @@map("generated_assets")
+}

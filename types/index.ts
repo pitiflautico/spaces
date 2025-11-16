@@ -19,6 +19,7 @@ export type ModuleType =
   | 'app-icon-generator'
   | 'app-icon-variant'
   | 'metadata-generator'
+  | 'appstore-connect'
   | 'marketing-pack';
 
 // Data types for connections (v1.1)
@@ -537,4 +538,105 @@ export interface MetadataGeneratorOutputs {
   chosenMetadata?: ChosenMetadata;         // Final selected variant
   metadataLog?: string;                    // Generation log
   flowContext?: FlowContext;               // Propagated context
+}
+
+// ============================================================================
+// MODULE 7: APP STORE CONNECT AUTOMATION
+// ============================================================================
+
+/**
+ * Build configuration for App Store Connect
+ */
+export interface BuildConfig {
+  bundle_id: string;                       // com.company.app
+  version: string;                         // 1.0.0
+  build_number: string;                    // 1
+  team_id: string;                         // Apple Team ID
+  localizations: string[];                 // ["en-US", "es-ES"]
+  privacy_policy_url?: string;             // Privacy policy URL
+  support_url?: string;                    // Support URL
+  marketing_url?: string;                  // Marketing URL
+  uses_encryption?: boolean;               // Encryption declaration
+  release_notes?: string;                  // What's new in this version
+}
+
+/**
+ * Screenshot set organized by device size
+ */
+export interface ScreenshotSet {
+  screenshots_by_device: {
+    [deviceSize: string]: Array<{           // "6.7", "6.5", "5.5"
+      path: string;                         // File path
+      resolution: string;                   // "1290x2796"
+      order: number;                        // Display order (1-10)
+    }>;
+  };
+  chosen_set: string;                       // Selected variant name
+}
+
+/**
+ * Validation error from App Store Connect
+ */
+export interface ValidationError {
+  code: string;                             // Error code (e.g., "MISSING_PRIVACY_POLICY")
+  message: string;                          // Human-readable message
+  severity: 'error' | 'warning';           // Error severity
+  field: string;                            // Affected field
+}
+
+/**
+ * Validation warning from App Store Connect
+ */
+export interface ValidationWarning {
+  code: string;                             // Warning code
+  message: string;                          // Human-readable message
+  severity: 'warning';                      // Always warning
+  field: string;                            // Affected field
+}
+
+/**
+ * Validation result from App Store Connect
+ */
+export interface ValidationResult {
+  passed: boolean;                          // True if no errors
+  errors: ValidationError[];                // Validation errors
+  warnings: ValidationWarning[];            // Validation warnings
+  timestamp: string;                        // ISO 8601 timestamp
+}
+
+/**
+ * Result of App Store Connect automation
+ */
+export interface AppStoreConnectResult {
+  status: 'success' | 'partial' | 'failed'; // Overall status
+  app_created: boolean;                     // App was created (or found)
+  metadata_uploaded: boolean;               // Metadata uploaded successfully
+  icon_uploaded: boolean;                   // Icon uploaded successfully
+  screenshots_uploaded: boolean;            // Screenshots uploaded
+  build_selected: boolean;                  // Build associated with version
+  privacy_configured: boolean;              // Privacy settings configured
+  validation_passed: boolean;               // App Store validation passed
+  errors: string[];                         // Error messages
+  warnings: string[];                       // Warning messages
+  execution_time_ms: number;                // Total execution time
+  timestamp: string;                        // ISO 8601 timestamp
+}
+
+/**
+ * Inputs for App Store Connect Module
+ */
+export interface AppStoreConnectInputs {
+  buildConfig?: BuildConfig;                // Build configuration
+  autoSubmit?: boolean;                     // Auto-submit for review
+  skipScreenshots?: boolean;                // Skip screenshot upload
+}
+
+/**
+ * Outputs from App Store Connect Module
+ */
+export interface AppStoreConnectOutputs {
+  automationResult?: AppStoreConnectResult; // Automation result
+  connectLog?: string;                      // Detailed log
+  validationReport?: ValidationResult;      // Validation report
+  appStoreUrl?: string;                     // URL to app in App Store Connect
 }
