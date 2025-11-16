@@ -23,6 +23,9 @@ const fs = require('fs');
 const winston = require('winston');
 require('dotenv').config();
 
+// Import App Store Connect automation
+const AppStoreConnectAutomation = require('../scripts/appstore-connect');
+
 // ============================================================
 // LOGGER SETUP
 // ============================================================
@@ -748,170 +751,45 @@ app.post('/run-appstore', async (req, res) => {
     logger.info(`[App Store Connect] Starting automation for ${build_config.bundle_id}`);
     logger.info(`[App Store Connect] Version: ${build_config.version} (${build_config.build_number})`);
 
-    const startTime = Date.now();
-    const logLines = [];
-
-    // Helper function to log
-    const log = (message) => {
-      const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
-      logLines.push(`[${timestamp}] ${message}`);
-      logger.info(`[ASC] ${message}`);
+    // Get Apple ID credentials from environment
+    const credentials = {
+      appleId: process.env.APPLE_ID || build_config.apple_id,
+      password: process.env.APPLE_PASSWORD || build_config.apple_password,
     };
 
-    // ========================================
-    // MOCK AUTOMATION (Replace with Playwright implementation)
-    // ========================================
+    if (!credentials.appleId || !credentials.password) {
+      return res.status(400).json({
+        error: 'Missing Apple ID credentials. Set APPLE_ID and APPLE_PASSWORD in .env or provide in build_config'
+      });
+    }
 
-    log('Starting App Store Connect automation...');
+    // Create automation instance
+    const automation = new AppStoreConnectAutomation(logger, credentials);
 
-    // Simulate login
-    log('✓ Logging in to App Store Connect...');
-    await sleep(500);
-    log('✓ Login successful (session cached)');
+    // Run automation (headless by default, set to false for debugging)
+    const headless = process.env.HEADLESS !== 'false';
+    const automationResult = await automation.run(metadata, icon_path, screenshots, build_config, headless);
 
-    // Simulate app creation/detection
-    log(`Checking if app exists: ${build_config.bundle_id}`);
-    await sleep(300);
-    const appExists = Math.random() > 0.5; // Random for demo
-    if (appExists) {
-      log('✓ App found in App Store Connect');
+    if (automationResult.success) {
+      logger.info(`[App Store Connect] Automation completed: ${automationResult.result.status}`);
+
+      res.json({
+        status: 'success',
+        result: automationResult.result,
+        validation: automationResult.validation,
+        log: automationResult.log,
+        message: 'App Store Connect automation completed successfully',
+      });
     } else {
-      log('Creating new app...');
-      await sleep(800);
-      log('✓ App created successfully');
+      logger.error(`[App Store Connect] Automation failed: ${automationResult.error}`);
+
+      res.status(500).json({
+        status: 'error',
+        error: automationResult.error,
+        log: automationResult.log,
+        message: 'App Store Connect automation failed',
+      });
     }
-
-    // Simulate metadata upload
-    log('Uploading app metadata...');
-    await sleep(400);
-    log(`  - Title: ${metadata.app_store?.title || 'N/A'}`);
-    log(`  - Subtitle: ${metadata.app_store?.subtitle || 'N/A'}`);
-    log(`  - Keywords: ${metadata.app_store?.keywords || 'N/A'}`);
-    await sleep(200);
-    log('✓ Metadata uploaded');
-
-    // Simulate icon upload
-    const iconUploaded = !!icon_path;
-    if (icon_path) {
-      log('Uploading app icon (1024x1024)...');
-      await sleep(300);
-      log('✓ Icon uploaded successfully');
-    } else {
-      log('⚠ No icon provided (skipping)');
-    }
-
-    // Simulate screenshots upload
-    const screenshotsUploaded = !!screenshots && Object.keys(screenshots.screenshots_by_device || {}).length > 0;
-    if (screenshotsUploaded) {
-      log('Uploading screenshots...');
-      const deviceSizes = Object.keys(screenshots.screenshots_by_device);
-      for (const size of deviceSizes) {
-        const count = screenshots.screenshots_by_device[size].length;
-        log(`  - ${size}": ${count} screenshots`);
-        await sleep(200);
-      }
-      log('✓ Screenshots uploaded');
-    } else {
-      log('⚠ No screenshots provided (skipping)');
-    }
-
-    // Simulate build selection
-    log(`Looking for build ${build_config.version} (${build_config.build_number})...`);
-    await sleep(400);
-    const buildFound = Math.random() > 0.3; // 70% chance for demo
-    if (buildFound) {
-      log(`✓ Build ${build_config.version} (${build_config.build_number}) found and selected`);
-    } else {
-      log(`⚠ Build ${build_config.version} (${build_config.build_number}) not found in TestFlight`);
-    }
-
-    // Simulate privacy configuration
-    log('Configuring privacy settings...');
-    await sleep(300);
-    if (build_config.privacy_policy_url) {
-      log(`  - Privacy Policy URL: ${build_config.privacy_policy_url}`);
-    }
-    log('✓ Privacy settings configured');
-
-    // Simulate validation
-    log('Running App Store Connect validation...');
-    await sleep(600);
-
-    const validationErrors = [];
-    const validationWarnings = [];
-
-    // Check for common issues
-    if (!build_config.privacy_policy_url) {
-      validationErrors.push('Missing privacy policy URL');
-    }
-
-    if (!screenshotsUploaded) {
-      validationWarnings.push('Consider adding screenshots for better visibility');
-    }
-
-    if (!buildFound) {
-      validationErrors.push(`Build ${build_config.version} (${build_config.build_number}) not available in TestFlight`);
-    }
-
-    const validationPassed = validationErrors.length === 0;
-
-    if (validationPassed) {
-      log('✓ Validation passed!');
-    } else {
-      log('⚠ Validation completed with errors:');
-      validationErrors.forEach(err => log(`  - ${err}`));
-    }
-
-    const endTime = Date.now();
-    const executionTime = endTime - startTime;
-
-    log(`Automation completed in ${(executionTime / 1000).toFixed(1)}s`);
-
-    // ========================================
-    // BUILD RESPONSE
-    // ========================================
-
-    const result = {
-      status: validationPassed ? 'success' : (validationErrors.length > 0 ? 'partial' : 'failed'),
-      app_created: !appExists,
-      metadata_uploaded: true,
-      icon_uploaded: iconUploaded,
-      screenshots_uploaded: screenshotsUploaded,
-      build_selected: buildFound,
-      privacy_configured: true,
-      validation_passed: validationPassed,
-      errors: validationErrors,
-      warnings: validationWarnings,
-      execution_time_ms: executionTime,
-      timestamp: new Date().toISOString(),
-    };
-
-    const validation = {
-      passed: validationPassed,
-      errors: validationErrors.map(msg => ({
-        code: 'VALIDATION_ERROR',
-        message: msg,
-        severity: 'error',
-        field: 'unknown'
-      })),
-      warnings: validationWarnings.map(msg => ({
-        code: 'VALIDATION_WARNING',
-        message: msg,
-        severity: 'warning',
-        field: 'unknown'
-      })),
-      timestamp: new Date().toISOString(),
-    };
-
-    logger.info(`[App Store Connect] Automation completed: ${result.status}`);
-
-    res.json({
-      status: 'success',
-      result,
-      validation,
-      log: logLines.join('\n'),
-      message: 'App Store Connect automation completed (MOCK MODE - Replace with Playwright for production)',
-    });
 
   } catch (error) {
     logger.error('[App Store Connect] Error:', error.message);
