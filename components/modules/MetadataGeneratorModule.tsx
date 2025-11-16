@@ -639,6 +639,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
             📊 View Log
           </button>
         )}
+        </div>
       </div>
 
       {/* Metadata Variants Panel */}
