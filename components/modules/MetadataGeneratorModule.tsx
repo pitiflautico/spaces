@@ -424,7 +424,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
   };
 
   return (
-    <div className="relative">
+    <>
       <div className="p-4">
         {/* Help Button */}
         <div className="mb-4 flex items-center justify-between">
@@ -648,75 +648,6 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
           selectedVariantId={outputs.chosenMetadata?.variant_id}
           onSelectVariant={handleSelectVariant}
           onClose={() => setIsPanelOpen(false)}
-        />
-      )}
-
-      {/* Info Panel */}
-      {showInfoPanel && (
-        <ModuleInfoPanel
-          moduleName="Metadata Generator (Module 5)"
-          moduleDescription="Generate professional App Store and Google Play metadata using AI. Creates multiple variants with different tones and target personas."
-          inputs={[
-            {
-              id: 'in-1',
-              label: 'App Intelligence',
-              description: 'Project analysis with category, features, keywords, and competitive angle. Used to create contextually relevant metadata.',
-              required: true,
-              source: 'Module 2 (AIE Engine) → Output Port 1',
-              dataType: 'JSON',
-            },
-            {
-              id: 'in-2',
-              label: 'Naming Package',
-              description: 'All naming suggestions including slogan and rationale. Provides additional branding context for metadata generation.',
-              required: true,
-              source: 'Module 3 (Naming Engine) → Output Port 1',
-              dataType: 'JSON',
-            },
-            {
-              id: 'in-3',
-              label: 'Chosen Name',
-              description: 'The final selected app name. This is the main name that will appear in the metadata title fields.',
-              required: true,
-              source: 'Module 3 (Naming Engine) → Output Port 2',
-              dataType: 'JSON',
-            },
-            {
-              id: 'in-4',
-              label: 'Icon Options',
-              description: 'Generated app icon information (optional). Can provide visual context for metadata tone, though not strictly required.',
-              required: false,
-              source: 'Module 4B (App Icon Generator) → Output Port 1',
-              dataType: 'JSON',
-            },
-          ]}
-          outputs={[
-            {
-              id: 'out-1',
-              label: 'Metadata Package',
-              description: 'ALL generated variants (1-5 versions) with different tones, target personas, and emphasis. Use this to compare options or export all variations.',
-              dataType: 'JSON',
-            },
-            {
-              id: 'out-2',
-              label: 'Chosen Metadata',
-              description: 'The FINAL selected metadata variant. Ready to use in App Store Connect and Google Play Console. Connect this to Module 7.',
-              dataType: 'JSON',
-            },
-            {
-              id: 'out-3',
-              label: 'Metadata Log',
-              description: 'Detailed log of the generation process including AI prompt, validation results, and character counts. Useful for debugging.',
-              dataType: 'TEXT',
-            },
-            {
-              id: 'out-4',
-              label: 'Flow Context',
-              description: 'Propagates branding context (language, colors, design style) to downstream modules like Module 7 (App Store Connect).',
-              dataType: 'JSON',
-            },
-          ]}
-          onClose={() => setShowInfoPanel(false)}
         />
       )}
     </div>
@@ -1010,4 +941,77 @@ function buildMetadataLog(
   log += `================================\n`;
 
   return log;
+}
+      </div>
+
+      {/* Info Panel */}
+      {showInfoPanel && (
+        <ModuleInfoPanel
+          moduleName="Metadata Generator (Module 5)"
+          moduleDescription="Generate professional App Store and Google Play metadata using AI. Creates multiple variants with different tones and target personas."
+          inputs={[
+            {
+              id: 'in-1',
+              label: 'App Intelligence',
+              description: 'Project analysis with category, features, keywords, and competitive angle. Used to create contextually relevant metadata.',
+              required: true,
+              source: 'Module 2 (AIE Engine) → Output Port 1',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-2',
+              label: 'Naming Package',
+              description: 'All naming suggestions including slogan and rationale. Provides additional branding context for metadata generation.',
+              required: true,
+              source: 'Module 3 (Naming Engine) → Output Port 1',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-3',
+              label: 'Chosen Name',
+              description: 'The final selected app name. This is the main name that will appear in the metadata title fields.',
+              required: true,
+              source: 'Module 3 (Naming Engine) → Output Port 2',
+              dataType: 'JSON',
+            },
+            {
+              id: 'in-4',
+              label: 'Icon Options',
+              description: 'Generated app icon information (optional). Can provide visual context for metadata tone, though not strictly required.',
+              required: false,
+              source: 'Module 4B (App Icon Generator) → Output Port 1',
+              dataType: 'JSON',
+            },
+          ]}
+          outputs={[
+            {
+              id: 'out-1',
+              label: 'Metadata Package',
+              description: 'ALL generated variants (1-5 versions) with different tones, target personas, and emphasis. Use this to compare options or export all variations.',
+              dataType: 'JSON',
+            },
+            {
+              id: 'out-2',
+              label: 'Chosen Metadata',
+              description: 'The FINAL selected metadata variant. Ready to use in App Store Connect and Google Play Console. Connect this to Module 7.',
+              dataType: 'JSON',
+            },
+            {
+              id: 'out-3',
+              label: 'Metadata Log',
+              description: 'Detailed log of the generation process including AI prompt, validation results, and character counts. Useful for debugging.',
+              dataType: 'TEXT',
+            },
+            {
+              id: 'out-4',
+              label: 'Flow Context',
+              description: 'Propagates branding context (language, colors, design style) to downstream modules like Module 7 (App Store Connect).',
+              dataType: 'JSON',
+            },
+          ]}
+          onClose={() => setShowInfoPanel(false)}
+        />
+      )}
+    </>
+  );
 }
