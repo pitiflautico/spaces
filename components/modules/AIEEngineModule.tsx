@@ -89,6 +89,12 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       setError(null);
       updateModule(module.id, { status: 'running' });
 
+      // Get fresh space data from store (not from closure)
+      const currentSpace = useSpaceStore.getState().spaces.find(s => s.id === useSpaceStore.getState().currentSpaceId);
+      if (!currentSpace) {
+        throw new Error('No active space found');
+      }
+
       // Use module's own AI configuration
       if (!selectedProvider || !selectedModel) {
         throw new Error('Please select an AI provider and model.');
@@ -96,7 +102,7 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
 
       // Get input from connected module
       // First, find the connection to this module
-      const connections = space?.connections || [];
+      const connections = currentSpace.connections || [];
       const incomingConnection = connections.find(
         (conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1'
       );
@@ -106,7 +112,7 @@ export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
       }
 
       // Get the source module
-      const sourceModule = space?.modules.find((m) => m.id === incomingConnection.sourceModuleId);
+      const sourceModule = currentSpace.modules.find((m) => m.id === incomingConnection.sourceModuleId);
       if (!sourceModule) {
         throw new Error('Source module not found. Please check the connection.');
       }

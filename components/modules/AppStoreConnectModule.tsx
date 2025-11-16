@@ -66,6 +66,12 @@ export default function AppStoreConnectModule({ module }: AppStoreConnectModuleP
       setError(null);
       updateModule(module.id, { status: 'running' });
 
+      // Get fresh space data from store (not from closure)
+      const currentSpace = useSpaceStore.getState().spaces.find(s => s.id === useSpaceStore.getState().currentSpaceId);
+      if (!currentSpace) {
+        throw new Error('No active space found');
+      }
+
       // Validate build config
       if (!inputs.buildConfig) {
         throw new Error('Build configuration is required. Please configure the module first.');
@@ -77,14 +83,15 @@ export default function AppStoreConnectModule({ module }: AppStoreConnectModuleP
         throw new Error('Bundle ID, Version, Build Number, and Team ID are required.');
       }
 
-      // Get connected data
+      // Get connected data using fresh space data
+      const connections = currentSpace.connections || [];
       const metadataConn = connections.find(c => c.targetModuleId === module.id && c.targetPortId === 'in-1');
       const iconConn = connections.find(c => c.targetModuleId === module.id && c.targetPortId === 'in-2');
       const screenshotsConn = connections.find(c => c.targetModuleId === module.id && c.targetPortId === 'in-3');
 
-      const metadataModule = metadataConn ? space?.modules.find(m => m.id === metadataConn.sourceModuleId) : null;
-      const iconModule = iconConn ? space?.modules.find(m => m.id === iconConn.sourceModuleId) : null;
-      const screenshotsModule = screenshotsConn ? space?.modules.find(m => m.id === screenshotsConn.sourceModuleId) : null;
+      const metadataModule = metadataConn ? currentSpace.modules.find(m => m.id === metadataConn.sourceModuleId) : null;
+      const iconModule = iconConn ? currentSpace.modules.find(m => m.id === iconConn.sourceModuleId) : null;
+      const screenshotsModule = screenshotsConn ? currentSpace.modules.find(m => m.id === screenshotsConn.sourceModuleId) : null;
 
       const chosenMetadata: ChosenMetadata | undefined = metadataModule?.outputs?.chosenMetadata;
       const iconPath: string | undefined = iconModule?.outputs?.iconPath;
