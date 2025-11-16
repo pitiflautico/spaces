@@ -719,7 +719,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
           onClose={() => setShowInfoPanel(false)}
         />
       )}
-    </div>
+    </>
   );
 }
 
