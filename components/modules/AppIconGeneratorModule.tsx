@@ -124,14 +124,15 @@ const IMAGE_AI_MODELS = {
  * Each variant spawns as a separate node on the canvas.
  */
 export default function AppIconGeneratorModule({ module }: AppIconGeneratorModuleProps) {
-  const { updateModule, getCurrentSpace, addLog, addModule, addConnection } = useSpaceStore();
+  const { updateModule, addLog, addModule, addConnection } = useSpaceStore();
+  // Use reactive selector to always get fresh space data (including API keys)
+  const space = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [numVariants, setNumVariants] = useState<number>(3);
   const [selectedStyle, setSelectedStyle] = useState<IconStyleKey>('flat');
 
   const outputs = module.outputs as AppIconGeneratorOutputs;
-  const space = getCurrentSpace();
 
   // Get module inputs for AI config and mode
   const inputs = (module.inputs || {}) as any;
