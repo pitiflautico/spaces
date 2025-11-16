@@ -70,7 +70,7 @@ const FLOW_STEPS: FlowStep[] = [
     name: 'Generate Metadata',
     description: 'App Store & Play Store descriptions',
     icon: '📝',
-    requiredInputs: ['reader-engine', 'naming-engine'],
+    requiredInputs: ['reader-engine', 'naming-engine', 'naming-engine'], // in-1: AppIntelligence, in-2: NamingPackage, in-3: ChosenName
     hasVariants: true,
   },
   {
@@ -170,6 +170,9 @@ export default function FlowWizardPanel({ isOpen, onClose }: FlowWizardPanelProp
     const step = FLOW_STEPS[currentStepIndex];
     if (!step.requiredInputs) return;
 
+    // Track how many times we've seen each module type
+    const moduleTypeCounts: Record<string, number> = {};
+
     // Find previous modules by type
     step.requiredInputs.forEach((requiredType, index) => {
       // Find the step that provides this input
@@ -179,8 +182,13 @@ export default function FlowWizardPanel({ isOpen, onClose }: FlowWizardPanelProp
       const prevModule = flowModules.get(prevStepIndex);
       if (!prevModule) return;
 
+      // Determine which output to use
+      // If we've seen this module type before, use the next output
+      const outputIndex = moduleTypeCounts[requiredType] || 0;
+      moduleTypeCounts[requiredType] = outputIndex + 1;
+
       // Connect output of previous to input of current
-      const sourcePort = prevModule.ports.output[0]; // Use first output
+      const sourcePort = prevModule.ports.output[outputIndex]; // Use appropriate output
       const targetPort = currentModule.ports.input[index]; // Use corresponding input
 
       if (sourcePort && targetPort) {
