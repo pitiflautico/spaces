@@ -302,13 +302,23 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
       console.log(prompt.substring(0, 500));
       console.log('===========================================');
 
-      // Get API key from space configuration (aiConfig stores key for selected provider)
-      const apiKey = space?.configuration?.aiConfig?.provider === selectedProvider
-        ? space?.configuration?.aiConfig?.apiKey
-        : undefined;
+      // Get API key from space configuration
+      // API keys are stored per provider in apiKeys object
+      const getApiKey = (provider: AIProvider): string | undefined => {
+        const keys = space?.configuration?.apiKeys || {};
+        switch (provider) {
+          case AIProvider.OPENAI: return keys.openai;
+          case AIProvider.ANTHROPIC: return keys.anthropic;
+          case AIProvider.REPLICATE: return keys.replicate;
+          case AIProvider.TOGETHER: return keys.together;
+          default: return undefined;
+        }
+      };
+
+      const apiKey = getApiKey(selectedProvider);
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings (AI Provider tab).`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings (API Keys tab).`);
       }
 
       // Call AI provider
