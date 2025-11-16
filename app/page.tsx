@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/sidebar/Sidebar';
 import Canvas from '@/components/canvas/Canvas';
 import AddModuleButton from '@/components/canvas/AddModuleButton';
+import ToastContainer from '@/components/shared/ToastContainer';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { useSpaceStore } from '@/lib/store';
 
 export default function Home() {
-  const { spaces, createSpace, setCurrentSpace } = useSpaceStore();
+  const { spaces, createSpace, setCurrentSpace, confirmDialog, hideConfirm } = useSpaceStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Wait for Zustand to hydrate from localStorage
@@ -48,6 +50,19 @@ export default function Home() {
         {/* Add Module Button */}
         <AddModuleButton />
       </div>
+
+      {/* Global UI Components */}
+      <ToastContainer />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={hideConfirm}
+      />
     </main>
   );
 }

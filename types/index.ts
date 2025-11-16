@@ -640,3 +640,25 @@ export interface AppStoreConnectOutputs {
   validationReport?: ValidationResult;      // Validation report
   appStoreUrl?: string;                     // URL to app in App Store Connect
 }
+
+// Toast notifications
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+export interface Toast {
+  id: string;
+  type: ToastType;
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
+// Confirm dialog
+export interface ConfirmDialogState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'danger' | 'warning' | 'info';
+  onConfirm: () => void;
+}

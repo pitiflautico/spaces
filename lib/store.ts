@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError, SpaceConfiguration, LogEntry, LogType } from '@/types';
+import type { Space, Module, ModuleConnection, CanvasState, Position, ModuleType, ConnectionDragState, ValidationResult, ConnectionError, SpaceConfiguration, LogEntry, LogType, Toast, ToastType, ConfirmDialogState } from '@/types';
 import { DataType, ConnectionErrorType } from '@/types';
 
 interface SpaceStore {
@@ -9,6 +9,8 @@ interface SpaceStore {
   canvasState: CanvasState;
   selectedModuleId: string | null;
   connectionDragState: ConnectionDragState;
+  toasts: Toast[];
+  confirmDialog: ConfirmDialogState;
 
   // Space actions
   createSpace: (name: string) => void;
@@ -48,6 +50,14 @@ interface SpaceStore {
   addLog: (type: LogType, message: string, moduleId?: string) => void;
   clearLogs: () => void;
 
+  // Toast actions
+  showToast: (type: ToastType, title: string, message?: string, duration?: number) => void;
+  removeToast: (id: string) => void;
+
+  // Confirm dialog actions
+  showConfirm: (title: string, message: string, onConfirm: () => void, options?: { confirmText?: string; cancelText?: string; type?: 'danger' | 'warning' | 'info' }) => void;
+  hideConfirm: () => void;
+
   // Utility
   getCurrentSpace: () => Space | null;
 }
@@ -68,6 +78,13 @@ export const useSpaceStore = create<SpaceStore>()(
         sourcePortId: null,
         sourceDataType: null,
         cursorPosition: null,
+      },
+      toasts: [],
+      confirmDialog: {
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
       },
 
   createSpace: (name: string) => {
@@ -742,6 +759,50 @@ export const useSpaceStore = create<SpaceStore>()(
       getCurrentSpace: () => {
         const state = get();
         return state.spaces.find((s) => s.id === state.currentSpaceId) || null;
+      },
+
+      // Toast actions
+      showToast: (type: ToastType, title: string, message?: string, duration: number = 4000) => {
+        const toast: Toast = {
+          id: `toast-${Date.now()}-${Math.random()}`,
+          type,
+          title,
+          message,
+          duration,
+        };
+        set((state) => ({
+          toasts: [...state.toasts, toast],
+        }));
+      },
+
+      removeToast: (id: string) => {
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        }));
+      },
+
+      // Confirm dialog actions
+      showConfirm: (title: string, message: string, onConfirm: () => void, options = {}) => {
+        set({
+          confirmDialog: {
+            isOpen: true,
+            title,
+            message,
+            confirmText: options.confirmText,
+            cancelText: options.cancelText,
+            type: options.type,
+            onConfirm,
+          },
+        });
+      },
+
+      hideConfirm: () => {
+        set((state) => ({
+          confirmDialog: {
+            ...state.confirmDialog,
+            isOpen: false,
+          },
+        }));
       },
     }),
     {

@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function FloatingToolbar() {
-  const { getCurrentSpace, executeFlow, resetAll, addLog } = useSpaceStore();
+  const { getCurrentSpace, executeFlow, resetAll, addLog, showConfirm, showToast } = useSpaceStore();
   const currentSpace = getCurrentSpace();
 
   const handlePlayFlow = async () => {
@@ -31,20 +31,26 @@ export default function FloatingToolbar() {
 
   const handleRestartFlow = () => {
     // V2.0: Reset all modules to idle state
-    if (confirm('¿Resetear todos los módulos? Esto borrará todos los outputs y estados.')) {
-      resetAll();
-      console.log('✓ Restart Flow - All modules reset to idle');
-    }
+    showConfirm(
+      '¿Resetear todos los módulos?',
+      'Esto borrará todos los outputs y estados. Esta acción no se puede deshacer.',
+      () => {
+        resetAll();
+        console.log('✓ Restart Flow - All modules reset to idle');
+        showToast('success', 'Flow reseteado', 'Todos los módulos han sido reseteados a estado inicial');
+      },
+      { confirmText: 'Resetear', type: 'warning' }
+    );
   };
 
   const handleUndo = () => {
     console.log('Undo - Previous state');
-    alert('Undo: Funcionalidad de historial pendiente');
+    showToast('info', 'Funcionalidad pendiente', 'Undo: Funcionalidad de historial pendiente');
   };
 
   const handleRedo = () => {
     console.log('Redo - Next state');
-    alert('Redo: Funcionalidad de historial pendiente');
+    showToast('info', 'Funcionalidad pendiente', 'Redo: Funcionalidad de historial pendiente');
   };
 
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
@@ -56,12 +62,18 @@ export default function FloatingToolbar() {
   const handleDeleteSpace = () => {
     if (!currentSpace) return;
 
-    if (confirm(`¿Seguro que quieres borrar el space "${currentSpace.name}"? Esta acción no se puede deshacer.`)) {
-      const { deleteSpace } = useSpaceStore.getState();
-      deleteSpace(currentSpace.id);
-      setShowSettingsMenu(false);
-      console.log(`✓ Space "${currentSpace.name}" deleted`);
-    }
+    showConfirm(
+      `¿Borrar "${currentSpace.name}"?`,
+      'Esta acción no se puede deshacer. Se eliminarán todos los módulos, conexiones y datos de este espacio.',
+      () => {
+        const { deleteSpace } = useSpaceStore.getState();
+        deleteSpace(currentSpace.id);
+        setShowSettingsMenu(false);
+        console.log(`✓ Space "${currentSpace.name}" deleted`);
+        showToast('success', 'Espacio eliminado', `El espacio "${currentSpace.name}" ha sido eliminado`);
+      },
+      { confirmText: 'Eliminar espacio', type: 'danger' }
+    );
   };
 
 

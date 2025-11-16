@@ -233,14 +233,8 @@ export default function FlowWizardPanel({ isOpen, onClose }: FlowWizardPanelProp
   const moduleStatus = currentModule ? space?.modules.find(m => m.id === currentModule.id)?.status : null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-        onClick={onClose}
-      />
-
-      {/* Panel */}
+    <div className="relative">
+      {/* Panel - Sin backdrop para no bloquear interacción */}
       <div className="fixed right-0 top-0 h-screen w-[450px] bg-[#1A1A1A] border-l border-[#2A2A2A] z-50 flex flex-col shadow-2xl">
         {/* Header */}
         <div className="px-6 py-5 border-b border-[#2A2A2A] flex items-center justify-between">
@@ -447,6 +441,6 @@ export default function FlowWizardPanel({ isOpen, onClose }: FlowWizardPanelProp
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

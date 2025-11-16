@@ -47,6 +47,7 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
     connectionDragState,
     validateConnection,
     addConnection,
+    showConfirm,
   } = useSpaceStore();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -300,9 +301,12 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm(`¿Eliminar "${module.name}"?`)) {
-                    deleteModule(module.id);
-                  }
+                  showConfirm(
+                    `¿Eliminar "${module.name}"?`,
+                    'Esta acción no se puede deshacer. Todas las conexiones con este módulo también se eliminarán.',
+                    () => deleteModule(module.id),
+                    { confirmText: 'Eliminar', type: 'danger' }
+                  );
                 }}
                 className="p-2 bg-dark-card/60 hover:bg-red-500/20 border border-transparent hover:border-red-500/50 rounded-lg transition-all group"
                 title="Delete module"

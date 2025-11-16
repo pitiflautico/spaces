@@ -52,7 +52,7 @@ const METADATA_STYLES = [
 ];
 
 export default function MetadataGeneratorModule({ module }: MetadataGeneratorModuleProps) {
-  const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
+  const { updateModule, getCurrentSpace, addLog, showToast } = useSpaceStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -632,7 +632,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
               console.log('=== METADATA GENERATION LOG ===');
               console.log(outputs.metadataLog);
               console.log('================================');
-              alert('Log printed to console (F12)');
+              showToast('info', 'Log impreso en consola', 'Abre la consola del navegador (F12) para ver el log completo');
             }}
             className="w-full py-2 bg-dark-card hover:bg-dark-hover text-gray-300 rounded-lg text-xs transition-colors"
           >
