@@ -121,7 +121,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
   // Get module inputs for AI config
   const inputs = (module.inputs || {}) as any;
-  // Use provider from space configuration (Settings > AI Provider) - Default to TOGETHER for Flux Pro
+  // Use provider from space configuration (Settings: AI Provider) - Default to TOGETHER for Flux Pro
   const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
 
@@ -217,7 +217,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
         : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings (AI Provider tab).`);
       }
 
       // Build prompt using the complete branding information and selected style

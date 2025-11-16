@@ -137,7 +137,7 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
   // Get module inputs for AI config and mode
   const inputs = (module.inputs || {}) as any;
   const generationMode = inputs.generationMode || 'resize'; // 'ai' or 'resize' - default to resize (faster, cheaper)
-  // Use provider from space configuration (Settings > AI Provider) - Default to TOGETHER for Flux Pro
+  // Use provider from space configuration (Settings: AI Provider) - Default to TOGETHER for Flux Pro
   const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
 
@@ -311,7 +311,7 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
         : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings (AI Provider tab).`);
       }
 
       // Generate icon variants using AI

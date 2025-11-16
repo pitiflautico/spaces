@@ -308,7 +308,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
         : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings (AI Provider tab).`);
       }
 
       // Call AI provider

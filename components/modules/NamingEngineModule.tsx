@@ -125,7 +125,7 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
         : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings (AI Provider tab).`);
       }
 
       const config: AIConfiguration = {
