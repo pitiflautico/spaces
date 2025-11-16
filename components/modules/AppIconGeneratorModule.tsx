@@ -305,11 +305,13 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
 
       addLog('info', `Generating ${iconBrief.icon_variants} app icon variants for "${iconBrief.brand_name}" with ${selectedProvider}...`, module.id);
 
-      // Get API key from space configuration
-      const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
+      // Get API key from space configuration (aiConfig stores key for selected provider)
+      const apiKey = space?.configuration?.aiConfig?.provider === selectedProvider
+        ? space?.configuration?.aiConfig?.apiKey
+        : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
       }
 
       // Generate icon variants using AI
@@ -583,11 +585,13 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
           </div>
 
           {/* API Key Status */}
-          {selectedProvider !== AIProvider.LOCAL && !space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] && (
+          {selectedProvider !== AIProvider.LOCAL &&
+            !(space?.configuration?.aiConfig?.provider === selectedProvider &&
+              space?.configuration?.aiConfig?.apiKey) && (
             <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-red-400">⚠️ API Key Missing</span>
-                <span className="text-gray-400">Add {selectedProvider} key in Settings</span>
+                <span className="text-gray-400">Add {selectedProvider} key in Settings > AI Provider</span>
               </div>
             </div>
           )}
@@ -930,22 +934,3 @@ STYLE GUIDANCE (from complete branding):
 ` : ''}`;
 }
 
-/**
- * Get API key for the selected provider
- */
-function getAPIKeyForProvider(provider: AIProvider, apiKeys: Record<string, string | undefined>): string | undefined {
-  switch (provider) {
-    case AIProvider.OPENAI:
-      return apiKeys.openai;
-    case AIProvider.ANTHROPIC:
-      return apiKeys.anthropic;
-    case AIProvider.REPLICATE:
-      return apiKeys.replicate;
-    case AIProvider.TOGETHER:
-      return apiKeys.together;
-    case AIProvider.LOCAL:
-      return undefined; // Mock doesn't need API key
-    default:
-      return undefined;
-  }
-}

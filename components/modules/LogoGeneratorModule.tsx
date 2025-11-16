@@ -211,11 +211,13 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       // Generate logos using AI image provider
       addLog('info', `Generating ${logoBrief.num_variants} logo variants for "${logoBrief.brand_name}" with ${selectedProvider}...`, module.id);
 
-      // Get API key from space configuration
-      const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
+      // Get API key from space configuration (from aiConfig)
+      const apiKey = space?.configuration?.aiConfig?.provider === selectedProvider
+        ? space?.configuration?.aiConfig?.apiKey
+        : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
       }
 
       // Build prompt using the complete branding information and selected style
@@ -450,11 +452,11 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
           </div>
 
           {/* API Key Status */}
-          {selectedProvider !== AIProvider.LOCAL && !space?.configuration?.apiKeys?.[selectedProvider.toLowerCase()] && (
+          {selectedProvider !== AIProvider.LOCAL && !(space?.configuration?.aiConfig?.provider === selectedProvider && space?.configuration?.aiConfig?.apiKey) && (
             <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-red-400">⚠️ API Key Missing</span>
-                <span className="text-gray-400">Add {selectedProvider} key in Settings</span>
+                <span className="text-gray-400">Add {selectedProvider} key in Settings > AI Provider</span>
               </div>
             </div>
           )}

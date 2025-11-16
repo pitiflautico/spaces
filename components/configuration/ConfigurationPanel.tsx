@@ -20,8 +20,9 @@ interface ConfigurationPanelProps {
 type Tab = 'general' | 'ai' | 'apikeys' | 'folders';
 
 export default function ConfigurationPanel({ isOpen, onClose }: ConfigurationPanelProps) {
-  const { getCurrentSpace, updateSpaceConfiguration } = useSpaceStore();
-  const currentSpace = getCurrentSpace();
+  const { updateSpaceConfiguration } = useSpaceStore();
+  // Use reactive selector to get fresh space data
+  const currentSpace = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
 
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [config, setConfig] = useState<SpaceConfiguration>(

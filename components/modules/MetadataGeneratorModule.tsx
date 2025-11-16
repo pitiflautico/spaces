@@ -302,11 +302,13 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
       console.log(prompt.substring(0, 500));
       console.log('===========================================');
 
-      // Get API key from space configuration
-      const apiKey = getAPIKeyForProvider(selectedProvider, space?.configuration?.apiKeys || {});
+      // Get API key from space configuration (aiConfig stores key for selected provider)
+      const apiKey = space?.configuration?.aiConfig?.provider === selectedProvider
+        ? space?.configuration?.aiConfig?.apiKey
+        : undefined;
 
       if (!apiKey && selectedProvider !== AIProvider.LOCAL) {
-        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > API Keys.`);
+        throw new Error(`API key for ${selectedProvider} not configured. Please add it in Settings > AI Provider.`);
       }
 
       // Call AI provider
@@ -728,18 +730,6 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
-
-function getAPIKeyForProvider(provider: AIProvider, apiKeys: Record<string, string | undefined>): string | undefined {
-  const keyMap: Record<AIProvider, string> = {
-    [AIProvider.REPLICATE]: 'replicate',
-    [AIProvider.TOGETHER]: 'together',
-    [AIProvider.OPENAI]: 'openai',
-    [AIProvider.ANTHROPIC]: 'anthropic',
-    [AIProvider.LOCAL]: 'local',
-  };
-
-  return apiKeys[keyMap[provider]];
-}
 
 function buildMetadataPrompt(
   appIntelligence: AppIntelligence,
