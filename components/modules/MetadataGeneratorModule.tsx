@@ -424,7 +424,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
   };
 
   return (
-    <>
+    <div>
       <div className="p-4">
         {/* Help Button */}
         <div className="mb-4 flex items-center justify-between">
@@ -1012,6 +1012,6 @@ function buildMetadataLog(
           onClose={() => setShowInfoPanel(false)}
         />
       )}
-    </>
+    </div>
   );
 }
