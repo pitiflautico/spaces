@@ -140,13 +140,19 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
       setError(null);
       updateModule(module.id, { status: 'running' });
 
+      // Get fresh space data from store (not from closure)
+      const currentSpace = useSpaceStore.getState().spaces.find(s => s.id === useSpaceStore.getState().currentSpaceId);
+      if (!currentSpace) {
+        throw new Error('No active space found');
+      }
+
       // Use module's own AI configuration
       if (!selectedProvider || !selectedModel) {
         throw new Error('Please select an AI provider and model.');
       }
 
       // Get inputs from connected modules
-      const connections = space?.connections || [];
+      const connections = currentSpace.connections || [];
 
       // Debug: Log all connections to this module
       console.log('=== METADATA GENERATOR - Connection Debug ===');
@@ -157,7 +163,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
 
       // Input 1: App Intelligence (from Module 2 - AIE Engine)
       const conn1 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1');
-      const sourceModule1 = conn1 ? space?.modules.find((m) => m.id === conn1.sourceModuleId) : null;
+      const sourceModule1 = conn1 ? currentSpace.modules.find((m) => m.id === conn1.sourceModuleId) : null;
 
       console.log('=== Input 1 (App Intelligence) ===');
       console.log('Connection found:', conn1);
@@ -170,7 +176,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
 
       // Input 2: Naming Package (from Module 3 - Naming Engine)
       const conn2 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-2');
-      const sourceModule2 = conn2 ? space?.modules.find((m) => m.id === conn2.sourceModuleId) : null;
+      const sourceModule2 = conn2 ? currentSpace.modules.find((m) => m.id === conn2.sourceModuleId) : null;
 
       console.log('=== Input 2 (Naming Package) ===');
       console.log('Connection found:', conn2);
@@ -182,7 +188,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
 
       // Input 3: Chosen Name (from Module 3 - Naming Engine)
       const conn3 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-3');
-      const sourceModule3 = conn3 ? space?.modules.find((m) => m.id === conn3.sourceModuleId) : null;
+      const sourceModule3 = conn3 ? currentSpace.modules.find((m) => m.id === conn3.sourceModuleId) : null;
 
       console.log('=== Input 3 (Chosen Name) ===');
       console.log('Connection found:', conn3);
@@ -194,7 +200,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
 
       // Input 4: Icon Options (from Module 4B - App Icon Generator) - OPTIONAL
       const conn4 = connections.find((conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-4');
-      const sourceModule4 = conn4 ? space?.modules.find((m) => m.id === conn4.sourceModuleId) : null;
+      const sourceModule4 = conn4 ? currentSpace.modules.find((m) => m.id === conn4.sourceModuleId) : null;
       const iconOptions = sourceModule4?.outputs?.iconOptions;
 
       // Validate required inputs with better error messages

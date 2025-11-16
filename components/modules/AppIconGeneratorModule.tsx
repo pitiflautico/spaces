@@ -179,8 +179,14 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
       setError(null);
       updateModule(module.id, { status: 'running' });
 
+      // Get fresh space data from store (not from closure)
+      const currentSpace = useSpaceStore.getState().spaces.find(s => s.id === useSpaceStore.getState().currentSpaceId);
+      if (!currentSpace) {
+        throw new Error('No active space found');
+      }
+
       // Get connections - TWO INPUTS
-      const connections = space?.connections || [];
+      const connections = currentSpace.connections || [];
 
       // Input 1: Logo (from Module 4A or Logo Variant)
       const logoConnection = connections.find(
@@ -207,7 +213,7 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
       let logoFlowContext: FlowContext | undefined;
 
       if (logoConnection) {
-        const logoModule = space?.modules.find((m) => m.id === logoConnection.sourceModuleId);
+        const logoModule = currentSpace.modules.find((m) => m.id === logoConnection.sourceModuleId);
         if (logoModule) {
           // Could be from Logo Variant or Logo Generator
           if (logoModule.type === 'logo-variant') {
@@ -225,7 +231,7 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
       let brandingFlowContext: FlowContext | undefined;
 
       if (brandingConnection) {
-        const brandingModule = space?.modules.find((m) => m.id === brandingConnection.sourceModuleId);
+        const brandingModule = currentSpace.modules.find((m) => m.id === brandingConnection.sourceModuleId);
         if (brandingModule) {
           if (brandingModule.type === 'naming-engine') {
             brandingData = {

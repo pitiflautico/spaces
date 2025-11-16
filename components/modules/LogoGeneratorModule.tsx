@@ -154,8 +154,14 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       setError(null);
       updateModule(module.id, { status: 'running' });
 
+      // Get fresh space data from store (not from closure)
+      const currentSpace = useSpaceStore.getState().spaces.find(s => s.id === useSpaceStore.getState().currentSpaceId);
+      if (!currentSpace) {
+        throw new Error('No active space found');
+      }
+
       // Get input from connected module (Module 3 - Naming Engine)
-      const connections = space?.connections || [];
+      const connections = currentSpace.connections || [];
       const incomingConnection = connections.find(
         (conn) => conn.targetModuleId === module.id && conn.targetPortId === 'in-1'
       );
@@ -165,7 +171,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
       }
 
       // Get the source module
-      const sourceModule = space?.modules.find((m) => m.id === incomingConnection.sourceModuleId);
+      const sourceModule = currentSpace.modules.find((m) => m.id === incomingConnection.sourceModuleId);
       if (!sourceModule) {
         throw new Error('Source module not found. Please check the connection.');
       }
