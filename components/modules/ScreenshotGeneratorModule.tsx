@@ -11,8 +11,8 @@
  */
 
 import React, { useState } from 'react';
-import type { Module } from '@/types/canvas';
-import { useSpaceStore } from '@/store/spaceStore';
+import type { Module } from '@/types';
+import { useSpaceStore } from '@/lib/store';
 
 // Output type
 interface ScreenshotGeneratorOutputs {
