@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSpaceStore } from '@/lib/store';
+import AddModulePanel from './AddModulePanel';
 import {
   PlusIcon,
   PlayIcon,
@@ -14,6 +15,7 @@ import {
 export default function FloatingToolbar() {
   const { getCurrentSpace, executeFlow, resetAll, addLog, showConfirm, showToast } = useSpaceStore();
   const currentSpace = getCurrentSpace();
+  const [showAddModulePanel, setShowAddModulePanel] = useState(false);
 
   const handlePlayFlow = async () => {
     // V2.0: Execute modules in topological order
@@ -85,19 +87,16 @@ export default function FloatingToolbar() {
   };
 
   return (
-    <div className="fixed left-[272px] top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1 bg-[#1A1A1A]/95 backdrop-blur-sm rounded-xl p-1.5 shadow-2xl border border-[#2A2A2A]">
-      {/* Add Module */}
-      <button
-        onClick={() => {
-          // This is handled by AddModuleButton component
-          const addBtn = document.querySelector('[data-add-module-btn]') as HTMLButtonElement;
-          addBtn?.click();
-        }}
-        className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-all hover:scale-105"
-        title="Add Module"
-      >
-        <PlusIcon className="w-5 h-5" />
-      </button>
+    <>
+      <div className="fixed left-[272px] top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1 bg-[#1A1A1A]/95 backdrop-blur-sm rounded-xl p-1.5 shadow-2xl border border-[#2A2A2A]">
+        {/* Add Module */}
+        <button
+          onClick={() => setShowAddModulePanel(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-all hover:scale-105"
+          title="Add Individual Module"
+        >
+          <PlusIcon className="w-5 h-5" />
+        </button>
 
       {/* Separator */}
       <div className="h-px bg-[#2A2A2A] my-0.5" />
@@ -179,5 +178,9 @@ export default function FloatingToolbar() {
         )}
       </div>
     </div>
+
+    {/* Add Module Panel */}
+    <AddModulePanel isOpen={showAddModulePanel} onClose={() => setShowAddModulePanel(false)} />
+    </>
   );
 }
