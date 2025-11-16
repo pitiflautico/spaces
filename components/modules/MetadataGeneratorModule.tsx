@@ -566,15 +566,15 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
           className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
         >
           {module.status === 'running' ? (
-            <>
+            <div className="flex items-center justify-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
               Generating Metadata...
-            </>
+            </div>
           ) : (
-            <>
+            <div className="flex items-center justify-center gap-2">
               <SparklesIcon className="w-5 h-5" />
               Generate Metadata
-            </>
+            </div>
           )}
         </button>
 
