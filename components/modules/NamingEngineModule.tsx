@@ -39,6 +39,20 @@ export default function NamingEngineModule({ module }: NamingEngineModuleProps) 
     }
   }, [outputs?.chosenName?.final_name, selectedNameForUI]);
 
+  // Helper to check if API key exists for a provider
+  const hasApiKey = (provider: AIProvider): boolean => {
+    const keys = space?.configuration?.apiKeys;
+    if (!keys) return false;
+    switch (provider) {
+      case AIProvider.OPENAI: return !!keys.openai;
+      case AIProvider.ANTHROPIC: return !!keys.anthropic;
+      case AIProvider.REPLICATE: return !!keys.replicate;
+      case AIProvider.TOGETHER: return !!keys.together;
+      case AIProvider.LOCAL: return true;
+      default: return false;
+    }
+  };
+
   // Get module inputs (will store AI config here)
   const inputs = (module.inputs || {}) as any;
   const selectedProvider: AIProvider = inputs.aiProvider || space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
