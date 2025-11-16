@@ -88,11 +88,21 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
   const outputs = module.outputs as AppIconGeneratorOutputs;
   const space = getCurrentSpace();
 
-  // Get module inputs for AI config
+  // Get module inputs for AI config and mode
   const inputs = (module.inputs || {}) as any;
+  const generationMode = inputs.generationMode || 'resize'; // 'ai' or 'resize' - default to resize (faster, cheaper)
   // Use provider from space configuration (Settings > AI Provider) - Default to TOGETHER for Flux Pro
   const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
+
+  const handleModeChange = (mode: 'ai' | 'resize') => {
+    updateModule(module.id, {
+      inputs: {
+        ...inputs,
+        generationMode: mode,
+      },
+    });
+  };
 
   const handleModelChange = (modelId: string) => {
     updateModule(module.id, {
@@ -375,13 +385,50 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
         </p>
       </div>
 
-      {/* AI Model Selector */}
+      {/* Generation Mode Selector */}
       <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#3A3A3A]/50 rounded-lg">
-        <div className="space-y-3">
-          <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
-            <SparklesIcon className="w-4 h-4 text-blue-400" />
-            AI Image Generator
-          </div>
+        <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3">
+          Generation Mode
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => handleModeChange('resize')}
+            className={`px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              generationMode === 'resize'
+                ? 'bg-green-600 text-white border-2 border-green-400'
+                : 'bg-[#1A1A1A] text-gray-400 border border-[#3A3A3A] hover:border-gray-500'
+            }`}
+          >
+            <div className="font-semibold mb-1">⚡ Resize Logo</div>
+            <div className="text-[10px] opacity-80">Fast • Free • Exact</div>
+          </button>
+          <button
+            onClick={() => handleModeChange('ai')}
+            className={`px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              generationMode === 'ai'
+                ? 'bg-blue-600 text-white border-2 border-blue-400'
+                : 'bg-[#1A1A1A] text-gray-400 border border-[#3A3A3A] hover:border-gray-500'
+            }`}
+          >
+            <div className="font-semibold mb-1">✨ AI Generate</div>
+            <div className="text-[10px] opacity-80">Creative • Variants</div>
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          {generationMode === 'resize'
+            ? '📦 Resizes and centers your logo into app icon sizes'
+            : '🎨 Creates new AI-generated icon variants'}
+        </p>
+      </div>
+
+      {/* AI Model Selector - Only show in AI mode */}
+      {generationMode === 'ai' && (
+        <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#3A3A3A]/50 rounded-lg">
+          <div className="space-y-3">
+            <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold flex items-center gap-2">
+              <SparklesIcon className="w-4 h-4 text-blue-400" />
+              AI Image Generator
+            </div>
 
           {/* Current Provider Info */}
           <div className="px-3 py-2 bg-[#0A0A0A]/80 border border-[#3A3A3A] rounded-lg">
@@ -435,11 +482,13 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
           )}
         </div>
       </div>
+      )}
 
-      {/* Settings */}
-      <div className="space-y-3">
-        {/* Variants selector */}
-        {(!module.status || module.status === 'idle' || module.status === 'invalid') && (
+      {/* Settings - Only show variants and style selectors in AI mode */}
+      {generationMode === 'ai' && (
+        <div className="space-y-3">
+          {/* Variants selector */}
+          {(!module.status || module.status === 'idle' || module.status === 'invalid') && (
           <div className="px-3 py-2 bg-[#0A0A0A]/50 border border-[#3A3A3A]/50 rounded-lg">
             <label className="flex items-center justify-between mb-3">
               <span className="text-xs text-gray-300 font-medium">Number of variants:</span>
@@ -482,6 +531,7 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
           </div>
         )}
       </div>
+      )}
 
       {/* Info */}
       <div className="px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
