@@ -424,7 +424,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
   };
 
   return (
-    <React.Fragment>
+    <div>
       <div className="p-4">
         {/* Help Button */}
         <div className="mb-4 flex items-center justify-between">
@@ -719,7 +719,7 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
           onClose={() => setShowInfoPanel(false)}
         />
       )}
-    </React.Fragment>
+    </div>
   );
 }
 
