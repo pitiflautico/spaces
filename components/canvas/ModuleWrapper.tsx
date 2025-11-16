@@ -283,17 +283,17 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
             <h3 className="text-white font-medium text-sm flex-1">{module.name}</h3>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               {/* Duplicate button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDuplicate();
                 }}
-                className="p-1.5 hover:bg-dark-card rounded-lg transition-colors group"
+                className="p-2 bg-dark-card/60 hover:bg-blue-500/20 border border-transparent hover:border-blue-500/50 rounded-lg transition-all group"
                 title="Duplicate module"
               >
-                <Square2StackIcon className="w-4 h-4 text-gray-500 group-hover:text-blue-400" />
+                <Square2StackIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-400" />
               </button>
 
               {/* Delete button */}
@@ -304,10 +304,10 @@ export default function ModuleWrapper({ module, children, onRun, icon, hasSettin
                     deleteModule(module.id);
                   }
                 }}
-                className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors group"
+                className="p-2 bg-dark-card/60 hover:bg-red-500/20 border border-transparent hover:border-red-500/50 rounded-lg transition-all group"
                 title="Delete module"
               >
-                <TrashIcon className="w-4 h-4 text-gray-500 group-hover:text-red-400" />
+                <TrashIcon className="w-5 h-5 text-gray-400 group-hover:text-red-400" />
               </button>
             </div>
 
