@@ -456,7 +456,7 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
             <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-red-400">⚠️ API Key Missing</span>
-                <span className="text-gray-400">Add {selectedProvider} key in Settings > AI Provider</span>
+                <span className="text-gray-400">Add {selectedProvider} key in Settings &gt; AI Provider</span>
               </div>
             </div>
           )}
