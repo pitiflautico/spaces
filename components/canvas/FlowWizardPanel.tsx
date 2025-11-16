@@ -75,11 +75,19 @@ const FLOW_STEPS: FlowStep[] = [
   },
   {
     id: 7,
+    moduleType: 'screenshot-generator',
+    name: 'Generate Screenshots',
+    description: 'iOS Simulator automation',
+    icon: '📸',
+    requiredInputs: ['metadata-generator'],
+  },
+  {
+    id: 8,
     moduleType: 'appstore-connect',
     name: 'Upload to App Store',
     description: 'Automate App Store Connect',
     icon: '🚀',
-    requiredInputs: ['metadata-generator'],
+    requiredInputs: ['metadata-generator', 'screenshot-generator'], // in-1: metadata, in-2: screenshots
   },
 ];
 

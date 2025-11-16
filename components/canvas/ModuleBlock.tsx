@@ -12,6 +12,7 @@ import {
   DevicePhoneMobileIcon,
   ClipboardDocumentListIcon,
   RocketLaunchIcon,
+  CameraIcon,
 } from '@heroicons/react/24/outline';
 import ModuleWrapper from './ModuleWrapper';
 import LocalProjectAnalysisModule from '@/components/modules/LocalProjectAnalysisModule';
@@ -22,6 +23,7 @@ import LogoVariantModule from '@/components/modules/LogoVariantModule';
 import AppIconGeneratorModule from '@/components/modules/AppIconGeneratorModule';
 import AppIconVariantModule from '@/components/modules/AppIconVariantModule';
 import MetadataGeneratorModule from '@/components/modules/MetadataGeneratorModule';
+import ScreenshotGeneratorModule from '@/components/modules/ScreenshotGeneratorModule';
 import AppStoreConnectModule from '@/components/modules/AppStoreConnectModule';
 
 interface ModuleBlockProps {
@@ -62,6 +64,8 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
         return <DevicePhoneMobileIcon className="w-5 h-5 text-cyan-400" />;
       case 'metadata-generator':
         return <ClipboardDocumentListIcon className="w-5 h-5 text-orange-400" />;
+      case 'screenshot-generator':
+        return <CameraIcon className="w-5 h-5 text-purple-400" />;
       case 'appstore-connect':
         return <RocketLaunchIcon className="w-5 h-5 text-purple-400" />;
       case 'marketing-pack':
@@ -216,6 +220,9 @@ export default function ModuleBlock({ module }: ModuleBlockProps) {
 
       case 'metadata-generator':
         return <MetadataGeneratorModule module={module} />;
+
+      case 'screenshot-generator':
+        return <ScreenshotGeneratorModule module={module} />;
 
       case 'appstore-connect':
         return <AppStoreConnectModule module={module} />;

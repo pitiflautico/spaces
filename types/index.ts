@@ -19,6 +19,7 @@ export type ModuleType =
   | 'app-icon-generator'
   | 'app-icon-variant'
   | 'metadata-generator'
+  | 'screenshot-generator'
   | 'appstore-connect'
   | 'marketing-pack';
 
