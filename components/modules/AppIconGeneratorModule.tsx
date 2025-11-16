@@ -48,17 +48,17 @@ const ICON_STYLES = {
 
 type IconStyleKey = keyof typeof ICON_STYLES;
 
-// Image generation models - Same as Logo Generator
+// Image generation models - Flux Pro works best for app icons
 const IMAGE_AI_MODELS = {
-  [AIProvider.REPLICATE]: [
-    { id: 'recraft-ai/recraft-v3-svg', name: 'Recraft V3 SVG', description: '⭐ BEST - Generates SVG icons' },
-    { id: 'black-forest-labs/flux-kontext-pro', name: 'Flux Kontext Pro', description: 'Perfect for icon design' },
-    { id: 'black-forest-labs/flux-1.1-pro', name: 'Flux 1.1 Pro', description: 'High quality raster' },
-  ],
   [AIProvider.TOGETHER]: [
-    { id: 'black-forest-labs/FLUX.1-pro', name: 'Flux Pro', description: '⭐ Premium quality' },
+    { id: 'black-forest-labs/FLUX.1-pro', name: 'Flux Pro', description: '⭐ BEST - Premium quality for icons' },
     { id: 'black-forest-labs/FLUX.1-schnell-Free', name: 'Flux Schnell (Free)', description: 'Fast & Free' },
     { id: 'black-forest-labs/FLUX.1-Kontext-dev', name: 'Flux Kontext Dev', description: 'Good for icons' },
+  ],
+  [AIProvider.REPLICATE]: [
+    { id: 'black-forest-labs/flux-1.1-pro', name: 'Flux 1.1 Pro', description: '⭐ BEST - High quality' },
+    { id: 'black-forest-labs/flux-kontext-pro', name: 'Flux Kontext Pro', description: 'Perfect for icon design' },
+    { id: 'recraft-ai/recraft-v3-svg', name: 'Recraft V3 SVG', description: 'Generates SVG icons' },
   ],
   [AIProvider.LOCAL]: [
     { id: 'mock-flux', name: 'Mock Flux', description: 'Testing (placeholders)' },
@@ -90,8 +90,8 @@ export default function AppIconGeneratorModule({ module }: AppIconGeneratorModul
 
   // Get module inputs for AI config
   const inputs = (module.inputs || {}) as any;
-  // Use provider from space configuration (Settings > AI Provider)
-  const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.REPLICATE;
+  // Use provider from space configuration (Settings > AI Provider) - Default to TOGETHER for Flux Pro
+  const selectedProvider: AIProvider = space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
   const selectedModel = inputs.aiModel || IMAGE_AI_MODELS[selectedProvider]?.[0]?.id;
 
   const handleModelChange = (modelId: string) => {
