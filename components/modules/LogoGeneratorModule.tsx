@@ -119,6 +119,20 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
 
   const [selectedStyle, setSelectedStyle] = useState<LogoStyleKey>(detectedStyle || 'minimalist');
 
+  // Helper to check if API key exists for a provider
+  const hasApiKey = (provider: AIProvider): boolean => {
+    const keys = space?.configuration?.apiKeys;
+    if (!keys) return false;
+    switch (provider) {
+      case AIProvider.OPENAI: return !!keys.openai;
+      case AIProvider.ANTHROPIC: return !!keys.anthropic;
+      case AIProvider.REPLICATE: return !!keys.replicate;
+      case AIProvider.TOGETHER: return !!keys.together;
+      case AIProvider.LOCAL: return true;
+      default: return false;
+    }
+  };
+
   // Get module inputs for AI config
   const inputs = (module.inputs || {}) as any;
   // Use provider from space configuration (Settings: AI Provider) - Default to TOGETHER for Flux Pro
@@ -462,12 +476,11 @@ export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps
           </div>
 
           {/* API Key Status */}
-          {selectedProvider !== AIProvider.LOCAL &&
-            !space?.configuration?.apiKeys?.[selectedProvider.toLowerCase() as keyof typeof space.configuration.apiKeys] && (
+          {selectedProvider !== AIProvider.LOCAL && !hasApiKey(selectedProvider) && (
             <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-red-400">⚠️ API Key Missing</span>
-                <span className="text-gray-400">Add {selectedProvider} key in Settings &gt; API Keys tab</span>
+                <span className="text-gray-400">Add {selectedProvider} key in Settings &gt; AI Provider tab</span>
               </div>
             </div>
           )}

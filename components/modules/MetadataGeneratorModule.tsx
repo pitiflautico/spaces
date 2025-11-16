@@ -62,6 +62,20 @@ export default function MetadataGeneratorModule({ module }: MetadataGeneratorMod
 
   const outputs = module.outputs as MetadataGeneratorOutputs;
 
+  // Helper to check if API key exists for a provider
+  const hasApiKey = (provider: AIProvider): boolean => {
+    const keys = space?.configuration?.apiKeys;
+    if (!keys) return false;
+    switch (provider) {
+      case AIProvider.OPENAI: return !!keys.openai;
+      case AIProvider.ANTHROPIC: return !!keys.anthropic;
+      case AIProvider.REPLICATE: return !!keys.replicate;
+      case AIProvider.TOGETHER: return !!keys.together;
+      case AIProvider.LOCAL: return true;
+      default: return false;
+    }
+  };
+
   // Get module inputs (will store AI config and settings here)
   const inputs = (module.inputs || {}) as MetadataGeneratorInputs;
   const selectedProvider: AIProvider = inputs.aiProvider || space?.configuration?.aiConfig?.provider || AIProvider.TOGETHER;
