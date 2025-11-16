@@ -30,7 +30,9 @@ interface AppStoreConnectModuleProps {
 }
 
 export default function AppStoreConnectModule({ module }: AppStoreConnectModuleProps) {
-  const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
+  const { updateModule, addLog } = useSpaceStore();
+  // Use reactive selector to always get fresh space data (including API keys)
+  const space = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
@@ -39,7 +41,6 @@ export default function AppStoreConnectModule({ module }: AppStoreConnectModuleP
 
   const outputs = module.outputs as AppStoreConnectOutputs;
   const inputs = (module.inputs || {}) as AppStoreConnectInputs;
-  const space = getCurrentSpace();
 
   // Check connected inputs
   const connections = space?.connections || [];

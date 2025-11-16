@@ -26,12 +26,13 @@ const LANGUAGES = [
 ];
 
 export default function AIEEngineModule({ module }: AIEEngineModuleProps) {
-  const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
+  const { updateModule, addLog } = useSpaceStore();
+  // Use reactive selector to always get fresh space data (including API keys)
+  const space = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const outputs = module.outputs as AIEEngineOutputs;
-  const space = getCurrentSpace();
 
   // Get module inputs (will store AI config and language here)
   const inputs = (module.inputs || {}) as any;

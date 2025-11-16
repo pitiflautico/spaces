@@ -99,13 +99,14 @@ const IMAGE_AI_MODELS = {
 };
 
 export default function LogoGeneratorModule({ module }: LogoGeneratorModuleProps) {
-  const { updateModule, getCurrentSpace, addLog, addModule, addConnection } = useSpaceStore();
+  const { updateModule, addLog, addModule, addConnection } = useSpaceStore();
+  // Use reactive selector to always get fresh space data (including API keys)
+  const space = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [numVariants, setNumVariants] = useState<number>(3);
 
   const outputs = module.outputs as LogoGeneratorOutputs;
-  const space = getCurrentSpace();
 
   // Detect style from branding if available
   const connections = space?.connections || [];

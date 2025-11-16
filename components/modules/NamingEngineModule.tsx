@@ -15,13 +15,14 @@ interface NamingEngineModuleProps {
 }
 
 export default function NamingEngineModule({ module }: NamingEngineModuleProps) {
-  const { updateModule, getCurrentSpace, addLog } = useSpaceStore();
+  const { updateModule, addLog } = useSpaceStore();
+  // Use reactive selector to always get fresh space data (including API keys)
+  const space = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const outputs = module.outputs as NamingEngineOutputs;
-  const space = getCurrentSpace();
 
   // Initialize selectedNameForUI with current chosen name (if exists)
   const [selectedNameForUI, setSelectedNameForUI] = useState<string | null>(

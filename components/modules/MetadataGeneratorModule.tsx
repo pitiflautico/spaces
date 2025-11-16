@@ -52,14 +52,15 @@ const METADATA_STYLES = [
 ];
 
 export default function MetadataGeneratorModule({ module }: MetadataGeneratorModuleProps) {
-  const { updateModule, getCurrentSpace, addLog, showToast } = useSpaceStore();
+  const { updateModule, addLog, showToast } = useSpaceStore();
+  // Use reactive selector to always get fresh space data (including API keys)
+  const space = useSpaceStore(state => state.spaces.find(s => s.id === state.currentSpaceId));
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
 
   const outputs = module.outputs as MetadataGeneratorOutputs;
-  const space = getCurrentSpace();
 
   // Get module inputs (will store AI config and settings here)
   const inputs = (module.inputs || {}) as MetadataGeneratorInputs;
